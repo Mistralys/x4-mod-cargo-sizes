@@ -10,6 +10,11 @@ and ship type. This allows you to mix it any way you want.
 For example, transport ships with 10x cargo size, and mining ships with 
 2x cargo size.
 
+## Downloads
+
+See the [Releases](https://github.com/Mistralys/x4-mod-cargo-sizes/releases)
+for all available downloads.
+
 ## Reference of cargo sizes
 
 The exact changes to cargo sizes can be reviewed here:
