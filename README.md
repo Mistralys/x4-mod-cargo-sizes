@@ -12,8 +12,15 @@ For example, transport ships with 10x cargo size, and mining ships with
 
 ## Downloads
 
+### Nexusmods
+
+The easiest way to install the mod is with the Vortex Mod Manager.
+See the official [Nexus page for the mod](https://www.nexusmods.com/x4foundations/mods/1713).
+
+### Manual ZIP downloads
+
 See the [Releases](https://github.com/Mistralys/x4-mod-cargo-sizes/releases)
-for all available downloads.
+for all available manual downloads.
 
 ## Reference of cargo sizes
 
