@@ -31,6 +31,11 @@ and will potentially be juicier targets for piracy as a result.
 
 ## Development
 
+### Requirements
+
+1. PHP 8.2 or higher.
+2. [Composer](https://getcomposer.org/).
+
 ### Building from game sources
 
 The mod is designed to be built directly from the game's data files,
