@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "92cf28948d4585d1d610612aa5710553",
+    "content-hash": "ff6d7264847034ff0d45c569f5874491",
     "packages": [
         {
             "name": "components/jquery",
@@ -822,16 +822,16 @@
         },
         {
             "name": "mistralys/x4-core",
-            "version": "0.0.7",
+            "version": "0.0.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Mistralys/x4-core.git",
-                "reference": "45c74b9cc3bcff58272cd1e9074c4c0e4f164eae"
+                "reference": "5c6b6d45c051a67b35fc973e4f9ec608f9c3dce6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Mistralys/x4-core/zipball/45c74b9cc3bcff58272cd1e9074c4c0e4f164eae",
-                "reference": "45c74b9cc3bcff58272cd1e9074c4c0e4f164eae",
+                "url": "https://api.github.com/repos/Mistralys/x4-core/zipball/5c6b6d45c051a67b35fc973e4f9ec608f9c3dce6",
+                "reference": "5c6b6d45c051a67b35fc973e4f9ec608f9c3dce6",
                 "shasum": ""
             },
             "require": {
@@ -871,9 +871,9 @@
             "description": "Core files for all X4 tools.",
             "support": {
                 "issues": "https://github.com/Mistralys/x4-core/issues",
-                "source": "https://github.com/Mistralys/x4-core/tree/0.0.7"
+                "source": "https://github.com/Mistralys/x4-core/tree/0.0.8"
             },
-            "time": "2025-05-30T04:56:26+00:00"
+            "time": "2025-05-30T18:20:49+00:00"
         },
         {
             "name": "neitanod/forceutf8",
@@ -1219,16 +1219,16 @@
         },
         {
             "name": "nikic/php-parser",
-            "version": "v5.4.0",
+            "version": "v5.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "447a020a1f875a434d62f2a401f53b82a396e494"
+                "reference": "ae59794362fe85e051a58ad36b289443f57be7a9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/447a020a1f875a434d62f2a401f53b82a396e494",
-                "reference": "447a020a1f875a434d62f2a401f53b82a396e494",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/ae59794362fe85e051a58ad36b289443f57be7a9",
+                "reference": "ae59794362fe85e051a58ad36b289443f57be7a9",
                 "shasum": ""
             },
             "require": {
@@ -1271,9 +1271,9 @@
             ],
             "support": {
                 "issues": "https://github.com/nikic/PHP-Parser/issues",
-                "source": "https://github.com/nikic/PHP-Parser/tree/v5.4.0"
+                "source": "https://github.com/nikic/PHP-Parser/tree/v5.5.0"
             },
-            "time": "2024-12-30T11:07:19+00:00"
+            "time": "2025-05-31T08:24:38+00:00"
         },
         {
             "name": "phar-io/manifest",
@@ -3876,7 +3876,8 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=7.4"
+        "php": ">=8.2",
+        "ext-dom": "*"
     },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"
