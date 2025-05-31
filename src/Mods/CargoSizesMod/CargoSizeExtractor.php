@@ -244,9 +244,10 @@ class CargoSizeExtractor
             $rootName = self::MOD_PREFIX.'-'.$key;
 
             $zipFile = new ZIPHelper(sprintf(
-                '%s/%s.zip',
+                '%s/%s-v%s.zip',
                 $baseFolder,
-                $rootName
+                $rootName,
+                self::getVersion()
             ));
 
             echo "Creating ZIP file: $key.zip\n";
@@ -449,7 +450,7 @@ XML;
             $name->getInvariant(),
             $description->getInvariant(),
             self::AUTHOR_NAME,
-            self::getVersion(),
+            str_replace('.', '', self::getVersion()),
             date('Y-m-d'),
             implode("\n    ", $translations)."\n"
         );
