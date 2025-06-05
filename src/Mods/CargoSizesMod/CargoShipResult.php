@@ -1,9 +1,17 @@
 <?php
+/**
+ * @package X4 Cargo Sizes Mod
+ * @subpackage Extractor
+ */
 
 declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
+/**
+ * @package X4 Cargo Sizes Mod
+ * @subpackage Extractor
+ */
 class CargoShipResult
 {
     private string $macroName;
@@ -12,16 +20,24 @@ class CargoShipResult
     private string $shipType;
     private string $storageType;
     private string $size;
-    private string $shipName = '';
+    private string $shipName;
+    private string $relativePath;
 
-    public function __construct(string $macroName, string $fileName, int $cargo, string $shipType, string $storageType, string $size)
+    public function __construct(string $macroName, string $fileName, string $shipName, string $relativePath, int $cargo, string $shipType, string $storageType, string $size)
     {
         $this->macroName = $macroName;
         $this->fileName = $fileName;
+        $this->relativePath = $relativePath;
+        $this->shipName = $shipName;
         $this->cargo = $cargo;
         $this->shipType = $shipType;
         $this->storageType = $storageType;
         $this->size = $size;
+    }
+
+    public function getRelativePath(): string
+    {
+        return $this->relativePath;
     }
 
     public function getMacroName(): string
@@ -34,7 +50,7 @@ class CargoShipResult
         return $this->fileName;
     }
 
-    public function getCargo(): int
+    public function getCargoValue(): int
     {
         return $this->cargo;
     }
@@ -54,12 +70,6 @@ class CargoShipResult
         return $this->size;
     }
 
-    public function setShipName(string $shipName) : self
-    {
-        $this->shipName = $shipName;
-        return $this;
-    }
-
     public function getShipName(): string
     {
         return $this->shipName;
@@ -68,5 +78,10 @@ class CargoShipResult
     public function getTypeLabel() : string
     {
         return CargoSizeExtractor::SHIP_TYPES[$this->getShipType()]['label'] ?? 'Unknown';
+    }
+
+    public function calculateCargoValue(float|int $multiplier) : int
+    {
+        return (int)ceil($this->getCargoValue() * $multiplier);
     }
 }
