@@ -3,6 +3,10 @@
 This changelog only tracks changes to the mod's build tools,
 not the mod content itself.
 
+## v1.0.3 - Extraction revamp
+- Build: Rewrote the extraction script to be more robust.
+- Build: Now correctly detecting storage int the new `props` assets folder.
+
 ## v1.0.2 - Reference generation
 - Build: Improved the structure of the cargo size reference.
 
