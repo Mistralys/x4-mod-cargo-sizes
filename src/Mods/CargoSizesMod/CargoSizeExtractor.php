@@ -33,6 +33,9 @@ class CargoSizeExtractor
 {
     public const SHIP_TYPE_TRANSPORT = 'trans';
     public const SHIP_TYPE_MINER = 'miner';
+    public const SHIP_TYPE_AUXILIARY = 'resupplier';
+    public const SHIP_TYPE_CARRIER = 'carrier';
+
     public const HOMEPAGE_URL = 'https://github.com/Mistralys/x4-mod-cargo-sizes';
     public const MOD_PREFIX = 'cargo-size';
     public const AUTHOR_NAME = 'AeonsOfTime';
@@ -51,11 +54,28 @@ class CargoSizeExtractor
     );
 
     /**
-     * @var string[]
+     * Table of ship types with the JSON key names for
+     * translating the ship names and descriptions.
+     *
+     * @var array<string,array{name:string,description:string}>
      */
     private const SHIP_TYPES = array(
-        self::SHIP_TYPE_TRANSPORT,
-        self::SHIP_TYPE_MINER
+        self::SHIP_TYPE_TRANSPORT => array(
+            'name' => Translation::TYPE_NAME_TRANSPORT,
+            'description' => Translation::TYPE_DESCR_TRANSPORT
+        ),
+        self::SHIP_TYPE_MINER => array(
+            'name' => Translation::TYPE_NAME_MINER,
+            'description' => Translation::TYPE_DESCR_MINER
+        ),
+        self::SHIP_TYPE_AUXILIARY => array(
+            'name' => Translation::TYPE_NAME_AUXILIARY,
+            'description' => Translation::TYPE_DESCR_AUXILIARY
+        ),
+        self::SHIP_TYPE_CARRIER => array(
+            'name' => Translation::TYPE_NAME_CARRIER,
+            'description' => Translation::TYPE_DESCR_CARRIER
+        )
     );
 
     /**
@@ -198,7 +218,7 @@ class CargoSizeExtractor
 
         foreach ($this->results as $result)
         {
-            foreach(self::SHIP_TYPES as $shipType)
+            foreach(array_keys(self::SHIP_TYPES) as $shipType)
             {
                 if($result->getShipType() !== $shipType) {
                     continue;
@@ -216,36 +236,34 @@ class CargoSizeExtractor
 
     private function getShipTypeDescription(string $shipType, $multiplier) : Translation
     {
-        if($shipType === self::SHIP_TYPE_TRANSPORT) {
-            $translationID = Translation::TYPE_DESCR_TRANSPORT;
-        } else if($shipType === self::SHIP_TYPE_MINER) {
-            $translationID = Translation::TYPE_DESCR_MINER;
-        } else {
-            throw new CargoSizeException(
-                'No translation ID found for ship type: '.$shipType,
-                '',
-                CargoSizeException::ERROR_UNHANDLED_SHIP_TYPE
-            );
+        return $this->getShipTypeTranslation($shipType, 'description', $multiplier);
+    }
+
+    private function getShipTypeTranslation(string $shipType, string $textType, $multiplier) : Translation
+    {
+        $key = self::SHIP_TYPES[$shipType][$textType] ?? null;
+
+        if($key !== null) {
+            return new Translation($key, array($multiplier));
         }
 
-        return new Translation($translationID, array($multiplier));
+        throw new CargoSizeException(
+            sprintf(
+                'No translation ID found for ship type [%s] and text key [%s]. '.PHP_EOL.
+                'Known ship types are: '.PHP_EOL.
+                '- %s',
+                $shipType,
+                $textType,
+                implode(PHP_EOL.'- ', array_keys(self::SHIP_TYPES))
+            ),
+            '',
+            CargoSizeException::ERROR_UNHANDLED_SHIP_TYPE
+        );
     }
 
     private function getShipTypeName(string $shipType, $multiplier) : Translation
     {
-        if($shipType === self::SHIP_TYPE_TRANSPORT) {
-            $translationID = Translation::TYPE_NAME_TRANSPORT;
-        } else if($shipType === self::SHIP_TYPE_MINER) {
-            $translationID = Translation::TYPE_NAME_MINER;
-        } else {
-            throw new CargoSizeException(
-                'No translation ID found for ship type: '.$shipType,
-                '',
-                CargoSizeException::ERROR_UNHANDLED_SHIP_TYPE
-            );
-        }
-
-        return new Translation($translationID, array($multiplier));
+        return $this->getShipTypeTranslation($shipType, 'name', $multiplier);
     }
 
     private function writeFilesForShipType(
@@ -356,6 +374,8 @@ TXT;
             return 'transport';
         } else if($shipType === self::SHIP_TYPE_MINER) {
             return 'miner';
+        } else if ($shipType === self::SHIP_TYPE_AUXILIARY) {
+            return 'auxiliary';
         }
 
         return $shipType;
@@ -373,16 +393,9 @@ TXT;
     {
         foreach($this->getSizeMacros($sizeFolder) as $macroFile)
         {
-            $parts = ConvertHelper::explodeTrim('_', $macroFile->getBaseName());
-            $shipType = '';
+            $shipType = $this->detectShipType($macroFile->getBaseName());
 
-            if(in_array(self::SHIP_TYPE_TRANSPORT, $parts)) {
-                $shipType = self::SHIP_TYPE_TRANSPORT;
-            } else if(in_array(self::SHIP_TYPE_MINER, $parts)) {
-                $shipType = self::SHIP_TYPE_MINER;
-            }
-
-            if(!in_array($shipType, self::SHIP_TYPES)) {
+            if($shipType === null) {
                 continue;
             }
 
@@ -393,6 +406,19 @@ TXT;
 
             $this->registerShip($macroFile, $xml, $size, $shipType);
         }
+    }
+
+    private function detectShipType(string $macroName) : ?string
+    {
+        $parts = ConvertHelper::explodeTrim('_', $macroName);
+
+        foreach(array_keys(self::SHIP_TYPES) as $type) {
+            if(in_array($type, $parts)) {
+                return $type;
+            }
+        }
+
+        return null;
     }
 
     private function analyzeShipConnections(FolderInfo $sizeFolder) : void

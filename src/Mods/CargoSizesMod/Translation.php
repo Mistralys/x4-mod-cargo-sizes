@@ -15,6 +15,10 @@ class Translation
     public const TYPE_NAME_AIO = 'name-aio';
     public const TYPE_NAME_TRANSPORT = 'name-transport';
     public const TYPE_NAME_MINER = 'name-miner';
+    public const TYPE_NAME_AUXILIARY = 'name-auxiliary';
+    public const TYPE_DESCR_AUXILIARY = 'descr-auxiliary';
+    public const TYPE_NAME_CARRIER = 'name-carrier';
+    public const TYPE_DESCR_CARRIER = 'descr-carrier';
 
     /**
      * @var string[]
