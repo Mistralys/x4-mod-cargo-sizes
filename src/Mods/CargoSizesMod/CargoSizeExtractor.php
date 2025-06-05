@@ -59,20 +59,24 @@ class CargoSizeExtractor
      *
      * @var array<string,array{name:string,description:string}>
      */
-    private const SHIP_TYPES = array(
+    public const SHIP_TYPES = array(
         self::SHIP_TYPE_TRANSPORT => array(
+            'label' => 'Transport ships',
             'name' => Translation::TYPE_NAME_TRANSPORT,
             'description' => Translation::TYPE_DESCR_TRANSPORT
         ),
         self::SHIP_TYPE_MINER => array(
+            'label' => 'Mining ships',
             'name' => Translation::TYPE_NAME_MINER,
             'description' => Translation::TYPE_DESCR_MINER
         ),
         self::SHIP_TYPE_AUXILIARY => array(
+            'label' => 'Auxiliaries',
             'name' => Translation::TYPE_NAME_AUXILIARY,
             'description' => Translation::TYPE_DESCR_AUXILIARY
         ),
         self::SHIP_TYPE_CARRIER => array(
+            'label' => 'Carriers',
             'name' => Translation::TYPE_NAME_CARRIER,
             'description' => Translation::TYPE_DESCR_CARRIER
         )
@@ -93,12 +97,17 @@ class CargoSizeExtractor
     /**
      * @var array<string,Translation>
      */
-    private array $descriptions = array();
+    private array $keyDescriptions = array();
 
     /**
      * @var array<string,Translation>
      */
-    private array $names = array();
+    private array $keyNames = array();
+
+    /*
+     * @var array<string,int|float>
+     */
+    private array $keyMultipliers = array();
     private TranslationDefs $gameTranslations;
 
     public function __construct(FolderInfo $unitsFolder, FolderInfo $outputFolder)
@@ -177,34 +186,97 @@ class CargoSizeExtractor
             ''
         );
 
+        $categorized = array();
         foreach($this->zips as $key => $files)
         {
-            usort($files, static function(MacroFile $a, MacroFile $b) : int {
-                return strnatcasecmp($a->getShipName(), $b->getShipName());
-            });
+            $name = $this->keyNames[$key];
+            $description = $this->keyDescriptions[$key];
+            $multiplier = $this->keyMultipliers[$key];
 
-            $name = $this->names[$key];
-            $description = $this->descriptions[$key];
-
-            $lines[] = '## '.$name->getInvariant();
-            $lines[] = '';
-            $lines[] = $description->getInvariant();
-            $lines[] = '';
-
-            foreach($files as $file) {
-                $lines[] = sprintf(
-                    '- _%s_: %s m3 > **%s m3**',
-                    $file->getShipName(),
-                    number_format($file->getCargo(), 0, '.', ','),
-                    number_format($file->getAdjustedCargo(), 0, '.', ','),
-                );
+            if(!isset($categorized[$multiplier])) {
+                $categorized[$multiplier] = array();
             }
 
+            $categorized[$multiplier][$key] = array(
+                'name' => $name,
+                'description' => $description,
+                'files' => $files
+            );
+        }
+
+        foreach($categorized as $multiplier => $keys)
+        {
+            $lines[] = '## Cargo Size x'.$multiplier;
             $lines[] = '';
+
+            foreach($keys as $data)
+            {
+                $this->generateZIPReferenceLines(
+                    $lines,
+                    $data['name'],
+                    $data['description'],
+                    $data['files']
+                );
+            }
         }
 
         FileInfo::factory(__DIR__.'/../../../docs/cargo-size-reference.md')
             ->putContents(implode("\n", $lines)."\n");
+    }
+
+    /**
+     * @param string[] $lines
+     * @param Translation $name
+     * @param Translation $description
+     * @param MacroFile[] $files
+     * @return void
+     */
+    private function generateZIPReferenceLines(array &$lines, Translation $name, Translation $description, array $files) : void
+    {
+        $lines[] = '### '.$name->getInvariant();
+        $lines[] = '';
+        $lines[] = $description->getInvariant();
+        $lines[] = '';
+
+        usort($files, static function(MacroFile $a, MacroFile $b) : int {
+            return strnatcasecmp($a->getShipName(), $b->getShipName());
+        });
+
+        $categorized = array();
+        foreach($files as $file) {
+            $categorized[$file->getTypeLabel().' '.strtoupper($file->getSize())][] = $file;
+        }
+
+        ksort($categorized);
+
+        foreach($categorized as $typeLabel => $files)
+        {
+            $this->generateTypeReferenceLines($lines, $typeLabel, $files);
+        }
+    }
+
+    /**
+     * @param string[] $lines
+     * @param string $typeLabel
+     * @param MacroFile[] $files
+     * @return void
+     */
+    private function generateTypeReferenceLines(array &$lines, string $typeLabel, array $files) : void
+    {
+        $lines[] = '#### '.$typeLabel;
+        $lines[] = '';
+
+        foreach($files as $file) {
+            $lines[] = sprintf(
+                '- _%s_ (%s): %s m3 > **%s m3**',
+                $file->getShipName(),
+                strtoupper($file->getSize()),
+                number_format($file->getCargo(), 0, '.', ','),
+                number_format($file->getAdjustedCargo(), 0, '.', ','),
+            );
+        }
+
+        $lines[] = '';
     }
 
     private string $multiplierKey = '';
@@ -213,8 +285,9 @@ class CargoSizeExtractor
     {
         $this->multiplierKey = sprintf('aio-%sx', $multiplier);
 
-        $this->descriptions[$this->multiplierKey] = new Translation(Translation::TYPE_DESCR_AIO, array($multiplier));
-        $this->names[$this->multiplierKey] = new Translation(Translation::TYPE_NAME_AIO, array($multiplier));
+        $this->keyDescriptions[$this->multiplierKey] = new Translation(Translation::TYPE_DESCR_AIO, array($multiplier));
+        $this->keyNames[$this->multiplierKey] = new Translation(Translation::TYPE_NAME_AIO, array($multiplier));
+        $this->keyMultipliers[$this->multiplierKey] = $multiplier;
 
         foreach ($this->results as $result)
         {
@@ -279,8 +352,9 @@ class CargoSizeExtractor
             $multiplier
         );
 
-        $this->descriptions[$typeKey] = $this->getShipTypeDescription($shipType, $multiplier);
-        $this->names[$typeKey] = $this->getShipTypeName($shipType, $multiplier);
+        $this->keyDescriptions[$typeKey] = $this->getShipTypeDescription($shipType, $multiplier);
+        $this->keyNames[$typeKey] = $this->getShipTypeName($shipType, $multiplier);
+        $this->keyMultipliers[$typeKey] = $multiplier;
 
         if(!isset($this->zips[$typeKey])) {
             $this->zips[$typeKey] = array();
@@ -511,8 +585,8 @@ TXT;
 </content>
 XML;
 
-        $description = $this->descriptions[$key];
-        $name = $this->names[$key];
+        $description = $this->keyDescriptions[$key];
+        $name = $this->keyNames[$key];
 
         $translations = array();
         foreach(array_keys(TranslationExtractor::LANGUAGES) as $langID) {
