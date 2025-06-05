@@ -1,32 +1,52 @@
 {
-  "name-aio": {
-    "en_EN": "Cargo Sizes x %s - All-in-One",
-    "de_DE": "Frachtgrößen x %s - All-in-One",
-    "fr_FR": "Taille de cargaison x %s - Tout-en-Un"
-  },
-  "name-transport": {
-    "en_EN": "Cargo Sizes x %s - Transports",
-    "de_DE": "Frachtgrößen x %s - Transportschiffe",
-    "fr_FR": "Taille de cargaison x %s - Transports"
-  },
-  "name-miner": {
-    "en_EN": "Cargo Sizes x %s - Miners",
-    "de_DE": "Frachtgrößen x %s - Bergbau",
-    "fr_FR": "Taille de cargaison x %s - Minage"
-  },
   "descr-aio": {
     "en_EN": "Increases the cargo size of transport and mining ships by x %s",
     "de_DE": "Erweitert die Frachtgröße von Transport- und Bergbaufrachtschiffen um x %s",
     "fr_FR": "Augmente la taille de la cargaison des vaisseaux de transport et des mineurs par x %s"
+  },
+  "descr-auxiliary": {
+    "en_EN": "Increases the cargo size of auxiliary ships by x %s",
+    "de_DE": "Erweitert die Frachtgröße von Hilfsschiffen um x %s",
+    "fr_FR": "Augmente la taille de la cargaison des vaisseaux auxiliaires par x %s"
+  },
+  "descr-carrier": {
+    "en_EN": "Increases the cargo size of carrier ships by x %s",
+    "de_DE": "Erweitert die Frachtgröße von Trägerschiffen um x %s",
+    "fr_FR": "Augmente la taille de la cargaison des vaisseaux porte-vaisseaux par x %s"
+  },
+  "descr-miner": {
+    "en_EN": "Increases the cargo size of mining ships by x %s",
+    "de_DE": "Erweitert die Frachtgröße von Bergbauschiffen um x %s",
+    "fr_FR": "Augmente la taille de la cargaison des vaisseaux mineurs par x %s"
   },
   "descr-transport": {
     "en_EN": "Increases the cargo size of transport ships x %s",
     "de_DE": "Erweitert die Frachtgröße von Transportschiffen um x %s",
     "fr_FR": "Augmente la taille de la cargaison des vaisseaux de transport par x %s"
   },
-  "descr-miner": {
-      "en_EN": "Increases the cargo size of mining ships by x %s",
-      "de_DE": "Erweitert die Frachtgröße von Bergbauschiffen um x %s",
-      "fr_FR": "Augmente la taille de la cargaison des vaisseaux mineurs par x %s"
+  "name-aio": {
+    "en_EN": "Cargo Sizes x %s - All-in-One",
+    "de_DE": "Frachtgrößen x %s - All-in-One",
+    "fr_FR": "Taille de cargaison x %s - Tout-en-Un"
+  },
+  "name-auxiliary": {
+    "en_EN": "Cargo Sizes x %s - Auxiliaries",
+    "de_DE": "Frachtgrößen x %s - Hilfsschiffe",
+    "fr_FR": "Taille de cargaison x %s - Auxiliaires"
+  },
+  "name-carrier": {
+    "en_EN": "Cargo Sizes x %s - Carriers",
+    "de_DE": "Frachtgrößen x %s - Trägerschiffe",
+    "fr_FR": "Taille de cargaison x %s - Porte-vaisseaux"
+  },
+  "name-miner": {
+    "en_EN": "Cargo Sizes x %s - Miners",
+    "de_DE": "Frachtgrößen x %s - Bergbau",
+    "fr_FR": "Taille de cargaison x %s - Minage"
+  },
+  "name-transport": {
+    "en_EN": "Cargo Sizes x %s - Transports",
+    "de_DE": "Frachtgrößen x %s - Transportschiffe",
+    "fr_FR": "Taille de cargaison x %s - Transports"
   }
 }
