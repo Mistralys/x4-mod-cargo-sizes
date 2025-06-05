@@ -101,4 +101,9 @@ XML;
     {
         return $this->ship->getShipName();
     }
+
+    public function getTypeLabel() : string
+    {
+        return $this->ship->getTypeLabel();
+    }
 }

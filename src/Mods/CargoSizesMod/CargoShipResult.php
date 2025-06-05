@@ -64,4 +64,9 @@ class CargoShipResult
     {
         return $this->shipName;
     }
+
+    public function getTypeLabel() : string
+    {
+        return CargoSizeExtractor::SHIP_TYPES[$this->getShipType()]['label'] ?? 'Unknown';
+    }
 }
