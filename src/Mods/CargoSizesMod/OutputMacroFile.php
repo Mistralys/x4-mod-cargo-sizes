@@ -19,7 +19,7 @@ use AppUtils\FileHelper\FolderInfo;
  * @package X4 Mods
  * @subpackage Cargo Sizes
  */
-class MacroFile
+class OutputMacroFile
 {
     private FolderInfo $baseFolder;
     private int|float $multiplier;
@@ -28,10 +28,15 @@ class MacroFile
 
     public function __construct(FolderInfo $baseFolder, int|float $multiplier, CargoShipResult $ship)
     {
-        $this->id = md5(JSONConverter::var2json(array($ship->getFileName(), $ship->getCargo(), $multiplier, $ship->getShipType(), $ship->getSize())));
+        $this->id = md5(JSONConverter::var2json(array($ship->getFileName(), $ship->getCargoValue(), $multiplier, $ship->getShipType(), $ship->getSize())));
         $this->baseFolder = $baseFolder;
         $this->multiplier = $multiplier;
         $this->ship = $ship;
+    }
+
+    public function getRelativePath() : string
+    {
+        return $this->ship->getRelativePath();
     }
 
     public function getName() : string
@@ -51,12 +56,12 @@ class MacroFile
 
     public function getCargo(): int
     {
-        return $this->ship->getCargo();
+        return $this->ship->getCargoValue();
     }
 
     public function getAdjustedCargo(): int
     {
-        return (int)ceil($this->getCargo() * $this->getMultiplier());
+        return $this->ship->calculateCargoValue($this->getMultiplier());
     }
 
     /**
