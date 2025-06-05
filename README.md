@@ -1,7 +1,7 @@
 # X4 Cargo Sizes Mod
 
 A mod for X4 that provides options to increase the cargo size of
-transport and mining ships.
+transports, mining ships, auxiliaries and carriers.
 
 ## Mix and match cargo sizes
 
