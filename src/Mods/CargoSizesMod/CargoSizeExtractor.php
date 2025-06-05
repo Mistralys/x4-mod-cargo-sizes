@@ -13,10 +13,10 @@ use AppUtils\FileHelper;
 use AppUtils\FileHelper\FileInfo;
 use AppUtils\FileHelper\FolderInfo;
 use AppUtils\ZIPHelper;
-use DOMDocument;
 use Mistralys\X4\Database\Translations\TranslationDefs;
 use Mistralys\X4\Database\Translations\TranslationExtractor;
 use Mistralys\X4\Game\X4Game;
+use Mistralys\X4\Mods\CargoSizesMod\XML\CargoXMLFile;
 use const Mistralys\X4\X4_EXTRACTED_CAT_FILES_FOLDER;
 use const Mistralys\X4\X4_GAME_FOLDER;
 
@@ -32,6 +32,7 @@ use const Mistralys\X4\X4_GAME_FOLDER;
 class CargoSizeExtractor
 {
     public const SHIP_TYPE_TRANSPORT = 'trans';
+    public const SHIP_TYPE_STORAGE = 'storage';
     public const SHIP_TYPE_MINER = 'miner';
     public const SHIP_TYPE_AUXILIARY = 'resupplier';
     public const SHIP_TYPE_CARRIER = 'carrier';
@@ -39,13 +40,11 @@ class CargoSizeExtractor
     public const HOMEPAGE_URL = 'https://github.com/Mistralys/x4-mod-cargo-sizes';
     public const MOD_PREFIX = 'cargo-size';
     public const AUTHOR_NAME = 'AeonsOfTime';
+    public const PROPS_FOLDER = 'assets/props/StorageModules/macros';
+    const UNITS_FOLDER = 'assets/units/size_%s/macros';
+    const FILE_PROP_FOLDER_RELATIVE = 'folderRelative';
 
-    private FolderInfo $unitsFolder;
-
-    /**
-     * @var string[]
-     */
-    private array $sizes = array(
+    public const SHIP_SIZES = array(
         'l',
         'm',
         's',
@@ -61,6 +60,11 @@ class CargoSizeExtractor
      */
     public const SHIP_TYPES = array(
         self::SHIP_TYPE_TRANSPORT => array(
+            'label' => 'Transport ships',
+            'name' => Translation::TYPE_NAME_TRANSPORT,
+            'description' => Translation::TYPE_DESCR_TRANSPORT
+        ),
+        self::SHIP_TYPE_STORAGE => array(
             'label' => 'Transport ships',
             'name' => Translation::TYPE_NAME_TRANSPORT,
             'description' => Translation::TYPE_DESCR_TRANSPORT
@@ -104,30 +108,35 @@ class CargoSizeExtractor
      */
     private array $keyNames = array();
 
-    /*
-     * @var array<string,int|float>
-     */
-    private array $keyMultipliers = array();
-    private TranslationDefs $gameTranslations;
+    private FolderInfo $gameFolder;
 
-    public function __construct(FolderInfo $unitsFolder, FolderInfo $outputFolder)
+    public function __construct(FolderInfo $gameFolder, FolderInfo $outputFolder)
     {
-        $this->unitsFolder = FolderInfo::factory($unitsFolder.'/assets/units');
+        $this->gameFolder = $gameFolder;
         $this->outputFolder = $outputFolder;
         $this->gameVersion = X4Game::create(X4_GAME_FOLDER)->getVersion();
 
-        $this->initTranslations();
+        // Load the translations so they are done at the start
+        self::getTranslations();
     }
 
-    private function initTranslations() : void
+    private static ?TranslationDefs $translations = null;
+
+    public static function getTranslations() : TranslationDefs
     {
+        if(isset(self::$translations)) {
+            return self::$translations;
+        }
+
         $lang = TranslationExtractor::LANGUAGE_ENGLISH;
 
         $extractor = new TranslationExtractor(FolderInfo::factory(X4_EXTRACTED_CAT_FILES_FOLDER . '/t'));
         $extractor->selectLanguage($lang);
         $extractor->extract();
 
-        $this->gameTranslations = new TranslationDefs($lang);
+        self::$translations = new TranslationDefs($lang);
+
+        return self::$translations;
     }
 
     /**
@@ -138,17 +147,13 @@ class CargoSizeExtractor
     {
         $this->multipliers = $multipliers;
 
-        foreach($this->sizes as $size) {
-            $sizeFolder = FolderInfo::factory($this->unitsFolder.'/size_'.$size);
-            $this->analyzeCargoStorage($sizeFolder, $size);
-            $this->analyzeShipConnections($sizeFolder);
-        }
-
+        $this->analyzeCargoMacros();
+        $this->analyzeShipMacros();
         $this->writeFiles();
     }
 
     /**
-     * @var array<string,MacroFile[]>
+     * @var array<string,OutputMacroFile[]>
      */
     private array $zips = array();
 
@@ -160,6 +165,9 @@ class CargoSizeExtractor
             str_replace('.', '-', self::getVersion()),
             str_replace('.', '-', $this->gameVersion)
         ));
+
+        Console::header('Writing mod files');
+        Console::line1('Output folder: [%s]', $baseFolder->getName());
 
         FileHelper::deleteTree($baseFolder);
 
@@ -182,41 +190,18 @@ class CargoSizeExtractor
     private function writeReferenceFiles() : void
     {
         $lines = array(
-            '# Cargo Sizes Mod - Change Reference',
+            '# Cargo Sizes Mod - Cargo Values Reference',
             ''
         );
 
-        $categorized = array();
-        foreach($this->zips as $key => $files)
-        {
-            $name = $this->keyNames[$key];
-            $description = $this->keyDescriptions[$key];
-            $multiplier = $this->keyMultipliers[$key];
-
-            if(!isset($categorized[$multiplier])) {
-                $categorized[$multiplier] = array();
-            }
-
-            $categorized[$multiplier][$key] = array(
-                'name' => $name,
-                'description' => $description,
-                'files' => $files
-            );
-        }
-
-        foreach($categorized as $multiplier => $keys)
+        foreach($this->multipliers as $multiplier)
         {
             $lines[] = '## Cargo Size x'.$multiplier;
             $lines[] = '';
 
-            foreach($keys as $data)
+            foreach($this->getResultsCategorized() as $type => $results)
             {
-                $this->generateZIPReferenceLines(
-                    $lines,
-                    $data['name'],
-                    $data['description'],
-                    $data['files']
-                );
+                $this->generateZIPReferenceLines($lines, $type, $results, $multiplier);
             }
         }
 
@@ -224,55 +209,47 @@ class CargoSizeExtractor
             ->putContents(implode("\n", $lines)."\n");
     }
 
-    /**
-     * @param string[] $lines
-     * @param Translation $name
-     * @param Translation $description
-     * @param MacroFile[] $files
-     * @return void
-     */
-    private function generateZIPReferenceLines(array &$lines, Translation $name, Translation $description, array $files) : void
+    private function getResultsCategorized() : array
     {
-        $lines[] = '### '.$name->getInvariant();
-        $lines[] = '';
-        $lines[] = $description->getInvariant();
-        $lines[] = '';
-
-        usort($files, static function(MacroFile $a, MacroFile $b) : int {
-            return strnatcasecmp($a->getShipName(), $b->getShipName());
-        });
-
         $categorized = array();
-        foreach($files as $file) {
-            $categorized[$file->getTypeLabel().' '.strtoupper($file->getSize())][] = $file;
-        }
 
-        ksort($categorized);
-
-        foreach($categorized as $typeLabel => $files)
+        foreach($this->results as $result)
         {
-            $this->generateTypeReferenceLines($lines, $typeLabel, $files);
+            $type = $result->getTypeLabel().' '.strtoupper($result->getSize());
+            if(!isset($categorized[$type])) {
+                $categorized[$type] = array();
+            }
+
+            $categorized[$type][] = $result;
         }
+
+        uksort($categorized, 'strnatcasecmp');
+
+        return $categorized;
     }
 
     /**
      * @param string[] $lines
      * @param string $typeLabel
-     * @param MacroFile[] $files
+     * @param CargoShipResult[] $files
      * @return void
      */
-    private function generateTypeReferenceLines(array &$lines, string $typeLabel, array $files) : void
+    private function generateZIPReferenceLines(array &$lines, string $typeLabel, array $files, int|float $multiplier) : void
     {
-        $lines[] = '#### '.$typeLabel;
+        $lines[] = '### '.$typeLabel;
         $lines[] = '';
+
+        usort($files, static function(CargoShipResult $a, CargoShipResult $b) : int {
+            return strnatcasecmp($a->getShipName(), $b->getShipName());
+        });
 
         foreach($files as $file) {
             $lines[] = sprintf(
                 '- _%s_ (%s): %s m3 > **%s m3**',
                 $file->getShipName(),
                 strtoupper($file->getSize()),
-                number_format($file->getCargo(), 0, '.', ','),
-                number_format($file->getAdjustedCargo(), 0, '.', ','),
+                number_format($file->getCargoValue(), 0, '.', ','),
+                number_format($file->calculateCargoValue($multiplier), 0, '.', ','),
             );
         }
 
@@ -283,11 +260,12 @@ class CargoSizeExtractor
 
     private function writeFilesForMultiplier(FolderInfo $baseFolder, int|float $multiplier) : void
     {
+        Console::line1('Processing multiplier x%s', $multiplier);
+
         $this->multiplierKey = sprintf('aio-%sx', $multiplier);
 
         $this->keyDescriptions[$this->multiplierKey] = new Translation(Translation::TYPE_DESCR_AIO, array($multiplier));
         $this->keyNames[$this->multiplierKey] = new Translation(Translation::TYPE_NAME_AIO, array($multiplier));
-        $this->keyMultipliers[$this->multiplierKey] = $multiplier;
 
         foreach ($this->results as $result)
         {
@@ -305,6 +283,9 @@ class CargoSizeExtractor
                 );
             }
         }
+
+        Console::line1('Done.');
+        Console::nl();
     }
 
     private function getShipTypeDescription(string $shipType, $multiplier) : Translation
@@ -354,19 +335,18 @@ class CargoSizeExtractor
 
         $this->keyDescriptions[$typeKey] = $this->getShipTypeDescription($shipType, $multiplier);
         $this->keyNames[$typeKey] = $this->getShipTypeName($shipType, $multiplier);
-        $this->keyMultipliers[$typeKey] = $multiplier;
 
         if(!isset($this->zips[$typeKey])) {
             $this->zips[$typeKey] = array();
         }
 
-        foreach ($this->sizes as $size)
+        foreach (self::SHIP_SIZES as $size)
         {
             if ($result->getSize() !== $size) {
                 continue;
             }
 
-            $file =  new MacroFile(
+            $file = new OutputMacroFile(
                 $baseFolder,
                 $multiplier,
                 $result
@@ -376,11 +356,22 @@ class CargoSizeExtractor
 
             // Add it to the AIO ZIP as well
             $this->zips[$this->multiplierKey][$file->getID()] = $file;
+
+            Console::line2(
+                'Written file [%s].',
+                $file->getName(),
+                $shipType,
+                $size
+            );
         }
     }
 
     private function writeZIPFiles(FolderInfo $baseFolder) : void
     {
+        Console::header('Writing ZIP files');
+
+        Console::line1('Found %s zip files to write.', count($this->zips));
+
         foreach($this->zips as $key => $files)
         {
             $rootName = self::MOD_PREFIX.'-'.$key;
@@ -396,28 +387,36 @@ class CargoSizeExtractor
 
             $zipFile = new ZIPHelper($path);
 
-            echo "Creating ZIP file: $key.zip\n";
+            Console::line1("Creating ZIP file [%s].", $key);
 
             $zipFile->addString($this->renderReadme(), $rootName.'/_readme.txt');
             $zipFile->addString($this->renderContentXML($key), $rootName.'/content.xml');
 
             foreach($files as $file)
             {
+                if(empty($file->getShipName())) {
+                    Console::line2('SKIP | No ship name for [%s].', $file->getName());
+                    continue;
+                }
+
                 $path = $file->write();
 
                 $zipFile->addFile(
                     $path,
                     sprintf(
-                        '%s/assets/units/size_%s/macros/%s',
+                        '%s/%s/%s',
                         $rootName,
-                        $file->getSize(),
-                        basename($path)
+                        $file->getRelativePath(),
+                        $file->getName()
                     )
                 );
             }
 
             $zipFile->save();
         }
+
+        Console::line1('Done.');
+        Console::nl();
     }
 
     private function renderReadme() : string
@@ -446,6 +445,8 @@ TXT;
     {
         if($shipType === self::SHIP_TYPE_TRANSPORT) {
             return 'transport';
+        } else if($shipType === self::SHIP_TYPE_STORAGE) {
+            return 'transport';
         } else if($shipType === self::SHIP_TYPE_MINER) {
             return 'miner';
         } else if ($shipType === self::SHIP_TYPE_AUXILIARY) {
@@ -455,34 +456,7 @@ TXT;
         return $shipType;
     }
 
-    /**
-     * Goes through the extracted game files to discover all macro XML
-     * files that contain cargo.
-     *
-     * @param FolderInfo $sizeFolder
-     * @param string $size
-     * @return void
-     */
-    private function analyzeCargoStorage(FolderInfo $sizeFolder, string $size) : void
-    {
-        foreach($this->getSizeMacros($sizeFolder) as $macroFile)
-        {
-            $shipType = $this->detectShipType($macroFile->getBaseName());
-
-            if($shipType === null) {
-                continue;
-            }
-
-            $xml = $macroFile->getContents();
-            if(!str_contains($xml, 'generic_storage')) {
-                continue;
-            }
-
-            $this->registerShip($macroFile, $xml, $size, $shipType);
-        }
-    }
-
-    private function detectShipType(string $macroName) : ?string
+    private function resolveShipType(string $macroName) : ?string
     {
         $parts = ConvertHelper::explodeTrim('_', $macroName);
 
@@ -495,63 +469,206 @@ TXT;
         return null;
     }
 
-    private function analyzeShipConnections(FolderInfo $sizeFolder) : void
+    private function analyzeShipMacros() : void
     {
-        $xmlSources = array();
-        foreach($this->getSizeMacros($sizeFolder) as $macroFile) {
-            $xmlSources[] = $macroFile->getContents();
+        Console::header('Analyze ship macros');
+
+        foreach ($this->getShipMacros() as $shipMacro) {
+            $this->analyzeShipMacro($shipMacro);
         }
 
-        foreach($this->results as $result)
-        {
-            $macroName = $result->getMacroName();
-            foreach($xmlSources as $xml) {
-                if(str_contains($xml, 'ref="'.$macroName.'"')) {
-                    $result->setShipName($this->resolveShipName($xml));
+        Console::line1('Done, found %s ship macros.', count($this->results));
+        Console::nl();
+    }
+
+    private function addMessage(string $message, ...$args) : void
+    {
+        $this->messages[] = vsprintf($message, $args);
+    }
+
+    private function analyzeShipMacro(ShipXMLFile $shipMacro) : void
+    {
+        $macroName = $shipMacro->getMacroName();
+
+        $shipType = $this->resolveShipType($macroName);
+        if($shipType === null) {
+            $this->addMessage("SKIP | Unsupported ship type in [%s]", $macroName);
+            return;
+        }
+
+        $cargoMacro = $this->resolveCargoConnection($shipMacro);
+        if ($cargoMacro === null) {
+            $this->addMessage('SKIP | No cargo connection found in [%s].', $macroName);
+            return;
+        }
+
+        if(!isset($this->cargoMacros[$cargoMacro])) {
+            $this->addMessage('SKIP | No cargo macro found in [%s]. Expected macro [%s] but it does not exist.', $cargoMacro);
+            return;
+        }
+
+        $cargoMacro = $this->cargoMacros[$cargoMacro];
+
+        $name = $this->resolveShipName($shipMacro);
+        if(empty($name)) {
+            $this->addMessage('SKIP | No ship name found for [%s].', $macroName);
+            return;
+        }
+
+        Console::line2('Found ship [%s].', $name);
+
+        $this->results[] = new CargoShipResult(
+            $macroName,
+            $cargoMacro->getFileName(),
+            $name,
+            $cargoMacro->getRelativePath(),
+            $cargoMacro->getCargoValue(),
+            $shipType,
+            $cargoMacro->getCargoType(),
+            $shipMacro->getSize()
+        );
+    }
+
+    public function resolveCargoConnection(ShipXMLFile $xml) : ?string
+    {
+        foreach($xml->getConnections() as $connection) {
+            $ref = $connection->getAttribute('ref');
+            if(str_starts_with($ref, 'con_storage')) {
+                return $connection->getElementsByTagName('macro')->item(0)
+                    ->getAttribute('ref');
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveShipName(ShipXMLFile $xml) : string
+    {
+        $macroName = $xml->getMacroName();
+
+        $name = $xml->resolveShipName();
+        if ($name !== null) {
+            return $name;
+        }
+
+        // No translation ID found: This can happen when the macro is an alias for
+        // another macro, e.g. "ship_xen_m_corvette_01_b_macro" is an alias for "ship_xen_m_corvette_01_a_macro".
+        // In this case, we have to load the original macro to get the name.
+
+        $aliasName = $xml->getAliasName();
+        if ($aliasName !== null) {
+            foreach ($this->getShipMacros() as $macro) {
+                if ($macro->getMacroName() === $aliasName) {
+                    return $this->resolveShipName($macro);
                 }
             }
         }
+
+        Console::line2('WARNING | No ship name translation ID found for [%s].', $macroName);
+
+        return $macroName;
     }
 
-    private function resolveShipName(string $xml) : string
+    /**
+     * @var ShipXMLFile[]|null
+     */
+    private ?array $shipMacros = null;
+
+    /**
+     * @return ShipXMLFile[]
+     */
+    private function getShipMacros() : array
     {
-        $dom = new DOMDocument();
-        $dom->loadXML($xml);
+        if(isset($this->shipMacros)) {
+            return $this->shipMacros;
+        }
 
-        $translationID = $dom->getElementsByTagName('identification')->item(0)->getAttribute('name');
+        $this->shipMacros = array();
 
-        return $this->gameTranslations->ts($translationID);
+        foreach(self::SHIP_SIZES as $shipSize) {
+            foreach ($this->getXMLFiles($this->gameFolder.'/'.sprintf(self::UNITS_FOLDER, $shipSize)) as $file) {
+                if (str_starts_with($file->getBaseName(), 'ship_')) {
+                    $this->shipMacros[] = new ShipXMLFile($file);
+                }
+            }
+        }
+
+        return $this->shipMacros;
     }
 
-    private function getSizeMacros(FolderInfo $sizeFolder) : array
+    /**
+     * @var array<string,CargoXMLFile>
+     */
+    private array $cargoMacros = array();
+
+    /**
+     * Analyzes the cargo macros in the game folder and stores them,
+     * for each adding the relative folder path that will be used
+     * for the output XML files in the ZIP archives (as accessible
+     * via {@see CargoXMLFile::getRelativePath()}).
+     */
+    private function analyzeCargoMacros() : void
     {
-        return FileHelper::createFileFinder($sizeFolder.'/macros')
+        Console::header('Analyze cargo macros');
+
+        $files = array();
+
+        foreach($this->getXMLFiles($this->gameFolder . '/'. self::PROPS_FOLDER) as $file) {
+            $files[] = $file->setRuntimeProperty(self::FILE_PROP_FOLDER_RELATIVE, self::PROPS_FOLDER);
+        }
+
+        foreach (self::SHIP_SIZES as $shipSize) {
+            $relative = sprintf(self::UNITS_FOLDER, $shipSize);
+            foreach($this->getXMLFiles($this->gameFolder . '/'. $relative) as $file) {
+                $files[] = $file->setRuntimeProperty(self::FILE_PROP_FOLDER_RELATIVE, $relative);
+            }
+        }
+
+        Console::line1('Found %s XML files to analyze.', count($files));
+
+        foreach($files as $file) {
+            $this->analyzeCargoMacro($file);
+        }
+
+        Console::line1('Done, found %s cargo macros.', count($this->cargoMacros));
+        Console::nl();
+    }
+
+    private array $messages = array();
+
+    private function analyzeCargoMacro(FileInfo $file) : void
+    {
+        if(!str_starts_with($file->getBaseName(), 'storage_')) {
+            return;
+        }
+
+        $macro = new CargoXMLFile($file);
+        $macroName = $macro->getMacroName();
+
+        if(!$macro->isGenericStorage()) {
+            Console::line2('SKIP | Not a cargo macro in [%s]', $macroName);
+            return;
+        }
+
+        if(!$macro->hasCargoValue()) {
+            Console::line2('SKIP | No cargo value in [%s].', $macroName);
+            return;
+        }
+
+        $this->cargoMacros[$macroName] = $macro;
+    }
+
+    /**
+     * @param FolderInfo|string $folder
+     * @return FileInfo[]
+     */
+    private function getXMLFiles(FolderInfo|string $folder) : array
+    {
+        return FolderInfo::factory($folder)
+            ->createFileFinder()
             ->includeExtension('xml')
             ->getFiles()
             ->typeANY();
-    }
-
-    private function registerShip(FileInfo $macroFile, string $xml, string $size, string $shipType) : void
-    {
-        $dom = new DOMDocument();
-        $dom->loadXML($xml);
-
-        foreach($dom->getElementsByTagName('cargo') as $el)
-        {
-            $value = (int)$el->getAttribute('max');
-            $storageType = (string)$el->getAttribute('tags');
-
-            $this->results[] = new CargoShipResult(
-                $dom->getElementsByTagName('macro')->item(0)->getAttribute('name'),
-                $macroFile->getName(),
-                $value,
-                $shipType,
-                $storageType,
-                $size
-            );
-
-            break;
-        }
     }
 
     public static function getVersionFile() : FileInfo
