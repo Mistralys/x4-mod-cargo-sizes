@@ -75,6 +75,7 @@ class OutputMacroFile
     private string $template = <<<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 
+    Ship: %4$s
     Original cargo value: %1$s
     Multiplier: %3$s 
 -->
@@ -85,7 +86,13 @@ XML;
 
     public function write() : string
     {
-        $xml = sprintf($this->template, $this->getCargo(), $this->getAdjustedCargo(), $this->getMultiplier());
+        $xml = sprintf(
+            $this->template,
+            $this->getCargo(),
+            $this->getAdjustedCargo(),
+            $this->getMultiplier(),
+            $this->getShipName()
+        );
 
         $path = sprintf(
             '%s/%s-%sx-%s-%s/%s',
