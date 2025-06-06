@@ -84,16 +84,29 @@ class OutputMacroFile
 </diff>
 XML;
 
-    public function write() : string
+    public function render() : string
     {
-        $xml = sprintf(
+        return sprintf(
             $this->template,
             $this->getCargo(),
             $this->getAdjustedCargo(),
             $this->getMultiplier(),
             $this->getShipName()
-        );
+        )."\n";
+    }
 
+    public function getZipPath(string $rootRelative) : string
+    {
+        return sprintf(
+            '%s/%s/%s',
+            $rootRelative,
+            $this->getRelativePath(),
+            $this->getName()
+        );
+    }
+
+    public function write() : string
+    {
         $path = sprintf(
             '%s/%s-%sx-%s-%s/%s',
             $this->baseFolder,
@@ -105,7 +118,7 @@ XML;
         );
 
         return FileInfo::factory($path)
-            ->putContents($xml."\n")
+            ->putContents($this->render())
             ->getPath();
     }
 
