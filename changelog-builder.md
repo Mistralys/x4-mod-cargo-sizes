@@ -3,6 +3,13 @@
 This changelog only tracks changes to the mod's build tools,
 not the mod content itself.
 
+## v1.1.0 - Fomod installer
+- Build: Added a Fomod wizard generator.
+- Build: Added a content.xml renderer class.
+- Docs: Added BBCode reference generation.
+- Docs: Added Nexus description generator.
+- Core: Added the ModInfo utility class.
+
 ## v1.0.3 - Extraction revamp
 - Build: Rewrote the extraction script to be more robust.
 - Build: Now correctly detecting storage int the new `props` assets folder.
