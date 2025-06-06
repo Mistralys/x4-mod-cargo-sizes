@@ -14,6 +14,11 @@
     "de_DE": "Erweitert die Frachtgröße von Trägerschiffen um x %s",
     "fr_FR": "Augmente la taille de la cargaison des vaisseaux porte-vaisseaux par x %s"
   },
+  "descr-fomod": {
+    "en_EN": "Configurable mod that increases the cargo size of various ship types.",
+    "de_DE": "Konfigurierbares Mod, das die Frachtgröße verschiedener Schiffstypen erhöht.",
+    "fr_FR": "Mod configurable qui augmente la taille de la cargaison de différents types de vaisseaux."
+  },
   "descr-miner": {
     "en_EN": "Increases the cargo size of mining ships by x %s",
     "de_DE": "Erweitert die Frachtgröße von Bergbauschiffen um x %s",
@@ -38,6 +43,11 @@
     "en_EN": "Cargo Sizes x %s - Carriers",
     "de_DE": "Frachtgrößen x %s - Trägerschiffe",
     "fr_FR": "Taille de cargaison x %s - Porte-vaisseaux"
+  },
+  "name-fomod": {
+    "en_EN": "Increased Cargo Sizes",
+    "de_DE": "Erhöhte Frachtgrößen",
+    "fr_FR": "Tailles de cargaison augmentées"
   },
   "name-miner": {
     "en_EN": "Cargo Sizes x %s - Miners",
