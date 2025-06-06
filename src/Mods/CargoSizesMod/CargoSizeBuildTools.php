@@ -57,7 +57,7 @@ class CargoSizeBuildTools
             ->requireLatestVersion()
             ->getNumber();
 
-        CargoSizeExtractor::getVersionFile()->putContents($version);
+        ModInfo::getVersionFile()->putContents($version);
     }
 
     /**
