@@ -11,6 +11,7 @@ namespace Mistralys\X4\Mods\CargoSizesMod;
 use AppUtils\FileHelper\FileInfo;
 use DOMDocument;
 use DOMElement;
+use Mistralys\X4\ExtractedData\DataFolder;
 
 /**
  * Helper class used to handle a generic macro XML file.
@@ -23,13 +24,20 @@ class XMLFile
     protected FileInfo $xmlFile;
     protected string $xml;
     protected DOMDocument $dom;
+    protected DataFolder $dataFolder;
 
-    public function __construct(FileInfo $xmlFile)
+    public function __construct(FileInfo $xmlFile, DataFolder $dataFolder)
     {
         $this->xmlFile = $xmlFile;
         $this->xml = $xmlFile->getContents();
         $this->dom = new DOMDocument();
         $this->dom->loadXML($this->xml);
+        $this->dataFolder = $dataFolder;
+    }
+
+    public function getDataFolder() : DataFolder
+    {
+        return $this->dataFolder;
     }
 
     public function getFileName() : string

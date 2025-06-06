@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
+use Mistralys\X4\ExtractedData\DataFolder;
+
 /**
  * @package X4 Cargo Sizes Mod
  * @subpackage Extractor
@@ -22,9 +24,11 @@ class CargoShipResult
     private string $size;
     private string $shipName;
     private string $relativePath;
+    private DataFolder $dataFolder;
 
-    public function __construct(string $macroName, string $fileName, string $shipName, string $relativePath, int $cargo, string $shipType, string $storageType, string $size)
+    public function __construct(string $macroName, string $fileName, DataFolder $dataFolder, string $shipName, string $relativePath, int $cargo, string $shipType, string $storageType, string $size)
     {
+        $this->dataFolder = $dataFolder;
         $this->macroName = $macroName;
         $this->fileName = $fileName;
         $this->relativePath = $relativePath;
@@ -37,6 +41,14 @@ class CargoShipResult
 
     public function getRelativePath(): string
     {
+        if($this->dataFolder->isExtension()) {
+            return sprintf(
+                'extensions/%s/%s',
+                $this->dataFolder->getID(),
+                $this->relativePath
+            );
+        }
+
         return $this->relativePath;
     }
 

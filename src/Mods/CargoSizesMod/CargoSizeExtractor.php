@@ -15,6 +15,8 @@ use AppUtils\FileHelper\FolderInfo;
 use AppUtils\ZIPHelper;
 use Mistralys\X4\Database\Translations\TranslationDefs;
 use Mistralys\X4\Database\Translations\TranslationExtractor;
+use Mistralys\X4\ExtractedData\DataFolder;
+use Mistralys\X4\ExtractedData\DataFolders;
 use Mistralys\X4\Game\X4Game;
 use Mistralys\X4\Mods\CargoSizesMod\XML\CargoXMLFile;
 use const Mistralys\X4\X4_EXTRACTED_CAT_FILES_FOLDER;
@@ -108,13 +110,16 @@ class CargoSizeExtractor
      */
     private array $keyNames = array();
 
-    private FolderInfo $gameFolder;
+    private FolderInfo $extractedDataFolder;
+    private DataFolders $dataFolders;
 
-    public function __construct(FolderInfo $gameFolder, FolderInfo $outputFolder)
+    public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder)
     {
-        $this->gameFolder = $gameFolder;
+        $this->extractedDataFolder = $extractedDataFolder;
         $this->outputFolder = $outputFolder;
         $this->gameVersion = X4Game::create(X4_GAME_FOLDER)->getVersion();
+
+        $this->dataFolders = DataFolders::create($extractedDataFolder);
 
         // Load the translations so they are done at the start
         self::getTranslations();
@@ -130,7 +135,7 @@ class CargoSizeExtractor
 
         $lang = TranslationExtractor::LANGUAGE_ENGLISH;
 
-        $extractor = new TranslationExtractor(FolderInfo::factory(X4_EXTRACTED_CAT_FILES_FOLDER . '/t'));
+        $extractor = new TranslationExtractor(DataFolders::create(FolderInfo::factory(X4_EXTRACTED_CAT_FILES_FOLDER)));
         $extractor->selectLanguage($lang);
         $extractor->extract();
 
@@ -170,6 +175,8 @@ class CargoSizeExtractor
         Console::line1('Output folder: [%s]', $baseFolder->getName());
 
         FileHelper::deleteTree($baseFolder);
+
+        $baseFolder->create();
 
         foreach($this->multipliers as $multiplier) {
             $this->writeFilesForMultiplier($baseFolder, $multiplier);
@@ -520,6 +527,7 @@ TXT;
         $this->results[] = new CargoShipResult(
             $macroName,
             $cargoMacro->getFileName(),
+            $shipMacro->getDataFolder(),
             $name,
             $cargoMacro->getRelativePath(),
             $cargoMacro->getCargoValue(),
@@ -586,9 +594,11 @@ TXT;
         $this->shipMacros = array();
 
         foreach(self::SHIP_SIZES as $shipSize) {
-            foreach ($this->getXMLFiles($this->gameFolder.'/'.sprintf(self::UNITS_FOLDER, $shipSize)) as $file) {
-                if (str_starts_with($file->getBaseName(), 'ship_')) {
-                    $this->shipMacros[] = new ShipXMLFile($file);
+            foreach($this->dataFolders->getAll() as $dataFolder) {
+                foreach ($this->getXMLFiles($dataFolder->getFolder() . '/' . sprintf(self::UNITS_FOLDER, $shipSize)) as $file) {
+                    if (str_starts_with($file->getBaseName(), 'ship_')) {
+                        $this->shipMacros[] = new ShipXMLFile($file, $dataFolder);
+                    }
                 }
             }
         }
@@ -611,23 +621,28 @@ TXT;
     {
         Console::header('Analyze cargo macros');
 
-        $files = array();
+        foreach($this->dataFolders->getAll() as $dataFolder)
+        {
+            Console::line1('Analyzing data folder [%s]...', $dataFolder->getLabel());
 
-        foreach($this->getXMLFiles($this->gameFolder . '/'. self::PROPS_FOLDER) as $file) {
-            $files[] = $file->setRuntimeProperty(self::FILE_PROP_FOLDER_RELATIVE, self::PROPS_FOLDER);
-        }
+            $files = array();
 
-        foreach (self::SHIP_SIZES as $shipSize) {
-            $relative = sprintf(self::UNITS_FOLDER, $shipSize);
-            foreach($this->getXMLFiles($this->gameFolder . '/'. $relative) as $file) {
-                $files[] = $file->setRuntimeProperty(self::FILE_PROP_FOLDER_RELATIVE, $relative);
+            foreach ($this->getXMLFiles($dataFolder->getFolder() . '/' . self::PROPS_FOLDER) as $file) {
+                $files[] = $file->setRuntimeProperty(self::FILE_PROP_FOLDER_RELATIVE, self::PROPS_FOLDER);
             }
-        }
 
-        Console::line1('Found %s XML files to analyze.', count($files));
+            foreach (self::SHIP_SIZES as $shipSize) {
+                $relative = sprintf(self::UNITS_FOLDER, $shipSize);
+                foreach ($this->getXMLFiles($dataFolder->getFolder() . '/' . $relative) as $file) {
+                    $files[] = $file->setRuntimeProperty(self::FILE_PROP_FOLDER_RELATIVE, $relative);
+                }
+            }
 
-        foreach($files as $file) {
-            $this->analyzeCargoMacro($file);
+            Console::line1('Found %s XML files to analyze.', count($files));
+
+            foreach ($files as $file) {
+                $this->analyzeCargoMacro($file, $dataFolder);
+            }
         }
 
         Console::line1('Done, found %s cargo macros.', count($this->cargoMacros));
@@ -636,13 +651,13 @@ TXT;
 
     private array $messages = array();
 
-    private function analyzeCargoMacro(FileInfo $file) : void
+    private function analyzeCargoMacro(FileInfo $file, DataFolder $dataFolder) : void
     {
         if(!str_starts_with($file->getBaseName(), 'storage_')) {
             return;
         }
 
-        $macro = new CargoXMLFile($file);
+        $macro = new CargoXMLFile($file, $dataFolder);
         $macroName = $macro->getMacroName();
 
         if(!$macro->isGenericStorage()) {
@@ -664,7 +679,13 @@ TXT;
      */
     private function getXMLFiles(FolderInfo|string $folder) : array
     {
-        return FolderInfo::factory($folder)
+        $info = FolderInfo::factory($folder);
+
+        if(!$info->exists()) {
+            return array();
+        }
+
+        return $info
             ->createFileFinder()
             ->includeExtension('xml')
             ->getFiles()
@@ -698,6 +719,7 @@ TXT;
         $xml = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <content id="%1$s" name="%2$s" description="%3$s" author="%4$s" version="%5$s" date="%6$s" save="0" enabled="1">
+    %8$s
     %7$s
 </content>
 XML;
@@ -716,6 +738,20 @@ XML;
             );
         }
 
+        $dependencies = array();
+        foreach($this->dataFolders->getAll() as $dataFolder)
+        {
+            if(!$dataFolder->isExtension()) {
+                continue;
+            }
+
+            $dependencies[] = sprintf(
+                '<dependency id="%s" optional="true" name="%s"/>',
+                $dataFolder->getID(),
+                $dataFolder->getLabel()
+            );
+        }
+
         return sprintf(
             $xml,
             self::MOD_PREFIX .'-'.$key,
@@ -724,7 +760,8 @@ XML;
             self::AUTHOR_NAME,
             str_replace('.', '', self::getVersion()),
             date('Y-m-d'),
-            implode("\n    ", $translations)."\n"
+            implode("\n    ", $translations)."\n",
+            implode("\n    ", $dependencies)."\n"
         );
     }
 }

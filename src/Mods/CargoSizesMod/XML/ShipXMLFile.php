@@ -61,30 +61,4 @@ class ShipXMLFile extends XMLFile
     {
         return $this->getAllByName('connection');
     }
-
-    private string $shipName = '';
-
-    public function setShipName(string $name) : self
-    {
-        $this->shipName = $name;
-        return $this;
-    }
-
-    public function getShipName() : string
-    {
-        return $this->shipName;
-    }
-
-    private string $cargoMacro = '';
-
-    public function setCargoMacro(string $cargoConnection) : self
-    {
-        $this->cargoMacro = $cargoConnection;
-        return $this;
-    }
-
-    public function getCargoMacro(): string
-    {
-        return $this->cargoMacro;
-    }
 }
