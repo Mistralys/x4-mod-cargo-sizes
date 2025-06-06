@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3b48609b289cce53e41945f0b2100779",
+    "content-hash": "958964d280a1153397be612901e8042d",
     "packages": [
         {
             "name": "components/jquery",
@@ -822,16 +822,16 @@
         },
         {
             "name": "mistralys/x4-core",
-            "version": "0.0.9",
+            "version": "0.0.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Mistralys/x4-core.git",
-                "reference": "a7ae4bc79f8b52c0dd7e1750ae552ded4c6ba1d2"
+                "reference": "e6efe447fc201282c600b32cf84eaaa2ca881c12"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Mistralys/x4-core/zipball/a7ae4bc79f8b52c0dd7e1750ae552ded4c6ba1d2",
-                "reference": "a7ae4bc79f8b52c0dd7e1750ae552ded4c6ba1d2",
+                "url": "https://api.github.com/repos/Mistralys/x4-core/zipball/e6efe447fc201282c600b32cf84eaaa2ca881c12",
+                "reference": "e6efe447fc201282c600b32cf84eaaa2ca881c12",
                 "shasum": ""
             },
             "require": {
@@ -843,6 +843,7 @@
                 "fortawesome/font-awesome": "^5.15.3",
                 "mistralys/application-localization": ">=1.4.1",
                 "mistralys/application-utils": ">=2.3.2",
+                "mistralys/x4-data-extractor": ">=1.0.0",
                 "php": ">=7.4",
                 "thomaspark/bootswatch": "^v5.1.3",
                 "twbs/bootstrap": "^v5.1.3"
@@ -871,9 +872,57 @@
             "description": "Core files for all X4 tools.",
             "support": {
                 "issues": "https://github.com/Mistralys/x4-core/issues",
-                "source": "https://github.com/Mistralys/x4-core/tree/0.0.9"
+                "source": "https://github.com/Mistralys/x4-core/tree/0.0.10"
             },
-            "time": "2025-05-31T16:57:32+00:00"
+            "time": "2025-06-06T10:28:10+00:00"
+        },
+        {
+            "name": "mistralys/x4-data-extractor",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Mistralys/x4-data-extractor.git",
+                "reference": "a3048babb907a203efc257961fe88321d3462f32"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Mistralys/x4-data-extractor/zipball/a3048babb907a203efc257961fe88321d3462f32",
+                "reference": "a3048babb907a203efc257961fe88321d3462f32",
+                "shasum": ""
+            },
+            "require": {
+                "ext-dom": "*",
+                "mistralys/application-utils-collections": ">=1.1.6",
+                "mistralys/application-utils-core": ">=2.3.11",
+                "php": ">=8.2"
+            },
+            "require-dev": {
+                "phpstan/phpstan": ">=1.6.1",
+                "phpunit/phpunit": ">=9.5.20",
+                "roave/security-advisories": "dev-latest"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "src"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastian Mordziol",
+                    "email": "s.mordziol@mistralys.eu"
+                }
+            ],
+            "description": "Generate batch files to extract X4 data with XRCatTool.",
+            "support": {
+                "issues": "https://github.com/Mistralys/x4-data-extractor/issues",
+                "source": "https://github.com/Mistralys/x4-data-extractor/tree/1.0.0"
+            },
+            "time": "2025-06-06T10:24:42+00:00"
         },
         {
             "name": "neitanod/forceutf8",
@@ -1776,16 +1825,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "11.5.21",
+            "version": "11.5.22",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "d565e2cdc21a7db9dc6c399c1fc2083b8010f289"
+                "reference": "4cd72faaa8f811e4cc63040cba167757660a5538"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/d565e2cdc21a7db9dc6c399c1fc2083b8010f289",
-                "reference": "d565e2cdc21a7db9dc6c399c1fc2083b8010f289",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/4cd72faaa8f811e4cc63040cba167757660a5538",
+                "reference": "4cd72faaa8f811e4cc63040cba167757660a5538",
                 "shasum": ""
             },
             "require": {
@@ -1857,7 +1906,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.21"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.22"
             },
             "funding": [
                 {
@@ -1881,7 +1930,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-05-21T12:35:00+00:00"
+            "time": "2025-06-06T02:48:05+00:00"
         },
         {
             "name": "roave/security-advisories",
@@ -1889,12 +1938,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Roave/SecurityAdvisories.git",
-                "reference": "c6007a53027047b08044448c57571988ac9b6e93"
+                "reference": "6ca443cead7d0cd731610a12fd47028c7e28edb3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/c6007a53027047b08044448c57571988ac9b6e93",
-                "reference": "c6007a53027047b08044448c57571988ac9b6e93",
+                "url": "https://api.github.com/repos/Roave/SecurityAdvisories/zipball/6ca443cead7d0cd731610a12fd47028c7e28edb3",
+                "reference": "6ca443cead7d0cd731610a12fd47028c7e28edb3",
                 "shasum": ""
             },
             "conflict": {
@@ -1959,6 +2008,7 @@
                 "baserproject/basercms": "<=5.1.1",
                 "bassjobsen/bootstrap-3-typeahead": ">4.0.2",
                 "bbpress/bbpress": "<2.6.5",
+                "bcit-ci/codeigniter": "<3.1.3",
                 "bcosca/fatfree": "<3.7.2",
                 "bedita/bedita": "<4",
                 "bednee/cooluri": "<1.0.30",
@@ -2746,7 +2796,7 @@
                 "yiisoft/yii2-elasticsearch": "<2.0.5",
                 "yiisoft/yii2-gii": "<=2.2.4",
                 "yiisoft/yii2-jui": "<2.0.4",
-                "yiisoft/yii2-redis": "<2.0.8",
+                "yiisoft/yii2-redis": "<2.0.20",
                 "yikesinc/yikes-inc-easy-mailchimp-extender": "<6.8.6",
                 "yoast-seo-for-typo3/yoast_seo": "<7.2.3",
                 "yourls/yourls": "<=1.8.2",
@@ -2825,7 +2875,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-05-29T18:07:06+00:00"
+            "time": "2025-06-05T17:04:40+00:00"
         },
         {
             "name": "sebastian/cli-parser",
