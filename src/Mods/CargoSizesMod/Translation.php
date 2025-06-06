@@ -19,6 +19,8 @@ class Translation
     public const TYPE_DESCR_AUXILIARY = 'descr-auxiliary';
     public const TYPE_NAME_CARRIER = 'name-carrier';
     public const TYPE_DESCR_CARRIER = 'descr-carrier';
+    public const TYPE_NAME_FOMOD = 'name-fomod';
+    public const TYPE_DESCR_FOMOD = 'descr-fomod';
 
     /**
      * @var string[]
