@@ -13,11 +13,15 @@ use AppUtils\FileHelper;
 use AppUtils\FileHelper\FileInfo;
 use AppUtils\FileHelper\FolderInfo;
 use AppUtils\ZIPHelper;
+use Misc\Mods\CargoSizesMod\FOMOD\FileCollection;
 use Mistralys\X4\Database\Translations\TranslationDefs;
 use Mistralys\X4\Database\Translations\TranslationExtractor;
 use Mistralys\X4\ExtractedData\DataFolder;
 use Mistralys\X4\ExtractedData\DataFolders;
 use Mistralys\X4\Game\X4Game;
+use Mistralys\X4\Mods\CargoSizesMod\FOMOD\FomodWriter;
+use Mistralys\X4\Mods\CargoSizesMod\References\BBCodeReference;
+use Mistralys\X4\Mods\CargoSizesMod\References\MarkdownReference;
 use Mistralys\X4\Mods\CargoSizesMod\XML\CargoXMLFile;
 use const Mistralys\X4\X4_EXTRACTED_CAT_FILES_FOLDER;
 use const Mistralys\X4\X4_GAME_FOLDER;
@@ -47,11 +51,11 @@ class CargoSizeExtractor
     const FILE_PROP_FOLDER_RELATIVE = 'folderRelative';
 
     public const SHIP_SIZES = array(
-        'l',
-        'm',
+        'xs',
         's',
-        'xl',
-        'xs'
+        'm',
+        'l',
+        'xl'
     );
 
     /**
@@ -152,9 +156,28 @@ class CargoSizeExtractor
     {
         $this->multipliers = $multipliers;
 
+        FileCollection::reset();
+
         $this->analyzeCargoMacros();
         $this->analyzeShipMacros();
         $this->writeFiles();
+    }
+
+    /**
+     * @return string[]
+     */
+    public static function getShipTypesPretty() : array
+    {
+        $result = array();
+
+        foreach(self::SHIP_TYPES as $type => $data) {
+            $pretty = self::prettifyShipType($type);
+            if(!in_array($pretty, $result)) {
+                $result[] = $pretty;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -167,7 +190,7 @@ class CargoSizeExtractor
         $baseFolder = FolderInfo::factory(sprintf(
             '%s/v%s-for-v%s',
             $this->outputFolder,
-            str_replace('.', '-', self::getVersion()),
+            str_replace('.', '-', ModInfo::getVersion()),
             str_replace('.', '-', $this->gameVersion)
         ));
 
@@ -183,8 +206,18 @@ class CargoSizeExtractor
         }
 
         $this->writeZIPFiles($baseFolder);
+        $this->writeFomodFiles();
         $this->writeReferenceFiles();
         $this->cleanUp($baseFolder);
+    }
+
+    private function writeFomodFiles() : void
+    {
+        (new FomodWriter(
+            $this->multipliers,
+            $this->outputFolder,
+            $this->dataFolders
+        ))->write();
     }
 
     private function cleanUp(FolderInfo $baseFolder) : void
@@ -196,24 +229,29 @@ class CargoSizeExtractor
 
     private function writeReferenceFiles() : void
     {
-        $lines = array(
-            '# Cargo Sizes Mod - Cargo Values Reference',
-            ''
-        );
+        Console::header('Writing reference files');
 
-        foreach($this->multipliers as $multiplier)
-        {
-            $lines[] = '## Cargo Size x'.$multiplier;
-            $lines[] = '';
+        $this->writeNexusBBCodeReference();
+        $this->writeMarkdownReference();
+    }
 
-            foreach($this->getResultsCategorized() as $type => $results)
-            {
-                $this->generateZIPReferenceLines($lines, $type, $results, $multiplier);
-            }
-        }
+    private function writeMarkdownReference() : void
+    {
+        Console::line1('Writing Markdown reference file.');
 
-        FileInfo::factory(__DIR__.'/../../../docs/cargo-size-reference.md')
-            ->putContents(implode("\n", $lines)."\n");
+        (new MarkdownReference($this->multipliers, $this->getResultsCategorized()))->write();
+    }
+
+    private function writeNexusBBCodeReference() : void
+    {
+        Console::line1('Writing Nexus BBCode reference file.');
+
+        FileInfo::factory(__DIR__.'/../../../docs/nexus-description.bbcode')
+            ->putContents(str_replace(
+                '{{CARGO_SIZES_REFERENCE}}',
+                (new BBCodeReference($this->multipliers, $this->getResultsCategorized()))->generate(),
+                FileInfo::factory(__DIR__.'/../../../docs/nexus-description.bbcode.tpl')->getContents()
+            ));
     }
 
     private function getResultsCategorized() : array
@@ -233,34 +271,6 @@ class CargoSizeExtractor
         uksort($categorized, 'strnatcasecmp');
 
         return $categorized;
-    }
-
-    /**
-     * @param string[] $lines
-     * @param string $typeLabel
-     * @param CargoShipResult[] $files
-     * @return void
-     */
-    private function generateZIPReferenceLines(array &$lines, string $typeLabel, array $files, int|float $multiplier) : void
-    {
-        $lines[] = '### '.$typeLabel;
-        $lines[] = '';
-
-        usort($files, static function(CargoShipResult $a, CargoShipResult $b) : int {
-            return strnatcasecmp($a->getShipName(), $b->getShipName());
-        });
-
-        foreach($files as $file) {
-            $lines[] = sprintf(
-                '- _%s_ (%s): %s m3 > **%s m3**',
-                $file->getShipName(),
-                strtoupper($file->getSize()),
-                number_format($file->getCargoValue(), 0, '.', ','),
-                number_format($file->calculateCargoValue($multiplier), 0, '.', ','),
-            );
-        }
-
-        $lines[] = '';
     }
 
     private string $multiplierKey = '';
@@ -364,6 +374,8 @@ class CargoSizeExtractor
             // Add it to the AIO ZIP as well
             $this->zips[$this->multiplierKey][$file->getID()] = $file;
 
+            FileCollection::create($shipType, $size, $multiplier)->addFile($file);
+
             Console::line2(
                 'Written file [%s].',
                 $file->getName(),
@@ -387,7 +399,7 @@ class CargoSizeExtractor
                 '%s/%s_v%s.zip',
                 $baseFolder,
                 $rootName,
-                self::getVersion()
+                ModInfo::getVersion()
             );
 
             FileInfo::factory($path)->getFolder()->create();
@@ -406,16 +418,9 @@ class CargoSizeExtractor
                     continue;
                 }
 
-                $path = $file->write();
-
-                $zipFile->addFile(
-                    $path,
-                    sprintf(
-                        '%s/%s/%s',
-                        $rootName,
-                        $file->getRelativePath(),
-                        $file->getName()
-                    )
+                $zipFile->addString(
+                    $file->render(),
+                    $file->getZipPath($rootName)
                 );
             }
 
@@ -441,7 +446,7 @@ TXT;
 
         return sprintf(
             $text,
-            self::getVersion(),
+            ModInfo::getVersion(),
             $this->gameVersion,
             date('Y-m-d H:i:s'),
             CargoSizeExtractor::HOMEPAGE_URL
@@ -692,20 +697,6 @@ TXT;
             ->typeANY();
     }
 
-    public static function getVersionFile() : FileInfo
-    {
-        return FileInfo::factory(__DIR__.'/../../../mod-version.txt');
-    }
-
-    /**
-     * Gets the version of the mod.
-     * @return string
-     */
-    public static function getVersion() : string
-    {
-        return self::getVersionFile()->getContents();
-    }
-
     /**
      * Renders the content for the `content.xml` file that is
      * used by X4 to display information on the mod in the
@@ -716,52 +707,31 @@ TXT;
      */
     private function renderContentXML(string $key) : string
     {
-        $xml = <<<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<content id="%1$s" name="%2$s" description="%3$s" author="%4$s" version="%5$s" date="%6$s" save="0" enabled="1">
-    %8$s
-    %7$s
-</content>
-XML;
-
-        $description = $this->keyDescriptions[$key];
-        $name = $this->keyNames[$key];
-
-        $translations = array();
-        foreach(array_keys(TranslationExtractor::LANGUAGES) as $langID) {
-            $translations[] = sprintf(
-                '<text language="%d" name="%s" description="%s" author="%s" />',
-                $langID,
-                $name->getByLanguageID($langID),
-                $description->getByLanguageID($langID),
-                self::AUTHOR_NAME
-            );
-        }
-
-        $dependencies = array();
-        foreach($this->dataFolders->getAll() as $dataFolder)
-        {
-            if(!$dataFolder->isExtension()) {
-                continue;
-            }
-
-            $dependencies[] = sprintf(
-                '<dependency id="%s" optional="true" name="%s"/>',
-                $dataFolder->getID(),
-                $dataFolder->getLabel()
-            );
-        }
-
-        return sprintf(
-            $xml,
+        return (new ContentXMLRenderer(
             self::MOD_PREFIX .'-'.$key,
-            $name->getInvariant(),
-            $description->getInvariant(),
-            self::AUTHOR_NAME,
-            str_replace('.', '', self::getVersion()),
-            date('Y-m-d'),
-            implode("\n    ", $translations)."\n",
-            implode("\n    ", $dependencies)."\n"
+            $this->keyNames[$key],
+            $this->keyDescriptions[$key],
+            $this->dataFolders
+        ))->render();
+    }
+
+    public static function getTypeLabel(string $shipType) : string
+    {
+        if(isset(self::SHIP_TYPES[$shipType])) {
+            return self::SHIP_TYPES[$shipType]['label'];
+        }
+
+        foreach(array_keys(self::SHIP_TYPES) as $rawType) {
+            $pretty = self::prettifyShipType($rawType);
+            if($pretty === $shipType) {
+                return self::getTypeLabel($rawType);
+            }
+        }
+
+        throw new CargoSizeException(
+            sprintf('Unknown label for ship type [%s].', $shipType),
+            '',
+            CargoSizeException::ERROR_UNHANDLED_SHIP_TYPE
         );
     }
 }
