@@ -14,9 +14,11 @@
 - _Orca_: 40,000 m3 > **80,000 m3**
 - _Stork Sentinel_: 30,000 m3 > **60,000 m3**
 - _Stork Vanguard_: 25,000 m3 > **50,000 m3**
+
 ### Carriers L
 
 - _Guppy_: 8,000 m3 > **16,000 m3**
+
 ### Carriers XL
 
 - _Colossus E_: 25,000 m3 > **50,000 m3**
@@ -30,6 +32,7 @@
 - _Zeus E_: 22,000 m3 > **44,000 m3**
 - _Zeus Sentinel_: 24,000 m3 > **48,000 m3**
 - _Zeus Vanguard_: 20,000 m3 > **40,000 m3**
+
 ### Mining ships L
 
 - _Chthonios (Gas) Sentinel_: 38,400 m3 > **76,800 m3**
@@ -55,6 +58,7 @@
 - _Rorqual (Mineral)_: 40,000 m3 > **80,000 m3**
 - _Wyvern (Gas)_: 22,000 m3 > **44,000 m3**
 - _Wyvern (Mineral)_: 20,000 m3 > **40,000 m3**
+
 ### Mining ships M
 
 - _Alligator (Gas)_: 7,600 m3 > **15,200 m3**
@@ -77,6 +81,7 @@
 - _SE_: 9,500 m3 > **19,000 m3**
 - _Sunder (Gas) Sentinel_: 12,480 m3 > **24,960 m3**
 - _Sunder (Gas) Vanguard_: 10,400 m3 > **20,800 m3**
+
 ### Mining ships S
 
 - _Courier (Mineral)_: 2,600 m3 > **5,200 m3**
@@ -85,6 +90,7 @@
 - _Magpie (Mineral)_: 3,500 m3 > **7,000 m3**
 - _Tethys (Mineral)_: 2,100 m3 > **4,200 m3**
 - _Tuatara (Mineral)_: 1,720 m3 > **3,440 m3**
+
 ### Transport ships L
 
 - _Buffalo_: 16,000 m3 > **32,000 m3**
@@ -110,6 +116,7 @@
 - _Sturgeon_: 30,000 m3 > **60,000 m3**
 - _Veles Sentinel_: 43,200 m3 > **86,400 m3**
 - _Veles Vanguard_: 36,000 m3 > **72,000 m3**
+
 ### Transport ships M
 
 - _Baldric_: 10,700 m3 > **21,400 m3**
@@ -129,6 +136,7 @@
 - _Tern Vanguard_: 10,880 m3 > **21,760 m3**
 - _Vulture Sentinel_: 15,100 m3 > **30,200 m3**
 - _Vulture Vanguard_: 12,080 m3 > **24,160 m3**
+
 ### Transport ships S
 
 - _Callisto Sentinel_: 1,236 m3 > **2,472 m3**
@@ -146,6 +154,7 @@
 - _Tethys Vanguard_: 1,580 m3 > **3,160 m3**
 - _Tuatara_: 1,350 m3 > **2,700 m3**
 - _Tuatara_: 1,350 m3 > **2,700 m3**
+
 ## Cargo Size x4
 
 ### Auxiliaries XL
@@ -160,9 +169,11 @@
 - _Orca_: 40,000 m3 > **160,000 m3**
 - _Stork Sentinel_: 30,000 m3 > **120,000 m3**
 - _Stork Vanguard_: 25,000 m3 > **100,000 m3**
+
 ### Carriers L
 
 - _Guppy_: 8,000 m3 > **32,000 m3**
+
 ### Carriers XL
 
 - _Colossus E_: 25,000 m3 > **100,000 m3**
@@ -176,6 +187,7 @@
 - _Zeus E_: 22,000 m3 > **88,000 m3**
 - _Zeus Sentinel_: 24,000 m3 > **96,000 m3**
 - _Zeus Vanguard_: 20,000 m3 > **80,000 m3**
+
 ### Mining ships L
 
 - _Chthonios (Gas) Sentinel_: 38,400 m3 > **153,600 m3**
@@ -201,6 +213,7 @@
 - _Rorqual (Mineral)_: 40,000 m3 > **160,000 m3**
 - _Wyvern (Gas)_: 22,000 m3 > **88,000 m3**
 - _Wyvern (Mineral)_: 20,000 m3 > **80,000 m3**
+
 ### Mining ships M
 
 - _Alligator (Gas)_: 7,600 m3 > **30,400 m3**
@@ -223,6 +236,7 @@
 - _SE_: 9,500 m3 > **38,000 m3**
 - _Sunder (Gas) Sentinel_: 12,480 m3 > **49,920 m3**
 - _Sunder (Gas) Vanguard_: 10,400 m3 > **41,600 m3**
+
 ### Mining ships S
 
 - _Courier (Mineral)_: 2,600 m3 > **10,400 m3**
@@ -231,6 +245,7 @@
 - _Magpie (Mineral)_: 3,500 m3 > **14,000 m3**
 - _Tethys (Mineral)_: 2,100 m3 > **8,400 m3**
 - _Tuatara (Mineral)_: 1,720 m3 > **6,880 m3**
+
 ### Transport ships L
 
 - _Buffalo_: 16,000 m3 > **64,000 m3**
@@ -256,6 +271,7 @@
 - _Sturgeon_: 30,000 m3 > **120,000 m3**
 - _Veles Sentinel_: 43,200 m3 > **172,800 m3**
 - _Veles Vanguard_: 36,000 m3 > **144,000 m3**
+
 ### Transport ships M
 
 - _Baldric_: 10,700 m3 > **42,800 m3**
@@ -275,6 +291,7 @@
 - _Tern Vanguard_: 10,880 m3 > **43,520 m3**
 - _Vulture Sentinel_: 15,100 m3 > **60,400 m3**
 - _Vulture Vanguard_: 12,080 m3 > **48,320 m3**
+
 ### Transport ships S
 
 - _Callisto Sentinel_: 1,236 m3 > **4,944 m3**
@@ -292,6 +309,7 @@
 - _Tethys Vanguard_: 1,580 m3 > **6,320 m3**
 - _Tuatara_: 1,350 m3 > **5,400 m3**
 - _Tuatara_: 1,350 m3 > **5,400 m3**
+
 ## Cargo Size x10
 
 ### Auxiliaries XL
@@ -306,9 +324,11 @@
 - _Orca_: 40,000 m3 > **400,000 m3**
 - _Stork Sentinel_: 30,000 m3 > **300,000 m3**
 - _Stork Vanguard_: 25,000 m3 > **250,000 m3**
+
 ### Carriers L
 
 - _Guppy_: 8,000 m3 > **80,000 m3**
+
 ### Carriers XL
 
 - _Colossus E_: 25,000 m3 > **250,000 m3**
@@ -322,6 +342,7 @@
 - _Zeus E_: 22,000 m3 > **220,000 m3**
 - _Zeus Sentinel_: 24,000 m3 > **240,000 m3**
 - _Zeus Vanguard_: 20,000 m3 > **200,000 m3**
+
 ### Mining ships L
 
 - _Chthonios (Gas) Sentinel_: 38,400 m3 > **384,000 m3**
@@ -347,6 +368,7 @@
 - _Rorqual (Mineral)_: 40,000 m3 > **400,000 m3**
 - _Wyvern (Gas)_: 22,000 m3 > **220,000 m3**
 - _Wyvern (Mineral)_: 20,000 m3 > **200,000 m3**
+
 ### Mining ships M
 
 - _Alligator (Gas)_: 7,600 m3 > **76,000 m3**
@@ -369,6 +391,7 @@
 - _SE_: 9,500 m3 > **95,000 m3**
 - _Sunder (Gas) Sentinel_: 12,480 m3 > **124,800 m3**
 - _Sunder (Gas) Vanguard_: 10,400 m3 > **104,000 m3**
+
 ### Mining ships S
 
 - _Courier (Mineral)_: 2,600 m3 > **26,000 m3**
@@ -377,6 +400,7 @@
 - _Magpie (Mineral)_: 3,500 m3 > **35,000 m3**
 - _Tethys (Mineral)_: 2,100 m3 > **21,000 m3**
 - _Tuatara (Mineral)_: 1,720 m3 > **17,200 m3**
+
 ### Transport ships L
 
 - _Buffalo_: 16,000 m3 > **160,000 m3**
@@ -402,6 +426,7 @@
 - _Sturgeon_: 30,000 m3 > **300,000 m3**
 - _Veles Sentinel_: 43,200 m3 > **432,000 m3**
 - _Veles Vanguard_: 36,000 m3 > **360,000 m3**
+
 ### Transport ships M
 
 - _Baldric_: 10,700 m3 > **107,000 m3**
@@ -421,6 +446,7 @@
 - _Tern Vanguard_: 10,880 m3 > **108,800 m3**
 - _Vulture Sentinel_: 15,100 m3 > **151,000 m3**
 - _Vulture Vanguard_: 12,080 m3 > **120,800 m3**
+
 ### Transport ships S
 
 - _Callisto Sentinel_: 1,236 m3 > **12,360 m3**
@@ -438,3 +464,4 @@
 - _Tethys Vanguard_: 1,580 m3 > **15,800 m3**
 - _Tuatara_: 1,350 m3 > **13,500 m3**
 - _Tuatara_: 1,350 m3 > **13,500 m3**
+
