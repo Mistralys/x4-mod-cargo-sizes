@@ -28,13 +28,16 @@ The exact changes to cargo sizes can be reviewed here:
 
 [Reference of cargo sizes](./docs/cargo-size-reference.md)
 
-## Limitations
+## Features and limitations
 
-The mod affects NPC and player ships. 
-
-One slightly tricky side effect of increasing cargo sizes is that
-by being able to transport more, ships actually transport more value
-and will potentially be juicier targets for piracy as a result.
+- The mod affects NPC and player ships.
+- Cargo values are increased for both new and existing ships.
+- Can be installed and uninstalled at any time.
+- After uninstalling, ships may carry more cargo than they
+  normally would, but this has no adverse effects.
+- One slightly tricky side effect of increasing cargo sizes is 
+  that ships actually transport more value and are juicier 
+  targets for piracy as a result.
 
 ## Development
 
@@ -48,14 +51,38 @@ and will potentially be juicier targets for piracy as a result.
 The mod is designed to be built directly from the game's data files,
 to make sure it is always up to date with the latest game version.
 
-1. Unpack the game's data files ([howto](https://github.com/Mistralys/x4-game-notes/blob/main/unpacking-game-files.md)).
-2. Clone this repository.
-3. Copy `dev-config.php.dist` to `dev-config.php`.
-4. Edit the file to set the correct paths.
-5. Run `composer install` to install the dependencies.
-6. Run `composer build-mod` to build the mod.
+### Unpacking game data files
+
+The mod requires the game's data files to be unpacked using the
+[X4 Data Extractor][] tool. The tool acts as a library to access the 
+extracted information. This includes the DLC metadata necessary to
+generate the correct mod file structure.
+
+Please refer to the tool's instructions to unpack the game data files.
+
+### Building the mod
+
+1. Clone this repository.
+2. Copy `dev-config.php.dist` to `dev-config.php`.
+3. Edit the file to set the correct paths.
+4. Run `composer install` to install the dependencies.
+5. Run `composer build-mod` to build the mod.
 
 ### Customizing multiplier values
 
 Edit the file `config/build-config.php` to set the desired multiplier 
 values, then build the mod again.
+
+## X4 Tools and libraries
+
+- [X4 Game Notes][] - _Docs_ - Howto, tips and general information about X4.
+- [X4 Core][] - _Library_ - Access X4 game data in an OOP way.
+- [X4 Data Extractor][] - _Tool & Library_ - Extract X4 game files.
+- [X4 Savegame Parser][] - _Tool_ - Parse X4 savegames to extract information.
+- [X4 Cargo Size Mod][] - _Mod_ - Mod to increase ship cargo sizes.
+
+[X4 Data Extractor]: https://github.com/Mistralys/x4-data-extractor
+[X4 Game Notes]: https://github.com/Mistralys/x4-game-notes
+[X4 Core]: https://github.com/Mistralys/x4-core
+[X4 Savegame Parser]: https://github.com/Mistralys/x4-savegame-parser
+[X4 Cargo Size Mod]: https://github.com/Mistralys/x4-mod-cargo-sizes
