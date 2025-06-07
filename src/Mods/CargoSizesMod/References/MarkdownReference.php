@@ -47,6 +47,7 @@ class MarkdownReference extends BaseReferenceRenderer
 
     protected function generateListEnd(array &$lines): void
     {
+        $lines[] = '';
     }
 
     protected function generateListStart(array &$lines): void
