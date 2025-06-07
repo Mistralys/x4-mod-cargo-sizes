@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
+use Mistralys\X4\Database\Translations\Languages;
 use Mistralys\X4\Database\Translations\TranslationExtractor;
 use Mistralys\X4\ExtractedData\DataFolders;
 
@@ -55,7 +56,7 @@ XML;
     {
         $translations = array();
 
-        foreach(array_keys(TranslationExtractor::LANGUAGES) as $langID)
+        foreach(array_keys(Languages::LANGUAGES) as $langID)
         {
             $translations[] = sprintf(
                 '<text language="%d" name="%s" description="%s" author="%s" />',

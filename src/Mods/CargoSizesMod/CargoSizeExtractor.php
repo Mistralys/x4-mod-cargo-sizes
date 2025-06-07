@@ -14,6 +14,7 @@ use AppUtils\FileHelper\FileInfo;
 use AppUtils\FileHelper\FolderInfo;
 use AppUtils\ZIPHelper;
 use Misc\Mods\CargoSizesMod\FOMOD\FileCollection;
+use Mistralys\X4\Database\Translations\Languages;
 use Mistralys\X4\Database\Translations\TranslationDefs;
 use Mistralys\X4\Database\Translations\TranslationExtractor;
 use Mistralys\X4\ExtractedData\DataFolder;
@@ -124,9 +125,6 @@ class CargoSizeExtractor
         $this->gameVersion = X4Game::create(X4_GAME_FOLDER)->getVersion();
 
         $this->dataFolders = DataFolders::create($extractedDataFolder);
-
-        // Load the translations so they are done at the start
-        self::getTranslations();
     }
 
     private static ?TranslationDefs $translations = null;
@@ -137,13 +135,7 @@ class CargoSizeExtractor
             return self::$translations;
         }
 
-        $lang = TranslationExtractor::LANGUAGE_ENGLISH;
-
-        $extractor = new TranslationExtractor(DataFolders::create(FolderInfo::factory(X4_EXTRACTED_CAT_FILES_FOLDER)));
-        $extractor->selectLanguage($lang);
-        $extractor->extract();
-
-        self::$translations = new TranslationDefs($lang);
+        self::$translations = new TranslationDefs(Languages::LANGUAGE_ENGLISH);
 
         return self::$translations;
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
 use AppUtils\FileHelper\JSONFile;
+use Mistralys\X4\Database\Translations\Languages;
 use Mistralys\X4\Database\Translations\TranslationExtractor;
 
 class Translation
@@ -67,7 +68,7 @@ class Translation
                 continue;
             }
 
-            foreach(TranslationExtractor::LANGUAGES as $langID => $localeCode) {
+            foreach(Languages::LANGUAGES as $langID => $localeCode) {
                 if($locale === $localeCode) {
                     $result[$langID] = $text;
                     break;
@@ -80,13 +81,13 @@ class Translation
 
     public function getInvariant() : string
     {
-        return $this->getByLanguageID(TranslationExtractor::LANGUAGE_ENGLISH);
+        return $this->getByLanguageID(Languages::LANGUAGE_ENGLISH);
     }
 
     public function getByLanguageID(int $id) : string
     {
         if(!isset($this->translations[$id])) {
-            $id = TranslationExtractor::LANGUAGE_ENGLISH; // Fallback to English if the requested language is not available.
+            $id = Languages::LANGUAGE_ENGLISH; // Fallback to English if the requested language is not available.
         }
 
         if(empty($this->translations[$id])) {
