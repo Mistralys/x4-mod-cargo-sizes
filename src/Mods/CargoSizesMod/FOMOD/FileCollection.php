@@ -95,7 +95,7 @@ class FileCollection
 
     public function getPluginLabel() : string
     {
-        return 'Cargo x'.$this->getMultiplier();
+        return 'x'.$this->getMultiplier();
     }
 
     public function getPluginDescription() : string
@@ -149,7 +149,7 @@ class FileCollection
 
     public function getOutputFolderName() : string
     {
-        return 'cargo-size-x'.str_replace('.', '_', (string)$this->getMultiplier());
+        return 'cargo-size-fomod';
     }
 
     public function writeFiles(ZIPHelper $zip) : void

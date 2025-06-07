@@ -99,7 +99,7 @@ XML;
     {
         Console::line1('Writing content.xml');
 
-        $this->zip->addString($this->generateContentXML(), 'content.xml');
+        $this->zip->addString($this->generateContentXML(), 'cargo-size-fomod/content.xml');
     }
 
     public function getName() : Translation
@@ -135,7 +135,7 @@ XML;
     <moduleName>%1$s</moduleName>
 
     <requiredInstallFiles>
-        <file source="content.xml"/>
+        <file source="cargo-size-fomod/content.xml"/>
     </requiredInstallFiles>
 
     <installSteps order="Explicit">
@@ -175,21 +175,36 @@ XML;
                     continue;
                 }
 
-                $steps[] = $this->generateConfigStep(
-                    CargoSizeExtractor::getTypeLabel($shipType).' ('.strtoupper($shipSize).')',
-                    $sizeShips
+                $steps[] = array(
+                    'shipType' => $shipType,
+                    'shipSize' => $shipSize,
+                    'sizeShips' => $sizeShips
                 );
             }
         }
 
-        return implode(PHP_EOL, $steps);
+        $totalSteps = count($steps);
+        $stepXML = array();
+        $stepNumber = 1;
+        foreach($steps as $step) {
+            $stepXML[] = $this->generateConfigStep(
+                $stepNumber,
+                $totalSteps,
+                CargoSizeExtractor::getTypeLabel($step['shipType']).' ('.strtoupper($step['shipSize']).')',
+                $step['sizeShips']
+            );
+
+            $stepNumber++;
+        }
+
+        return implode(PHP_EOL, $stepXML);
     }
 
     private const CONFIG_STEP_TEMPLATE = <<<'XML'
-        <installStep name="%1$s">
+        <installStep name="%1$s - %3$s of %4$s">
             <optionalFileGroups>
                 <group name="Select a cargo capacity change:" type="SelectExactlyOne">
-                    <plugins>
+                    <plugins order="Explicit">
 %2$s
                     </plugins>
                 </group>
@@ -199,18 +214,22 @@ XML;
 XML;
 
     /**
+     * @param int $stepNumber
+     * @param int $totalSteps
      * @param string $label
      * @param FileCollection[] $ships
      * @return string
      */
-    private function generateConfigStep(string $label, array $ships) : string
+    private function generateConfigStep(int $stepNumber, int $totalSteps, string $label, array $ships) : string
     {
-        Console::line2('Install step [%s]', $label);
+        Console::line2('Install step [%s] %s/%s', $label, $stepNumber, $totalSteps);
 
         return sprintf(
             self::CONFIG_STEP_TEMPLATE,
             $label,
-            $this->generateConfigPlugins($ships)
+            $this->generateConfigPlugins($ships),
+            $stepNumber,
+            $totalSteps
         );
     }
 
@@ -259,7 +278,7 @@ XML;
     }
 
     private const CONFIG_PLUGIN_DEFAULT_TEMPLATE = <<<'XML'
-                        <plugin name="None">
+                        <plugin name="Unchanged">
                             <description>Do not change this ship category.</description>
                             <typeDescriptor><type name="Recommended" /></typeDescriptor>
                         </plugin>
