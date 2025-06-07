@@ -21,7 +21,7 @@
     ]
   },
   "require": {
-    "mistralys/x4-core": ">=0.0.10",
+    "mistralys/x4-core": ">=0.0.11",
     "php": ">=8.2",
     "ext-dom": "*"
   },
@@ -31,6 +31,6 @@
     "roave/security-advisories": "dev-latest"
   },
   "scripts": {
-    "build-mod": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::build"
+    "build": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::build"
   }
 }
