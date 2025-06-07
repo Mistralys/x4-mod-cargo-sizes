@@ -7,22 +7,14 @@ There are three cargo size variants to choose from:
 [*]Cargo size x4
 [*]Cargo size x10
 [/list]
-All ship sizes (S / M / L / XL) will be adjusted, for both NPC and player ships. 
+All ship sizes (S / M / L / XL) will be adjusted for both NPC and player ships. Existing and new ships will receive the adjusted values.
 
-Existing and new ships will receive the adjusted values.
+[color=#b6d7a8][size=3][b]Customizing cargo sizes 🔸[/b][/size][/color]
 
-[color=#b6d7a8][size=3][b]Optional downloads by ship type 🔸[/b][/size][/color]
+If you want more control over the cargo sizes, use the FOMOD installer version available in the downloads. This lets you choose the cargo size for each ship class and size combination.
 
-As optional downloads, you can choose ship types to adjust separately, which allows mixing cargo multipliers (Transport ships x2 and mining ships x10 for example).
+For example, Transports (S) x2, Transports (M) x4, Mining Ships (L) x10, etc.
 
-Available ship type downloads:
-
-[list]
-[*]Mining Ships
-[*]Transport Ships
-[*]Auxiliaries
-[*]Carriers
-[/list]
 [color=#b6d7a8][size=3][b]Reference of cargo values 🔸[/b][/size][/color]
 
 {{CARGO_SIZES_REFERENCE}}
