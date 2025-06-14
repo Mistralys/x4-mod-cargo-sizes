@@ -17,7 +17,7 @@ use Mistralys\X4\ExtractedData\DataFolder;
 class CargoShipResult
 {
     private string $macroName;
-    private string $fileName;
+    private string $cargoFileName;
     private int $cargo;
     private string $shipType;
     private string $storageType;
@@ -25,18 +25,27 @@ class CargoShipResult
     private string $shipName;
     private string $relativePath;
     private DataFolder $dataFolder;
+    private ShipXMLFile $xmlFile;
+    private string $shipFileName;
 
-    public function __construct(string $macroName, string $fileName, DataFolder $dataFolder, string $shipName, string $relativePath, int $cargo, string $shipType, string $storageType, string $size)
+    public function __construct(string $macroName, string $shipFileName, string $cargoFileName, DataFolder $dataFolder, string $shipName, string $relativePath, int $cargo, string $shipType, string $storageType, string $size, ShipXMLFile $xmlFile)
     {
         $this->dataFolder = $dataFolder;
         $this->macroName = $macroName;
-        $this->fileName = $fileName;
+        $this->shipFileName = $shipFileName;
+        $this->cargoFileName = $cargoFileName;
         $this->relativePath = $relativePath;
         $this->shipName = $shipName;
         $this->cargo = $cargo;
         $this->shipType = $shipType;
         $this->storageType = $storageType;
         $this->size = $size;
+        $this->xmlFile = $xmlFile;
+    }
+
+    public function getXMLFile(): ShipXMLFile
+    {
+        return $this->xmlFile;
     }
 
     public function getRelativePath(): string
@@ -57,9 +66,14 @@ class CargoShipResult
         return $this->macroName;
     }
 
-    public function getFileName(): string
+    public function getCargoFileName(): string
     {
-        return $this->fileName;
+        return $this->cargoFileName;
+    }
+
+    public function getShipFileName(): string
+    {
+        return $this->shipFileName;
     }
 
     public function getCargoValue(): int
