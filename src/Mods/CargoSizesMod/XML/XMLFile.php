@@ -35,6 +35,11 @@ class XMLFile
         $this->dataFolder = $dataFolder;
     }
 
+    public function getXML(): string
+    {
+        return $this->xml;
+    }
+
     public function getDataFolder() : DataFolder
     {
         return $this->dataFolder;
