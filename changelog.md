@@ -1,5 +1,8 @@
 # Cargo Sizes Mod - Changelog 
 
+## v2.1.0 for X4 v7.6 - Flight models
+- Core: Now adjusting the flight models of ships to match their cargo sizes.
+
 ## v2.0.0 for X4 v7.6 - Fomod installer
 - Ships: Added a Fomod installer.
 
