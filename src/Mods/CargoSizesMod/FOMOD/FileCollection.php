@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Misc\Mods\CargoSizesMod\FOMOD;
 
 use AppUtils\ZIPHelper;
+use Mistralys\X4\Mods\CargoSizesMod\BaseOverrideFile;
 use Mistralys\X4\Mods\CargoSizesMod\CargoSizeExtractor;
 use Mistralys\X4\Mods\CargoSizesMod\Console;
-use Mistralys\X4\Mods\CargoSizesMod\OutputMacroFile;
+use Mistralys\X4\Mods\CargoSizesMod\StorageOverrideFile;
 
 class FileCollection
 {
@@ -137,11 +138,11 @@ class FileCollection
     }
 
     /**
-     * @var OutputMacroFile[]
+     * @var BaseOverrideFile[]
      */
     private array $files = array();
 
-    public function addFile(OutputMacroFile $macroFile) : self
+    public function addFile(BaseOverrideFile $macroFile) : self
     {
         $this->files[] = $macroFile;
         return $this;
