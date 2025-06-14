@@ -21,6 +21,7 @@ use Mistralys\X4\ExtractedData\DataFolder;
 use Mistralys\X4\ExtractedData\DataFolders;
 use Mistralys\X4\Game\X4Game;
 use Mistralys\X4\Mods\CargoSizesMod\FOMOD\FomodWriter;
+use Mistralys\X4\Mods\CargoSizesMod\Output\FlightMechanicsOverrideFile;
 use Mistralys\X4\Mods\CargoSizesMod\References\BBCodeReference;
 use Mistralys\X4\Mods\CargoSizesMod\References\MarkdownReference;
 use Mistralys\X4\Mods\CargoSizesMod\XML\CargoXMLFile;
@@ -173,7 +174,7 @@ class CargoSizeExtractor
     }
 
     /**
-     * @var array<string,OutputMacroFile[]>
+     * @var array<string,StorageOverrideFile[]>
      */
     private array $zips = array();
 
@@ -355,26 +356,58 @@ class CargoSizeExtractor
                 continue;
             }
 
-            $file = new OutputMacroFile(
+            $this->writeShipFiles(
+                $typeKey,
                 $baseFolder,
                 $multiplier,
                 $result
             );
-
-            $this->zips[$typeKey][$file->getID()] = $file;
-
-            // Add it to the AIO ZIP as well
-            $this->zips[$this->multiplierKey][$file->getID()] = $file;
-
-            FileCollection::create($shipType, $size, $multiplier)->addFile($file);
-
-            Console::line2(
-                'Written file [%s].',
-                $file->getName(),
-                $shipType,
-                $size
-            );
         }
+    }
+
+    private function writeShipFiles(
+        string $typeKey,
+        FolderInfo $baseFolder,
+        int|float $multiplier,
+        CargoShipResult $result
+    ) : void
+    {
+        $this->registerOverrideFile(
+            $typeKey,
+            $multiplier,
+            new StorageOverrideFile(
+                $baseFolder,
+                $multiplier,
+                $result
+            )
+        );
+
+        $this->registerOverrideFile(
+            $typeKey,
+            $multiplier,
+            new FlightMechanicsOverrideFile(
+                $baseFolder,
+                $multiplier,
+                $result
+            )
+        );
+    }
+
+    private function registerOverrideFile(string $typeKey, int|float $multiplier, BaseOverrideFile $file) : void
+    {
+        $this->zips[$typeKey][$file->getID()] = $file;
+
+        // Add it to the AIO ZIP as well
+        $this->zips[$this->multiplierKey][$file->getID()] = $file;
+
+        FileCollection::create($file->getShipType(), $file->getShipSize(), $multiplier)->addFile($file);
+
+        Console::line2(
+            'Written file [%s].',
+            $file->getName(),
+            $file->getShipType(),
+            $file->getShipSize()
+        );
     }
 
     private function writeZIPFiles(FolderInfo $baseFolder) : void
@@ -490,9 +523,9 @@ TXT;
         $this->messages[] = vsprintf($message, $args);
     }
 
-    private function analyzeShipMacro(ShipXMLFile $shipMacro) : void
+    private function analyzeShipMacro(ShipXMLFile $shipXMLFile) : void
     {
-        $macroName = $shipMacro->getMacroName();
+        $macroName = $shipXMLFile->getMacroName();
 
         $shipType = $this->resolveShipType($macroName);
         if($shipType === null) {
@@ -500,7 +533,7 @@ TXT;
             return;
         }
 
-        $cargoMacro = $this->resolveCargoConnection($shipMacro);
+        $cargoMacro = $this->resolveCargoConnection($shipXMLFile);
         if ($cargoMacro === null) {
             $this->addMessage('SKIP | No cargo connection found in [%s].', $macroName);
             return;
@@ -513,7 +546,7 @@ TXT;
 
         $cargoMacro = $this->cargoMacros[$cargoMacro];
 
-        $name = $this->resolveShipName($shipMacro);
+        $name = $this->resolveShipName($shipXMLFile);
         if(empty($name)) {
             $this->addMessage('SKIP | No ship name found for [%s].', $macroName);
             return;
@@ -523,14 +556,16 @@ TXT;
 
         $this->results[] = new CargoShipResult(
             $macroName,
+            $shipXMLFile->getFileName(),
             $cargoMacro->getFileName(),
-            $shipMacro->getDataFolder(),
+            $shipXMLFile->getDataFolder(),
             $name,
             $cargoMacro->getRelativePath(),
             $cargoMacro->getCargoValue(),
             $shipType,
             $cargoMacro->getCargoType(),
-            $shipMacro->getSize()
+            $shipXMLFile->getSize(),
+            $shipXMLFile
         );
     }
 
