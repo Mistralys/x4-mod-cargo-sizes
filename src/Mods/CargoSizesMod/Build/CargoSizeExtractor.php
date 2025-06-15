@@ -197,16 +197,16 @@ class CargoSizeExtractor
         }
 
         $this->writeZIPFiles($baseFolder);
-        $this->writeFomodFiles();
+        $this->writeFomodFiles($baseFolder);
         $this->writeReferenceFiles();
         $this->cleanUp($baseFolder);
     }
 
-    private function writeFomodFiles() : void
+    private function writeFomodFiles(FolderInfo $baseFolder) : void
     {
         (new FomodWriter(
             $this->multipliers,
-            $this->outputFolder,
+            $baseFolder,
             $this->dataFolders
         ))->write();
     }
