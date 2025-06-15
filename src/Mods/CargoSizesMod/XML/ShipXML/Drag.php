@@ -8,13 +8,13 @@ class Drag
 {
     private float $forward;
     private float $reverse;
-    private int $horizontal;
-    private int $vertical;
-    private int $pitch;
-    private int $yaw;
+    private float $horizontal;
+    private float $vertical;
+    private float $pitch;
+    private float $yaw;
     private float $roll;
 
-    public function __construct(float $forward, float $reverse, int $horizontal, int $vertical, int $pitch, int $yaw, float $roll)
+    public function __construct(float $forward, float $reverse, float $horizontal, float $vertical, float $pitch, float $yaw, float $roll)
     {
         $this->forward = $forward;
         $this->reverse = $reverse;
@@ -40,22 +40,22 @@ class Drag
         return $this->reverse;
     }
 
-    public function getHorizontal(): int
+    public function getHorizontal(): float
     {
         return $this->horizontal;
     }
 
-    public function getVertical(): int
+    public function getVertical(): float
     {
         return $this->vertical;
     }
 
-    public function getPitch(): int
+    public function getPitch(): float
     {
         return $this->pitch;
     }
 
-    public function getYaw(): int
+    public function getYaw(): float
     {
         return $this->yaw;
     }
