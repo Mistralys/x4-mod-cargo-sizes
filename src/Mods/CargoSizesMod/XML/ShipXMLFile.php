@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
 use DOMElement;
+use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\AccelerationFactors;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Drag;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Inertia;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Jerk;
@@ -75,14 +76,51 @@ class ShipXMLFile extends BaseXMLFile
         return (float)$this->requireFirstByTagName('physics')->getAttribute('mass');
     }
 
-    public function getAccelerationFactor() : float
+    private ?AccelerationFactors $accelerationFactors = null;
+
+    public function getAccelerationFactors() : AccelerationFactors
     {
-        $el = $this->getFirstByTagName('accfactors');
-        if($el === null) {
-            return 1.0;
+        if(isset($this->accelerationFactors)) {
+            return $this->accelerationFactors;
         }
 
-        return (float)$el->getAttribute('forward');
+        $el = $this->getFirstByTagName('accfactors');
+
+        $forward = 1.0;
+        $reverse = 1.0;
+        $horizontal = 1.0;
+        $vertical = 1.0;
+
+        if($el !== null) {
+            $valForward = $el->getAttribute('forward');
+            if($valForward !== '') {
+                $forward = (float)$valForward;
+            }
+
+            $valReverse = $el->getAttribute('reverse');
+            if($valReverse !== '') {
+                $reverse = (float)$valReverse;
+            }
+
+            $valHorizontal = $el->getAttribute('horizontal');
+            if($valHorizontal !== '') {
+                $horizontal = (float)$valHorizontal;
+            }
+
+            $valVertical = $el->getAttribute('vertical');
+            if($valVertical !== '') {
+                $vertical = (float)$valVertical;
+            }
+        }
+
+        $this->accelerationFactors = new AccelerationFactors(
+            $forward,
+            $reverse,
+            $horizontal,
+            $vertical
+        );
+
+        return $this->accelerationFactors;
     }
 
     private ?Drag $drag = null;
