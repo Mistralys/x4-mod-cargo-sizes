@@ -185,6 +185,10 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
             $this->getAdjustedCargo()
         );
 
+        $this->addComment('Ship base mass: %s', dec($this->mass->getMass(), 0));
+        $this->addComment('Ship base cargo: %s', dec($this->getCargo(), 0));
+        $this->addComment('Ship adjusted cargo: %s', dec($this->getAdjustedCargo(), 0));
+
         $this->addComment(
             'Mass multiplier: x%s (= original full load mass / new full load mass = %s / %s)',
             $this->mass->formatMultiplier(),
