@@ -4,58 +4,65 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod\Output;
 
-use AppUtils\FileHelper;
-use Mistralys\X4\Database\Ships\ShipSizes;
 use Mistralys\X4\Mods\CargoSizesMod\BaseOverrideFile;
 use Mistralys\X4\Mods\CargoSizesMod\BaseXMLFile;
+use Mistralys\X4\Mods\CargoSizesMod\CargoSizeBuildTools;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\BaseJerkMovement;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Jerk;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkBoost;
 use function Mistralys\X4\dec;
 use function Mistralys\X4\dec2;
+use function Mistralys\X4\dec3;
 
 class FlightMechanicsOverrideFile extends BaseOverrideFile
 {
-    /**
-     * @var array<string, float>
-     */
-    private array $dragReduction = array(
-        ShipSizes::SIZE_XS => 0.10,
-        ShipSizes::SIZE_S => 0.14,
-        ShipSizes::SIZE_M => 0.18,
-        ShipSizes::SIZE_L => 0.22,
-        ShipSizes::SIZE_XL => 0.26
-    );
-
-    /**
-     * @var array<string, float>
-     */
-    private array $steeringIncrease = array(
-        ShipSizes::SIZE_XS => 0.05,
-        ShipSizes::SIZE_S => 0.10,
-        ShipSizes::SIZE_M => 0.13,
-        ShipSizes::SIZE_L => 0.17,
-        ShipSizes::SIZE_XL => 0.21
-    );
-
     private MassAdjustment $mass;
+    private float $dragReductionMultiplier;
+    private float $steeringIncreaseMultiplier;
+    private float $inertiaIncreaseMultiplier;
 
     protected function preRender() : void
     {
         $this->addComment('Ship size: %s', strtoupper($this->ship->getSize()));
-        $this->addComment('Steering increase: x%s', number_format($this->steeringIncrease[$this->ship->getSize()], 2));
-        $this->addComment('Drag reduction: x%s', number_format($this->dragReduction[$this->ship->getSize()], 2));
 
         $this->calculateMassAdjustment();
+
         $this->overrideDrag();
         $this->overrideAcceleration();
         $this->overrideJerk();
         $this->overrideSteeringCurve();
+        $this->overrideInertia();
     }
 
     public function getName(): string
     {
         return $this->ship->getShipFileName();
+    }
+
+    private function overrideInertia() : void
+    {
+        $inertia = $this->ship->getShipXMLFile()->getInertia();
+
+        $this->multiplierIncreaseFloat(
+            'properties/physics/inertia/@pitch',
+            $inertia->getPitch(),
+            3,
+            $this->inertiaIncreaseMultiplier
+        );
+
+        $this->multiplierIncreaseFloat(
+            'properties/physics/inertia/@yaw',
+            $inertia->getYaw(),
+            3,
+            $this->inertiaIncreaseMultiplier
+        );
+
+        $this->multiplierIncreaseFloat(
+            'properties/physics/inertia/@roll',
+            $inertia->getRoll(),
+            3,
+            $this->inertiaIncreaseMultiplier
+        );
     }
 
     private function overrideSteeringCurve() : void
@@ -67,17 +74,42 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
                 sprintf("properties/steeringcurve/point[@position='%s']/@value", $position->getPosition()),
                 $position->getValue(),
                 2,
-                $this->steeringIncrease[$this->ship->getSize()]
+                $this->steeringIncreaseMultiplier
             );
         }
     }
 
     private function overrideAcceleration() : void
     {
+        $factors = $this->ship->getShipXMLFile()->getAccelerationFactors();
+        $multiplier = $this->mass->getMultiplier();
+
         $this->multiplierIncreaseFloat(
             'properties/physics/accfactors/@forward',
-            $this->ship->getShipXMLFile()->getAccelerationFactor(),
-            2
+            $factors->getForward(),
+            2,
+            $multiplier
+        );
+
+        $this->multiplierIncreaseFloat(
+            'properties/physics/accfactors/@reverse',
+            $factors->getReverse(),
+            2,
+            $multiplier
+        );
+
+        $this->multiplierIncreaseFloat(
+            'properties/physics/accfactors/@horizontal',
+            $factors->getHorizontal(),
+            2,
+            $multiplier
+        );
+
+        $this->multiplierIncreaseFloat(
+            'properties/physics/accfactors/@vertical',
+            $factors->getVertical(),
+            2,
+            $multiplier
         );
     }
 
@@ -87,7 +119,7 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
             'properties/physics/drag/@forward',
             $this->ship->getShipXMLFile()->getDrag()->getForward(),
             3,
-            $this->dragReduction[$this->ship->getSize()]
+            $this->dragReductionMultiplier
         );
     }
 
@@ -106,60 +138,27 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
         $this->multiplierIncreaseFloat(
             'properties/jerk/strafe/@value',
             $jerk->getStrafe(),
-            2
+            2,
+            $this->mass->getMultiplier()
         );
-    }
-
-    private function multiplierIncreaseFloat(string $path, float $value, int $precision, ?float $multiplier=null) : void
-    {
-        if($multiplier === null) {
-            $multiplier = $this->mass->getMultiplier();
-        }
-
-        $increase = $value * $multiplier;
-
-        $this->addOverride()
-            ->setMacroPath($path)
-            ->setFloat($value + $increase, 2)
-            ->setComment(
-                '= %s + %s (increase x%s)',
-                dec($value, $precision),
-                dec($increase, $precision),
-                dec2($multiplier)
-            );
-    }
-
-    private function multiplierDecreaseFloat(string $path, float $value, int $precision, ?float $multiplier=null) : void
-    {
-        if($multiplier === null) {
-            $multiplier = $this->mass->getMultiplier();
-        }
-
-        $decrease = $value * $multiplier;
-
-        $this->addOverride()
-            ->setMacroPath($path)
-            ->setFloat($value - $decrease, 2)
-            ->setComment(
-                '= %s - %s (decrease x%s)',
-                dec($value, $precision),
-                dec($decrease, $precision),
-                dec2($multiplier)
-            );
     }
 
     private function overrideJerkMovement(BaseJerkMovement $movement) : void
     {
+        $multiplier = $this->mass->getMultiplier();
+
         $this->multiplierIncreaseFloat(
             'properties/jerk/'.$movement->getTagName().'/@accel',
             $movement->getAcceleration(),
-            2
+            2,
+            $multiplier
         );
 
         $this->multiplierIncreaseFloat(
             'properties/jerk/'.$movement->getTagName().'/@decel',
             $movement->getDeceleration(),
-            2
+            2,
+            $multiplier
         );
     }
 
@@ -168,7 +167,8 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
         $this->multiplierIncreaseFloat(
             'properties/jerk/forward_boost/@accel',
             $boost->getAcceleration(),
-            2
+            2,
+            $this->mass->getMultiplier()
         );
     }
 
@@ -188,8 +188,19 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
         $this->addComment(
             'Mass multiplier: x%s (= original full load mass / new full load mass = %s / %s)',
             $this->mass->formatMultiplier(),
-            number_format($this->mass->getOriginalFullLoadMass(), 0),
-            number_format($this->mass->getAdjustedFullLoadMass(), 0)
+            dec($this->mass->getOriginalFullLoadMass(), 0),
+            dec($this->mass->getAdjustedFullLoadMass(), 0)
         );
+
+        $massMultiplier = $this->mass->getMultiplier();
+        $config = CargoSizeBuildTools::getConfig();
+
+        $this->dragReductionMultiplier = (float)($massMultiplier * $config->getDragReductionFactor());
+        $this->steeringIncreaseMultiplier = (float)($massMultiplier * $config->getSteeringIncreaseFactor());
+        $this->inertiaIncreaseMultiplier = (float)($massMultiplier * $config->getInertiaIncreaseFactor());
+
+        $this->addComment('Steering increase: x%s (= mass multiplier * %s)', dec3($this->steeringIncreaseMultiplier), dec2($config->getSteeringIncreaseFactor()));
+        $this->addComment('Drag reduction: x%s (= mass multiplier * %s)', dec3($this->dragReductionMultiplier), dec2($config->getDragReductionFactor()));
+        $this->addComment('Inertia increase: x%s (= mass multiplier * %s)', dec3($this->inertiaIncreaseMultiplier), dec2($config->getInertiaIncreaseFactor()));
     }
 }
