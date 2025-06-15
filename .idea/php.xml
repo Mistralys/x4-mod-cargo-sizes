@@ -63,6 +63,7 @@
       <path value="$PROJECT_DIR$/vendor/nikic/php-parser" />
       <path value="$PROJECT_DIR$/vendor/parsecsv/php-parsecsv" />
       <path value="$PROJECT_DIR$/vendor/mistralys/x4-data-extractor" />
+      <path value="$PROJECT_DIR$/vendor/symfony/css-selector" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2" />
