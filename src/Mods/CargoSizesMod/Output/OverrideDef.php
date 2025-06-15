@@ -11,10 +11,20 @@ class OverrideDef implements StringableInterface
     private string $comment;
     private string $value;
     private string $path;
+    private string $macroName;
+
+    public function __construct(string $macroName)
+    {
+        $this->macroName = $macroName;
+    }
 
     public function setMacroPath(string $path) : self
     {
-        return $this->setPath('/macros/macro/'.ltrim($path, '/'));
+        return $this->setPath(sprintf(
+            "//macro[@name='%s']/%s",
+            $this->macroName,
+            ltrim($path, '/')
+        ));
     }
 
     public function setPath(string $path) : self
@@ -58,13 +68,18 @@ class OverrideDef implements StringableInterface
             $lines[] = sprintf('    <!-- %s -->', str_replace("\n", " ", $this->comment));
         }
 
-        $lines[] = sprintf(
+        $lines[] = $this->renderOverride();
+
+        return implode("\n", $lines);
+    }
+
+    protected function renderOverride() : string
+    {
+        return sprintf(
             '    <replace sel="%s">%s</replace>',
             $this->path,
             $this->value
         );
-
-        return implode("\n", $lines);
     }
 
     public function __toString(): string
