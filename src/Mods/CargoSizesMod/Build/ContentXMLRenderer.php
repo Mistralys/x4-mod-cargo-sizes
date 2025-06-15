@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
 use Mistralys\X4\Database\Translations\Languages;
-use Mistralys\X4\Database\Translations\TranslationExtractor;
 use Mistralys\X4\ExtractedData\DataFolders;
 
 class ContentXMLRenderer
 {
     private const XML_TEMPLATE = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
-<content id="%1$s" name="%2$s" description="%3$s" author="%4$s" version="%5$s" date="%6$s" save="0" enabled="1">
+<!-- Priority set to 91 to guarantee overriding DLC macros. -->
+<content id="%1$s" name="%2$s" description="%3$s" author="%4$s" version="%5$s" date="%6$s" save="0" enabled="1" priority="91">
     %8$s
     %7$s
 </content>
