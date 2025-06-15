@@ -39,6 +39,17 @@ The exact changes to cargo sizes can be reviewed here:
   that ships actually transport more value and are juicier 
   targets for piracy as a result.
 
+## Compatibility
+
+Because the mod changes flight characteristics of ships to compensate
+for the added mass of cargo, it will conflict with any mods that also
+change flight characteristics of ships.
+
+**I recommend that you load this mod after conflicting mods** to make the
+game use the flight characteristics of this mod instead. It is unlikely 
+that any other mod that changes flight characteristics will work with the 
+increased cargo sizes.
+
 ## Development
 
 ### Requirements
@@ -68,10 +79,72 @@ Please refer to the tool's instructions to unpack the game data files.
 4. Run `composer install` to install the dependencies.
 5. Run `composer build-mod` to build the mod.
 
-### Customizing multiplier values
+### Customizing build settings
 
-Edit the file `config/build-config.php` to set the desired multiplier 
-values, then build the mod again.
+All configuration settings for the build process are located
+in the `config/build-config.json` file.
+
+#### Cargo size multipliers
+
+Multipliers can be added and removed from the `cargo-multipliers`
+list. During the build process, the mod will automatically generate
+all the listed multipliers.
+
+> NOTE: Multiplier values can be floats, so you can choose to
+> use a multiplier of `1.5` for example.
+
+#### Flight model settings
+
+Because the amount of cargo a ship carries in its hold affects how
+it flies, the mod will automatically adjust the flight model to 
+compensate for the increased cargo size.
+
+The internal calculations of the mod automatically scale things like 
+the ship's acceleration, inertia and steering curve. These calculations 
+are based on a calculated mass multiplier value. 
+
+Example: The Argon Shuyaku Vanguard L-sized transport, cargo size x4.
+
+- Base ship mass: 650
+- Base cargo size: 37,000
+- Adjusted cargo size: **148,000** = 37,000 * 4 _(cargo size * multiplier)_
+- Base full cargo mass: **37,650** = 650 + 37,000 _(mass + cargo)_
+- Adjusted full cargo mass: **148,650** = 650 + 148,000 _(mass + adjusted cargo)_
+- Mass multiplier: **0.25** = 37,650 / 148,650 _(base full cargo mass / adjusted full cargo mass)_
+
+> NOTE: This assumes that one unit of cargo has a mass of 1. 
+
+Most values can simply be adjusted using the mass multiplier. Some values
+like the ship's inertia and steering curve require a lighter touch, however.
+The mod solves this by calculating custom multipliers as fractions
+of the mass multiplier (this way they scale along with the mass multiplier).
+
+They can be adjusted in the configuration:
+
+```json
+{
+  "flight-mechanics": {
+    "dragReductionFactor": 0.20,
+    "steeringIncreaseFactor": 0.24,
+    "inertiaIncreaseFactor": 0.40
+  }
+}
+```
+
+Using the Shuyaku example again:
+
+- Inertia multiplier: **0.101** = 0.40 * 0.25 _(inertia factor * mass multiplier)_
+- Pitch: **362.940** = 329.329 + 33.365 (= 329.329 * 0.101) _(base pitch + (base pitch * inertia multiplier))_
+- Drag multiplier: **0.05** = 0.20 * 0.25 _(drag factor * mass multiplier)_
+- Drag: **161.467** = 170.083 - 8.616 (= 170.083 * 0.05) _(base drag - (base drag * drag multiplier))_
+
+**So why those exact values?**
+
+They are based on recommendations from X4 modding resources and actual physics
+considerations, seeing that X4's flight model is quite realistic since the 7.5+
+flight model update.
+
+Still, the values are adjustable to be easily tweaked as needed.
 
 ## X4 Tools and libraries
 
