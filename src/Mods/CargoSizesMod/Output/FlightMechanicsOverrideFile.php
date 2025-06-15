@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod\Output;
 
+use AppUtils\HTMLTag;
 use Mistralys\X4\Mods\CargoSizesMod\BaseOverrideFile;
 use Mistralys\X4\Mods\CargoSizesMod\BaseXMLFile;
 use Mistralys\X4\Mods\CargoSizesMod\CargoSizeBuildTools;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\BaseJerkMovement;
+use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\EmptyAccelerationFactors;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Jerk;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkBoost;
 use function Mistralys\X4\dec;
@@ -79,38 +81,42 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
         }
     }
 
+    public function render(): string
+    {
+        die( parent::render());
+    }
+
     private function overrideAcceleration() : void
     {
         $factors = $this->ship->getShipXMLFile()->getAccelerationFactors();
+
+        $override = $this->addTagOverride('accfactors')
+            ->setMacroPath('properties/physics')
+            ->enableAddMode($factors instanceof EmptyAccelerationFactors)
+            ->setComment('Overriding the whole tag, because not all attributes are present in the original files.');
+
+        $this->overrideAccelerationAttribute($override, 'forward', $factors->getForward());
+        $this->overrideAccelerationAttribute($override, 'reverse', $factors->getReverse());
+        $this->overrideAccelerationAttribute($override, 'horizontal', $factors->getHorizontal());
+        $this->overrideAccelerationAttribute($override, 'vertical', $factors->getVertical());
+    }
+
+    private function overrideAccelerationAttribute(TagOverrideDef $override, string $name, float $value) : void
+    {
         $multiplier = $this->mass->getMultiplier();
+        $increase = $value * $multiplier;
+        $newValue = $value + $increase;
 
-        $this->multiplierIncreaseFloat(
-            'properties/physics/accfactors/@forward',
-            $factors->getForward(),
-            2,
-            $multiplier
+        $override->addComment(
+            '@%s: %s = %s + %s (increase x%s)',
+            $name,
+            dec2($newValue),
+            dec2($value),
+            dec2($increase),
+            dec2($multiplier)
         );
 
-        $this->multiplierIncreaseFloat(
-            'properties/physics/accfactors/@reverse',
-            $factors->getReverse(),
-            2,
-            $multiplier
-        );
-
-        $this->multiplierIncreaseFloat(
-            'properties/physics/accfactors/@horizontal',
-            $factors->getHorizontal(),
-            2,
-            $multiplier
-        );
-
-        $this->multiplierIncreaseFloat(
-            'properties/physics/accfactors/@vertical',
-            $factors->getVertical(),
-            2,
-            $multiplier
-        );
+        $override->setAttribute($name, dec2($newValue));
     }
 
     private function overrideDrag() : void
