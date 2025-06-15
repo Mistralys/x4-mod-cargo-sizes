@@ -132,6 +132,11 @@ abstract class BaseOverrideFile
         return $def;
     }
 
+    protected function addCustomOverride(OverrideDef $override) : void
+    {
+        $this->overrides[] = $override;
+    }
+
     private string $template = <<<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 
