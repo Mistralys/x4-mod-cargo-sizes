@@ -9,8 +9,10 @@ declare(strict_types=1);
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
 use DOMElement;
+use HTML\QuickForm2\Traits\RenderableElementTrait;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\AccelerationFactors;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Drag;
+use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\EmptyAccelerationFactors;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Inertia;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Jerk;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkBoost;
@@ -86,31 +88,34 @@ class ShipXMLFile extends BaseXMLFile
 
         $el = $this->getFirstByTagName('accfactors');
 
+        if($el === null) {
+            $this->accelerationFactors = new EmptyAccelerationFactors();
+            return $this->accelerationFactors;
+        }
+
         $forward = 1.0;
         $reverse = 1.0;
         $horizontal = 1.0;
         $vertical = 1.0;
 
-        if($el !== null) {
-            $valForward = $el->getAttribute('forward');
-            if($valForward !== '') {
-                $forward = (float)$valForward;
-            }
+        $valForward = $el->getAttribute('forward');
+        if($valForward !== '') {
+            $forward = (float)$valForward;
+        }
 
-            $valReverse = $el->getAttribute('reverse');
-            if($valReverse !== '') {
-                $reverse = (float)$valReverse;
-            }
+        $valReverse = $el->getAttribute('reverse');
+        if($valReverse !== '') {
+            $reverse = (float)$valReverse;
+        }
 
-            $valHorizontal = $el->getAttribute('horizontal');
-            if($valHorizontal !== '') {
-                $horizontal = (float)$valHorizontal;
-            }
+        $valHorizontal = $el->getAttribute('horizontal');
+        if($valHorizontal !== '') {
+            $horizontal = (float)$valHorizontal;
+        }
 
-            $valVertical = $el->getAttribute('vertical');
-            if($valVertical !== '') {
-                $vertical = (float)$valVertical;
-            }
+        $valVertical = $el->getAttribute('vertical');
+        if($valVertical !== '') {
+            $vertical = (float)$valVertical;
         }
 
         $this->accelerationFactors = new AccelerationFactors(
