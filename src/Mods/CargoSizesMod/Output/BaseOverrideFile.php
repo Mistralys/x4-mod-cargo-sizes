@@ -13,6 +13,8 @@ use AppUtils\FileHelper\FolderInfo;
 use Mistralys\X4\Database\DataSources\DataSourceDefs;
 use Mistralys\X4\Database\MacroIndex\MacroFileDefs;
 use Mistralys\X4\Mods\CargoSizesMod\Output\OverrideDef;
+use function Mistralys\X4\dec;
+use function Mistralys\X4\dec2;
 
 /**
  * Used to store information and render the XML of the macro file
@@ -176,5 +178,39 @@ XML;
         });
 
         return implode("\n", $this->overrides)."\n";
+    }
+
+    protected function multiplierIncreaseFloat(string $path, float $value, int $precision, float $multiplier) : void
+    {
+        $increase = $value * $multiplier;
+        $newValue = $value + $increase;
+
+        $this->addOverride()
+            ->setMacroPath($path)
+            ->setFloat($newValue, $precision)
+            ->setComment(
+                '%s = %s + %s (increase x%s)',
+                dec($newValue, $precision),
+                dec($value, $precision),
+                dec($increase, $precision),
+                dec2($multiplier)
+            );
+    }
+
+    protected function multiplierDecreaseFloat(string $path, float $value, int $precision, float $multiplier) : void
+    {
+        $decrease = $value * $multiplier;
+        $newValue = $value - $decrease;
+
+        $this->addOverride()
+            ->setMacroPath($path)
+            ->setFloat($newValue, $precision)
+            ->setComment(
+                '%s = %s - %s (decrease x%s)',
+                dec($newValue, $precision),
+                dec($value, $precision),
+                dec($decrease, $precision),
+                dec2($multiplier)
+            );
     }
 }
