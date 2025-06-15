@@ -2,6 +2,13 @@
   "cargo-multipliers": [
     2,
     4,
+    6,
+    8,
     10
-  ]
+  ],
+  "flight-mechanics": {
+    "dragReductionFactor": 0.2,
+    "steeringIncreaseFactor": 0.24,
+    "inertiaIncreaseFactor": 0.4
+  }
 }
