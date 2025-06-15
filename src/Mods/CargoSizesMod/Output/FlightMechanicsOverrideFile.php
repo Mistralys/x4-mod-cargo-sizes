@@ -7,6 +7,7 @@ namespace Mistralys\X4\Mods\CargoSizesMod\Output;
 use AppUtils\FileHelper;
 use Mistralys\X4\Database\Ships\ShipSizes;
 use Mistralys\X4\Mods\CargoSizesMod\BaseOverrideFile;
+use Mistralys\X4\Mods\CargoSizesMod\BaseXMLFile;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\BaseJerkMovement;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Jerk;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkBoost;
@@ -171,9 +172,9 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
         );
     }
 
-    public function getMacroID() : string
+    public function getXMLFile() : BaseXMLFile
     {
-        return FileHelper::removeExtension($this->ship->getShipFileName());
+        return $this->ship->getShipXMLFile();
     }
 
     private function calculateMassAdjustment() : void

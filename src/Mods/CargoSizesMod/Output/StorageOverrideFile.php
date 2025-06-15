@@ -8,8 +8,6 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
-use AppUtils\FileHelper;
-
 /**
  * Used to store information and render the XML of the macro file
  * that modifies the cargo size of a single ship.
@@ -27,8 +25,8 @@ class StorageOverrideFile extends BaseOverrideFile
             ->setComment('Original cargo value: %s', $this->getCargo());
     }
 
-    public function getMacroID() : string
+    public function getXMLFile() : BaseXMLFile
     {
-        return FileHelper::removeExtension($this->ship->getCargoFileName());
+        return $this->ship->getCargoXMLFile();
     }
 }

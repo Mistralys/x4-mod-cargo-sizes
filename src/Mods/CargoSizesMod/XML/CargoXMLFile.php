@@ -9,8 +9,6 @@ declare(strict_types=1);
 namespace Mistralys\X4\Mods\CargoSizesMod\XML;
 
 use DOMElement;
-use Mistralys\X4\Mods\CargoSizesMod\CargoSizeException;
-use Mistralys\X4\Mods\CargoSizesMod\CargoSizeExtractor;
 use Mistralys\X4\Mods\CargoSizesMod\BaseXMLFile;
 
 /**
@@ -22,23 +20,6 @@ use Mistralys\X4\Mods\CargoSizesMod\BaseXMLFile;
  */
 class CargoXMLFile extends BaseXMLFile
 {
-    public function getRelativePath() : string
-    {
-        $folder = $this->xmlFile->getRuntimeProperty(CargoSizeExtractor::FILE_PROP_FOLDER_RELATIVE);
-        if(!empty($folder) && is_string($folder)) {
-            return $folder;
-        }
-
-        throw new CargoSizeException(
-            sprintf(
-                'Invalid or missing relative path for the cargo XML file [%s].',
-                $this->getFileName()
-            ),
-            '',
-            CargoSizeException::ERROR_MISSING_RELATIVE_PATH
-        );
-    }
-
     public function hasCargoValue() : bool
     {
         return $this->getFirstByTagName('cargo') !== null;

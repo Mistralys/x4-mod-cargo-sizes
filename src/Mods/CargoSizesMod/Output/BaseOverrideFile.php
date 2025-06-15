@@ -80,18 +80,11 @@ abstract class BaseOverrideFile
         return $this->ship->getSize();
     }
 
-    abstract public function getMacroID() : string;
+    abstract public function getXMLFile() : BaseXMLFile;
 
     public function getZipPath(string $rootRelative) : string
     {
-        $macroDef = MacroFileDefs::getInstance()->getByID($this->getMacroID());
-
-        $dataSource = DataSourceDefs::getInstance()->getByID($macroDef->getDataFolderID());
-        if($dataSource->isExtension()) {
-            $rootRelative .= '/extensions/'.$dataSource->getID();
-        }
-
-        return $rootRelative.'/'.$macroDef->getFullPath().'.xml';
+        return $rootRelative.'/'.ltrim($this->getXMLFile()->getRelativePath(), '/');
     }
 
     public function getShipName() : string
@@ -144,8 +137,8 @@ XML;
             $this->getMultiplier(),
             $this->renderComments(),
             $this->renderOverrides(),
-            $this->ship->getShipFileName(),
-            $this->ship->getCargoFileName()
+            $this->ship->getShipXMLFile()->getRelativePath(),
+            $this->ship->getCargoXMLFile()->getRelativePath()
         )."\n";
 
         return $this->renderedXML;

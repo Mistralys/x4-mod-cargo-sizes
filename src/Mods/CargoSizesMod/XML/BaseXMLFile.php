@@ -8,9 +8,12 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
+use AppUtils\FileHelper;
 use AppUtils\FileHelper\FileInfo;
 use DOMDocument;
 use DOMElement;
+use Mistralys\X4\Database\DataSources\DataSourceDefs;
+use Mistralys\X4\Database\MacroIndex\MacroFileDefs;
 use Mistralys\X4\ExtractedData\DataFolder;
 
 /**
@@ -33,6 +36,20 @@ abstract class BaseXMLFile
         $this->dom = new DOMDocument();
         $this->dom->loadXML($this->xml);
         $this->dataFolder = $dataFolder;
+    }
+
+    public function getRelativePath() : string
+    {
+        $macroDef = MacroFileDefs::getInstance()->getByID($this->xmlFile->getBaseName());
+
+        $path = $macroDef->getFullPath().'.xml';
+
+        $dataSource = DataSourceDefs::getInstance()->getByID($macroDef->getDataFolderID());
+        if($dataSource->isExtension()) {
+            $path = 'extensions/'.$dataSource->getID().'/'.$path;
+        }
+
+        return $path;
     }
 
     public function getXML(): string
