@@ -85,13 +85,22 @@ class TagOverrideDef extends OverrideDef
         return $this;
     }
 
+    public function addComments(array $comments) : self
+    {
+        foreach($comments as $comment) {
+            $this->addComment($comment);
+        }
+
+        return $this;
+    }
+
     private const TAG_TEMPLATE = <<<'XML'
-    <%5$s sel="%1$s">
+    <%4$s sel="%1$s">
         <!--
-%4$s
+%3$s
         -->
-        <%2$s %3$s/>
-    </%5$s>
+%2$s
+    </%4$s>
 XML;
 
     protected function renderOverride() : string
@@ -110,10 +119,18 @@ XML;
         return sprintf(
             self::TAG_TEMPLATE,
             $this->getPath(),
-            $this->getTagName(),
-            (string)$this->attributes,
+            $this->renderTag(),
             implode("\n", $comments),
             $overrideTag
+        );
+    }
+
+    protected function renderTag() : string
+    {
+        return sprintf(
+            '        <%1$s%2$s/>',
+            $this->getTagName(),
+            $this->attributes,
         );
     }
 }
