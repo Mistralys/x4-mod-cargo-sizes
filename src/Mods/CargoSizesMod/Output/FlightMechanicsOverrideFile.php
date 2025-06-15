@@ -59,7 +59,7 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
 
     private function overrideSteeringCurve() : void
     {
-        $curve = $this->ship->getXMLFile()->getSteeringCurve();
+        $curve = $this->ship->getShipXMLFile()->getSteeringCurve();
 
         foreach($curve->getPositions() as $position) {
             $this->multiplierIncreaseFloat(
@@ -75,7 +75,7 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
     {
         $this->multiplierIncreaseFloat(
             'properties/physics/accfactors/@forward',
-            $this->ship->getXMLFile()->getAccelerationFactor(),
+            $this->ship->getShipXMLFile()->getAccelerationFactor(),
             2
         );
     }
@@ -84,7 +84,7 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
     {
         $this->multiplierDecreaseFloat(
             'properties/physics/drag/@forward',
-            $this->ship->getXMLFile()->getDrag()->getForward(),
+            $this->ship->getShipXMLFile()->getDrag()->getForward(),
             3,
             $this->dragReduction[$this->ship->getSize()]
         );
@@ -92,7 +92,7 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
 
     private function overrideJerk() : void
     {
-        $jerk = $this->ship->getXMLFile()->getJerk();
+        $jerk = $this->ship->getShipXMLFile()->getJerk();
 
         $this->overrideJerkMovement($jerk->getForward());
         $this->overrideJerkMovement($jerk->getTravel());
@@ -179,7 +179,7 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
     private function calculateMassAdjustment() : void
     {
         $this->mass = new MassAdjustment(
-            $this->ship->getXMLFile()->getMass(),
+            $this->ship->getShipXMLFile()->getMass(),
             $this->getCargo(),
             $this->getAdjustedCargo()
         );

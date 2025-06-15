@@ -47,7 +47,7 @@ class BBCodeReference extends BaseReferenceRenderer
     {
         $lines[] = sprintf(
             '[*] [i]%s[/i]: %s m3 > [b]%s m3[/b]',
-            $file->getShipName(),
+            $file->getShipLabel(),
             number_format($file->getCargoValue(), 0, '.', ','),
             number_format($file->calculateCargoValue($multiplier), 0, '.', ','),
         );

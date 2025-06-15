@@ -39,7 +39,7 @@ class MarkdownReference extends BaseReferenceRenderer
     {
         $lines[] = sprintf(
             '- _%s_: %s m3 > **%s m3**',
-            $file->getShipName(),
+            $file->getShipLabel(),
             number_format($file->getCargoValue(), 0, '.', ','),
             number_format($file->calculateCargoValue($multiplier), 0, '.', ','),
         );

@@ -69,7 +69,7 @@ abstract class BaseReferenceRenderer
         $this->generateTypeHeader($lines, $typeLabel);
 
         usort($files, static function(CargoShipResult $a, CargoShipResult $b) : int {
-            return strnatcasecmp($a->getShipName(), $b->getShipName());
+            return strnatcasecmp($a->getShipLabel(), $b->getShipLabel());
         });
 
         $this->generateListStart($lines);

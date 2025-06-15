@@ -52,7 +52,7 @@ class ShipXMLFile extends XMLFile
         );
     }
 
-    public function resolveShipName() : ?string
+    public function resolveShipLabel() : ?string
     {
         $el = $this->getFirstByTagName('identification');
         if($el !== null) {
