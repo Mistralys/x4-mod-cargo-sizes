@@ -23,3 +23,13 @@ function dec3(float|int $value): string
 {
     return dec($value, 3);
 }
+
+function calcIncrease(float $value, float $multiplier) : float
+{
+    return $value + ($value * $multiplier);
+}
+
+function calcDecrease(float $value, float $multiplier) : float
+{
+    return $value - ($value * $multiplier);
+}
