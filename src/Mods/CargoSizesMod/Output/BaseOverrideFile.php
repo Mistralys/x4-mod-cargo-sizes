@@ -26,10 +26,10 @@ abstract class BaseOverrideFile
     protected FolderInfo $baseFolder;
     protected int|float $multiplier;
     protected string $id;
-    protected CargoShipResult $ship;
+    protected ShipResult $ship;
     protected ?string $renderedXML = null;
 
-    public function __construct(FolderInfo $baseFolder, int|float $multiplier, CargoShipResult $ship)
+    public function __construct(FolderInfo $baseFolder, int|float $multiplier, ShipResult $ship)
     {
         $this->id = md5(JSONConverter::var2json(array(get_class($this), $ship->getCargoFileName(), $ship->getCargoValue(), $multiplier, $ship->getShipType(), $ship->getSize())));
         $this->baseFolder = $baseFolder;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod\References;
 
-use Mistralys\X4\Mods\CargoSizesMod\CargoShipResult;
+use Mistralys\X4\Mods\CargoSizesMod\ShipResult;
 
 class BBCodeReference extends BaseReferenceRenderer
 {
@@ -43,7 +43,7 @@ class BBCodeReference extends BaseReferenceRenderer
         $lines[] = '[size=2][b]'.$typeLabel.'[/b][/size]';
     }
 
-    protected function generateShipLine(array &$lines, CargoShipResult $file, float|int $multiplier): void
+    protected function generateShipLine(array &$lines, ShipResult $file, float|int $multiplier): void
     {
         $lines[] = sprintf(
             '[*] [i]%s[/i]: %s m3 > [b]%s m3[/b]',

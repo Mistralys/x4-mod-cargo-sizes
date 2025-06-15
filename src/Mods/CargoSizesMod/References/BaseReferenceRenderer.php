@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Mistralys\X4\Mods\CargoSizesMod\References;
 
 use AppUtils\FileHelper\FileInfo;
-use Mistralys\X4\Mods\CargoSizesMod\CargoShipResult;
+use Mistralys\X4\Mods\CargoSizesMod\ShipResult;
 
 abstract class BaseReferenceRenderer
 {
@@ -61,14 +61,14 @@ abstract class BaseReferenceRenderer
     /**
      * @param string[] $lines
      * @param string $typeLabel
-     * @param CargoShipResult[] $files
+     * @param ShipResult[] $files
      * @return void
      */
     private function generateMultiplierLines(array &$lines, string $typeLabel, array $files, int|float $multiplier) : void
     {
         $this->generateTypeHeader($lines, $typeLabel);
 
-        usort($files, static function(CargoShipResult $a, CargoShipResult $b) : int {
+        usort($files, static function(ShipResult $a, ShipResult $b) : int {
             return strnatcasecmp($a->getShipLabel(), $b->getShipLabel());
         });
 
@@ -102,9 +102,9 @@ abstract class BaseReferenceRenderer
 
     /**
      * @param string[] $lines
-     * @param CargoShipResult $file
+     * @param ShipResult $file
      * @param int|float $multiplier
      * @return void
      */
-    abstract protected function generateShipLine(array &$lines, CargoShipResult $file, int|float $multiplier) : void;
+    abstract protected function generateShipLine(array &$lines, ShipResult $file, int|float $multiplier) : void;
 }

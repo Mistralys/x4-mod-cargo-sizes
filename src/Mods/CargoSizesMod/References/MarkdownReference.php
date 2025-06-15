@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod\References;
 
-use Mistralys\X4\Mods\CargoSizesMod\CargoShipResult;
+use Mistralys\X4\Mods\CargoSizesMod\ShipResult;
 
 class MarkdownReference extends BaseReferenceRenderer
 {
@@ -35,7 +35,7 @@ class MarkdownReference extends BaseReferenceRenderer
         $lines[] = '';
     }
 
-    protected function generateShipLine(array &$lines, CargoShipResult $file, float|int $multiplier): void
+    protected function generateShipLine(array &$lines, ShipResult $file, float|int $multiplier): void
     {
         $lines[] = sprintf(
             '- _%s_: %s m3 > **%s m3**',

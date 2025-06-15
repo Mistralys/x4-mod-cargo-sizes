@@ -95,7 +95,7 @@ class CargoSizeExtractor
     );
 
     /**
-     * @var CargoShipResult[]
+     * @var ShipResult[]
      */
     private array $results = array();
 
@@ -334,7 +334,7 @@ class CargoSizeExtractor
         FolderInfo $baseFolder,
         int|float $multiplier,
         string $shipType,
-        CargoShipResult $result
+        ShipResult $result
     ) : void
     {
         $typeKey = sprintf(
@@ -369,7 +369,7 @@ class CargoSizeExtractor
         string $typeKey,
         FolderInfo $baseFolder,
         int|float $multiplier,
-        CargoShipResult $result
+        ShipResult $result
     ) : void
     {
         $this->registerOverrideFile(
@@ -554,7 +554,7 @@ TXT;
 
         Console::line2('Found ship [%s].', $label);
 
-        $this->results[] = new CargoShipResult(
+        $this->results[] = new ShipResult(
             $label,
             $shipType,
             $shipXMLFile,

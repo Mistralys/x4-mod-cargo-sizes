@@ -15,7 +15,7 @@ use Mistralys\X4\Mods\CargoSizesMod\XML\CargoXMLFile;
  * @package X4 Cargo Sizes Mod
  * @subpackage Extractor
  */
-class CargoShipResult
+class ShipResult
 {
     private string $shipType;
     private string $shipLabel;
