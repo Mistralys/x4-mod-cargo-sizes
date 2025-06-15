@@ -16,7 +16,6 @@ use AppUtils\ZIPHelper;
 use Misc\Mods\CargoSizesMod\FOMOD\FileCollection;
 use Mistralys\X4\Database\Translations\Languages;
 use Mistralys\X4\Database\Translations\TranslationDefs;
-use Mistralys\X4\Database\Translations\TranslationExtractor;
 use Mistralys\X4\ExtractedData\DataFolder;
 use Mistralys\X4\ExtractedData\DataFolders;
 use Mistralys\X4\Game\X4Game;
@@ -25,7 +24,6 @@ use Mistralys\X4\Mods\CargoSizesMod\Output\FlightMechanicsOverrideFile;
 use Mistralys\X4\Mods\CargoSizesMod\References\BBCodeReference;
 use Mistralys\X4\Mods\CargoSizesMod\References\MarkdownReference;
 use Mistralys\X4\Mods\CargoSizesMod\XML\CargoXMLFile;
-use const Mistralys\X4\X4_EXTRACTED_CAT_FILES_FOLDER;
 use const Mistralys\X4\X4_GAME_FOLDER;
 
 /**
@@ -239,11 +237,11 @@ class CargoSizeExtractor
     {
         Console::line1('Writing Nexus BBCode reference file.');
 
-        FileInfo::factory(__DIR__.'/../../../docs/nexus-description.bbcode')
+        FileInfo::factory(__DIR__.'/../../../../docs/nexus-description.bbcode')
             ->putContents(str_replace(
                 '{{CARGO_SIZES_REFERENCE}}',
                 (new BBCodeReference($this->multipliers, $this->getResultsCategorized()))->generate(),
-                FileInfo::factory(__DIR__.'/../../../docs/nexus-description.bbcode.tpl')->getContents()
+                FileInfo::factory(__DIR__.'/../../../../docs/nexus-description.bbcode.tpl')->getContents()
             ));
     }
 

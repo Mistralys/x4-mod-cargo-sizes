@@ -44,7 +44,7 @@ class Translation
     private static function loadStrings() : array
     {
         if(!isset(self::$strings)) {
-            self::$strings = JSONFile::factory(__DIR__.'/../../../config/translations.json')->parse();
+            self::$strings = JSONFile::factory(__DIR__.'/../../../../config/translations.json')->parse();
         }
 
         return self::$strings;
