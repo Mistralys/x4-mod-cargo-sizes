@@ -533,39 +533,32 @@ TXT;
             return;
         }
 
-        $cargoMacro = $this->resolveCargoConnection($shipXMLFile);
-        if ($cargoMacro === null) {
+        $cargoMacroID = $this->resolveCargoConnection($shipXMLFile);
+        if ($cargoMacroID === null) {
             $this->addMessage('SKIP | No cargo connection found in [%s].', $macroName);
             return;
         }
 
-        if(!isset($this->cargoMacros[$cargoMacro])) {
-            $this->addMessage('SKIP | No cargo macro found in [%s]. Expected macro [%s] but it does not exist.', $cargoMacro);
+        if(!isset($this->cargoMacros[$cargoMacroID])) {
+            $this->addMessage('SKIP | No cargo macro found in [%s]. Expected macro [%s] but it does not exist.', $cargoMacroID);
             return;
         }
 
-        $cargoMacro = $this->cargoMacros[$cargoMacro];
+        $cargoXMLFile = $this->cargoMacros[$cargoMacroID];
 
-        $name = $this->resolveShipName($shipXMLFile);
-        if(empty($name)) {
-            $this->addMessage('SKIP | No ship name found for [%s].', $macroName);
+        $label = $this->resolveShipLabel($shipXMLFile);
+        if(empty($label)) {
+            $this->addMessage('SKIP | No ship label found for [%s].', $macroName);
             return;
         }
 
-        Console::line2('Found ship [%s].', $name);
+        Console::line2('Found ship [%s].', $label);
 
         $this->results[] = new CargoShipResult(
-            $macroName,
-            $shipXMLFile->getFileName(),
-            $cargoMacro->getFileName(),
-            $shipXMLFile->getDataFolder(),
-            $name,
-            $cargoMacro->getRelativePath(),
-            $cargoMacro->getCargoValue(),
+            $label,
             $shipType,
-            $cargoMacro->getCargoType(),
-            $shipXMLFile->getSize(),
-            $shipXMLFile
+            $shipXMLFile,
+            $cargoXMLFile
         );
     }
 
@@ -582,11 +575,11 @@ TXT;
         return null;
     }
 
-    private function resolveShipName(ShipXMLFile $xml) : string
+    private function resolveShipLabel(ShipXMLFile $xml) : string
     {
         $macroName = $xml->getMacroName();
 
-        $name = $xml->resolveShipName();
+        $name = $xml->resolveShipLabel();
         if ($name !== null) {
             return $name;
         }
@@ -599,7 +592,7 @@ TXT;
         if ($aliasName !== null) {
             foreach ($this->getShipMacros() as $macro) {
                 if ($macro->getMacroName() === $aliasName) {
-                    return $this->resolveShipName($macro);
+                    return $this->resolveShipLabel($macro);
                 }
             }
         }

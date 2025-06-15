@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
 use Mistralys\X4\ExtractedData\DataFolder;
+use Mistralys\X4\Mods\CargoSizesMod\XML\CargoXMLFile;
 
 /**
  * @package X4 Cargo Sizes Mod
@@ -16,69 +17,47 @@ use Mistralys\X4\ExtractedData\DataFolder;
  */
 class CargoShipResult
 {
-    private string $macroName;
-    private string $cargoFileName;
-    private int $cargo;
     private string $shipType;
-    private string $storageType;
-    private string $size;
-    private string $shipName;
-    private string $relativePath;
-    private DataFolder $dataFolder;
-    private ShipXMLFile $xmlFile;
-    private string $shipFileName;
+    private string $shipLabel;
+    private ShipXMLFile $shipXMLFile;
+    private CargoXMLFile $cargoXMLFile;
 
-    public function __construct(string $macroName, string $shipFileName, string $cargoFileName, DataFolder $dataFolder, string $shipName, string $relativePath, int $cargo, string $shipType, string $storageType, string $size, ShipXMLFile $xmlFile)
+    public function __construct(string $shipLabel, string $shipType, ShipXMLFile $xmlFile, CargoXMLFile $cargoXMLFile)
     {
-        $this->dataFolder = $dataFolder;
-        $this->macroName = $macroName;
-        $this->shipFileName = $shipFileName;
-        $this->cargoFileName = $cargoFileName;
-        $this->relativePath = $relativePath;
-        $this->shipName = $shipName;
-        $this->cargo = $cargo;
+        $this->shipLabel = $shipLabel;
         $this->shipType = $shipType;
-        $this->storageType = $storageType;
-        $this->size = $size;
-        $this->xmlFile = $xmlFile;
+        $this->shipXMLFile = $xmlFile;
+        $this->cargoXMLFile = $cargoXMLFile;
     }
 
-    public function getXMLFile(): ShipXMLFile
+    public function getShipXMLFile(): ShipXMLFile
     {
-        return $this->xmlFile;
+        return $this->shipXMLFile;
     }
 
-    public function getRelativePath(): string
+    public function getCargoXMLFile(): CargoXMLFile
     {
-        if($this->dataFolder->isExtension()) {
-            return sprintf(
-                'extensions/%s/%s',
-                $this->dataFolder->getID(),
-                $this->relativePath
-            );
-        }
-
-        return $this->relativePath;
+        return $this->cargoXMLFile;
     }
 
-    public function getMacroName(): string
+    public function getDataFolder() : DataFolder
     {
-        return $this->macroName;
+        return $this->shipXMLFile->getDataFolder();
     }
 
     public function getCargoFileName(): string
     {
-        return $this->cargoFileName;
+        return $this->cargoXMLFile->getFileName();
     }
 
     public function getShipFileName(): string
     {
-        return $this->shipFileName;
+        return $this->shipXMLFile->getFileName();
     }
 
     public function getCargoValue(): int
     {
-        return $this->cargo;
+        return $this->cargoXMLFile->getCargoValue();
     }
 
     public function getShipType(): string
@@ -86,19 +65,19 @@ class CargoShipResult
         return $this->shipType;
     }
 
-    public function getStorageType(): string
+    public function getCargoType(): string
     {
-        return $this->storageType;
+        return $this->cargoXMLFile->getCargoType();
     }
 
     public function getSize(): string
     {
-        return $this->size;
+        return $this->shipXMLFile->getSize();
     }
 
-    public function getShipName(): string
+    public function getShipLabel(): string
     {
-        return $this->shipName;
+        return $this->shipLabel;
     }
 
     public function getTypeLabel() : string
