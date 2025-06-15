@@ -17,7 +17,6 @@ use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkForward;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkTravel;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\SteeringCurve;
 use Mistralys\X4\XML\DOMExtended;
-use Mistralys\X4\XML\ElementExtended;
 
 /**
  * Helper class used to handle a single ship definition XML file.
