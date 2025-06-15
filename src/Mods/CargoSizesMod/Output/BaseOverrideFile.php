@@ -27,6 +27,7 @@ abstract class BaseOverrideFile
     protected int|float $multiplier;
     protected string $id;
     protected CargoShipResult $ship;
+    protected ?string $renderedXML = null;
 
     public function __construct(FolderInfo $baseFolder, int|float $multiplier, CargoShipResult $ship)
     {
@@ -95,7 +96,7 @@ abstract class BaseOverrideFile
 
     public function getShipName() : string
     {
-        return $this->ship->getShipName();
+        return $this->ship->getShipLabel();
     }
 
     public function getTypeLabel() : string
@@ -120,6 +121,8 @@ abstract class BaseOverrideFile
 <!-- 
     Ship: %1$s
     Cargo multiplier: x%2$s
+    Ship Macro File: %5$s
+    Ship Storage Macro File: %6$s
 %3$s 
 -->
 <diff>
@@ -129,15 +132,23 @@ XML;
 
     public function render() : string
     {
+        if(isset($this->renderedXML)) {
+            return $this->renderedXML;
+        }
+
         $this->preRender();
 
-        return sprintf(
+        $this->renderedXML = sprintf(
             $this->template,
             $this->getShipName(),
             $this->getMultiplier(),
             $this->renderComments(),
-            $this->renderOverrides()
+            $this->renderOverrides(),
+            $this->ship->getShipFileName(),
+            $this->ship->getCargoFileName()
         )."\n";
+
+        return $this->renderedXML;
     }
 
     abstract protected function preRender() : void;
@@ -172,18 +183,5 @@ XML;
         });
 
         return implode("\n", $this->overrides)."\n";
-    }
-
-    protected function getOutputPath(): string
-    {
-        return sprintf(
-            '%s/%s-%sx-%s-%s/%s',
-            $this->baseFolder,
-            CargoSizeExtractor::MOD_PREFIX,
-            $this->getMultiplier(),
-            CargoSizeExtractor::prettifyShipType($this->ship->getShipType()),
-            $this->getSize(),
-            $this->getName()
-        );
     }
 }
