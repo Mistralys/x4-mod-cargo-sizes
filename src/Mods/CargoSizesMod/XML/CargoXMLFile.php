@@ -11,7 +11,7 @@ namespace Mistralys\X4\Mods\CargoSizesMod\XML;
 use DOMElement;
 use Mistralys\X4\Mods\CargoSizesMod\CargoSizeException;
 use Mistralys\X4\Mods\CargoSizesMod\CargoSizeExtractor;
-use Mistralys\X4\Mods\CargoSizesMod\XMLFile;
+use Mistralys\X4\Mods\CargoSizesMod\BaseXMLFile;
 
 /**
  * Helper class used to handle a single cargo definition XML file.
@@ -20,7 +20,7 @@ use Mistralys\X4\Mods\CargoSizesMod\XMLFile;
  * @package X4 Cargo Sizes Mod
  * @subpackage Macro XML Helpers
  */
-class CargoXMLFile extends XMLFile
+class CargoXMLFile extends BaseXMLFile
 {
     public function getRelativePath() : string
     {

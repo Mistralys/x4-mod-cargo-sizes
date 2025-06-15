@@ -26,7 +26,7 @@ use Mistralys\X4\XML\ElementExtended;
  * @package X4 Cargo Sizes Mod
  * @subpackage Macro XML Helpers
  */
-class ShipXMLFile extends XMLFile
+class ShipXMLFile extends BaseXMLFile
 {
     private ?string $size = null;
 

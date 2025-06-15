@@ -19,7 +19,7 @@ use Mistralys\X4\ExtractedData\DataFolder;
  * @package X4 Cargo Sizes Mod
  * @subpackage Macro XML Helpers
  */
-class XMLFile
+abstract class BaseXMLFile
 {
     protected FileInfo $xmlFile;
     protected string $xml;
