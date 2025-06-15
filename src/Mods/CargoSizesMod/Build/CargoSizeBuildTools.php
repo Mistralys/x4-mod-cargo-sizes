@@ -12,6 +12,7 @@ use AppUtils\BaseException;
 use AppUtils\FileHelper\FolderInfo;
 use AppUtils\FileHelper\JSONFile;
 use Mistralys\ChangelogParser\ChangelogParser;
+use Mistralys\X4\Mods\CargoSizesMod\Build\BuildConfig;
 use Mistralys\X4\UI\UserInterface;
 use const Mistralys\X4\X4_EXTRACTED_CAT_FILES_FOLDER;
 
@@ -35,7 +36,7 @@ class CargoSizeBuildTools
                 FolderInfo::factory(__DIR__.'/../../../../build')
             );
 
-            $extractor->extract(self::getMultipliers());
+            $extractor->extract(self::getConfig()->getMultipliers());
         }
         catch (BaseException $e)
         {
@@ -60,13 +61,14 @@ class CargoSizeBuildTools
         ModInfo::getVersionFile()->putContents($version);
     }
 
-    /**
-     * @return array<int,int|float>
-     */
-    private static function getMultipliers() : array
-    {
-        $config = JSONFile::factory(__DIR__.'/../../../../config/build-config.json')->parse();
+    private static ?BuildConfig $config = null;
 
-        return $config['cargo-multipliers'] ?? array(2);
+    public static function getConfig() : BuildConfig
+    {
+        if(!isset(self::$config)) {
+            self::$config = new BuildConfig();
+        }
+
+        return self::$config;
     }
 }
