@@ -10,9 +10,8 @@ namespace Mistralys\X4\Mods\CargoSizesMod;
 
 use AppUtils\ConvertHelper\JSONConverter;
 use AppUtils\FileHelper\FolderInfo;
-use Mistralys\X4\Database\DataSources\DataSourceDefs;
-use Mistralys\X4\Database\MacroIndex\MacroFileDefs;
 use Mistralys\X4\Mods\CargoSizesMod\Output\OverrideDef;
+use Mistralys\X4\Mods\CargoSizesMod\Output\TagOverrideDef;
 use function Mistralys\X4\dec;
 use function Mistralys\X4\dec2;
 
@@ -106,7 +105,29 @@ abstract class BaseOverrideFile
 
     protected function addOverride() : OverrideDef
     {
-        $def = new OverrideDef();
+        $def = new OverrideDef($this->getXMLFile()->getMacroName());
+        $this->overrides[] = $def;
+        return $def;
+    }
+
+    /**
+     * Adds an override for a whole tag with attributes.
+     *
+     * ## Example output
+     *
+     * ```xml
+     * <replace sel="/macros/macro/properties/physics/accfactors">
+     *     <accfactors forward="4.0" reverse="0.7" horizontal="1.1" vertical="1.4" />
+     * </replace>
+     * ```
+     *
+     * @param string $name
+     * @return TagOverrideDef
+     */
+    protected function addTagOverride(string $name) : TagOverrideDef
+    {
+        $def = new TagOverrideDef($this->getXMLFile()->getMacroName());
+        $def->setTagName($name);
         $this->overrides[] = $def;
         return $def;
     }
