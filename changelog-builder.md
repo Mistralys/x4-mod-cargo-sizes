@@ -3,6 +3,9 @@
 This changelog only tracks changes to the mod's build tools,
 not the mod content itself.
 
+## v1.2.0 - Flight Model
+- Build: Now generating flight model settings for all ships.
+
 ## v1.1.0 - Fomod installer
 - Build: Added a Fomod wizard generator.
 - Build: Added a content.xml renderer class.
