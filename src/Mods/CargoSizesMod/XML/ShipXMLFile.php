@@ -141,10 +141,10 @@ class ShipXMLFile extends BaseXMLFile
         $this->drag = new Drag(
             (float)$el->getAttribute('forward'),
             (float)$el->getAttribute('reverse'),
-            (int)$el->getAttribute('horizontal'),
-            (int)$el->getAttribute('vertical'),
-            (int)$el->getAttribute('pitch'),
-            (int)$el->getAttribute('yaw'),
+            (float)$el->getAttribute('horizontal'),
+            (float)$el->getAttribute('vertical'),
+            (float)$el->getAttribute('pitch'),
+            (float)$el->getAttribute('yaw'),
             (float)$el->getAttribute('roll')
         );
 
