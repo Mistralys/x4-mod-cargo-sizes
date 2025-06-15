@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod\Output;
 
-use AppUtils\HTMLTag;
 use Mistralys\X4\Mods\CargoSizesMod\BaseOverrideFile;
 use Mistralys\X4\Mods\CargoSizesMod\BaseXMLFile;
 use Mistralys\X4\Mods\CargoSizesMod\CargoSizeBuildTools;
+use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedAccelerationFactors;
+use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedDrag;
+use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedInertia;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\BaseJerkMovement;
-use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\EmptyAccelerationFactors;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Jerk;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkBoost;
 use function Mistralys\X4\dec;
@@ -29,11 +30,10 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
 
         $this->calculateMassAdjustment();
 
-        $this->overrideDrag();
-        $this->overrideAcceleration();
+        $this->overridePhysics();
         $this->overrideJerk();
         $this->overrideSteeringCurve();
-        $this->overrideInertia();
+
     }
 
     public function getName(): string
@@ -41,28 +41,35 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
         return $this->ship->getShipFileName();
     }
 
-    private function overrideInertia() : void
+    /**
+     * Using a custom override for the physics section,
+     * because we replace the whole section instead of
+     * replacing individual tags or attributes.
+     *
+     * This is done after a lot of trials and errors because
+     * of how X4 handles overriding values. Switching between
+     * `<add>` and `<replace>` tags depending on whether the
+     * attribute exists or not is not reliable. Especially
+     * since other mods may also add tags and attributes.
+     *
+     * In the end, it is more reliable and easier to just
+     * replace the whole section.
+     */
+    private function overridePhysics() : void
     {
-        $inertia = $this->ship->getShipXMLFile()->getInertia();
+        $this->addCustomOverride(new PhysicsOverrideDef(
+            $this->getXMLFile()->getMacroName(),
+            $this->ship->getShipXMLFile()->getMass(),
+            $this->resolveInertiaValues(),
+            $this->resolveDragValues(),
+            $this->resolveAccelerationValues()
+        ));
+    }
 
-        $this->multiplierIncreaseFloat(
-            'properties/physics/inertia/@pitch',
-            $inertia->getPitch(),
-            3,
-            $this->inertiaIncreaseMultiplier
-        );
-
-        $this->multiplierIncreaseFloat(
-            'properties/physics/inertia/@yaw',
-            $inertia->getYaw(),
-            3,
-            $this->inertiaIncreaseMultiplier
-        );
-
-        $this->multiplierIncreaseFloat(
-            'properties/physics/inertia/@roll',
-            $inertia->getRoll(),
-            3,
+    private function resolveInertiaValues() : AdjustedInertia
+    {
+        return new AdjustedInertia(
+            $this->ship->getShipXMLFile()->getInertia(),
             $this->inertiaIncreaseMultiplier
         );
     }
@@ -81,45 +88,23 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
         }
     }
 
-    private function overrideAcceleration() : void
+    private function resolveAccelerationValues() : AdjustedAccelerationFactors
     {
-        $factors = $this->ship->getShipXMLFile()->getAccelerationFactors();
-
-        $override = $this->addTagOverride('accfactors')
-            ->setMacroPath('properties/physics')
-            ->enableAddMode($factors instanceof EmptyAccelerationFactors)
-            ->setComment('Overriding the whole tag, because not all attributes are present in the original files.');
-
-        $this->overrideAccelerationAttribute($override, 'forward', $factors->getForward());
-        $this->overrideAccelerationAttribute($override, 'reverse', $factors->getReverse());
-        $this->overrideAccelerationAttribute($override, 'horizontal', $factors->getHorizontal());
-        $this->overrideAccelerationAttribute($override, 'vertical', $factors->getVertical());
-    }
-
-    private function overrideAccelerationAttribute(TagOverrideDef $override, string $name, float $value) : void
-    {
-        $multiplier = $this->mass->getMultiplier();
-        $increase = $value * $multiplier;
-        $newValue = $value + $increase;
-
-        $override->addComment(
-            '@%s: %s = %s + %s (increase x%s)',
-            $name,
-            dec2($newValue),
-            dec2($value),
-            dec2($increase),
-            dec2($multiplier)
+        return new AdjustedAccelerationFactors(
+            $this->ship->getShipXMLFile()->getAccelerationFactors(),
+            $this->mass->getMultiplier()
         );
-
-        $override->setAttribute($name, dec2($newValue));
     }
 
-    private function overrideDrag() : void
+    private function calcIncrease(float $value, float $multiplier) : float
     {
-        $this->multiplierDecreaseFloat(
-            'properties/physics/drag/@forward',
-            $this->ship->getShipXMLFile()->getDrag()->getForward(),
-            3,
+        return $value + ($value * $multiplier);
+    }
+
+    private function resolveDragValues() : AdjustedDrag
+    {
+        return new AdjustedDrag(
+            $this->ship->getShipXMLFile()->getDrag(),
             $this->dragReductionMultiplier
         );
     }
