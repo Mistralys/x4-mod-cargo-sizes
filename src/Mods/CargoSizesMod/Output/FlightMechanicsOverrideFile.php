@@ -81,11 +81,6 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
         }
     }
 
-    public function render(): string
-    {
-        die( parent::render());
-    }
-
     private function overrideAcceleration() : void
     {
         $factors = $this->ship->getShipXMLFile()->getAccelerationFactors();
