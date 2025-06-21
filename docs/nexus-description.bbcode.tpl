@@ -29,7 +29,9 @@ Can be installed anytime, does not affect savegame files. Installing with Vortex
 
 [b][color=#d9ead3][size=3]Uninstalling🔸[/size][/color][/b]
 
-The mod can be uninstalled at any time. Ships will retain their cargo even if it exceeds their cargo capacity after removing the mod, so no cargo is lost.
+The mod can be uninstalled at any time.
+
+Ships will retain their cargo even if it exceeds their cargo capacity after removing the mod, so no cargo is lost. However, since the ship's engines may no longer be able to handle the increased cargo mass, they may become too slow or have poor acceleration. It is recommended to remove the cargo from the ships before uninstalling the mod, or to drop the excess cargo to space.
 
 [b][color=#d9ead3][size=3]VRO compatibility🔸[/size][/color][/b]
 
