@@ -72,7 +72,7 @@ class FileCollection
         $result = array();
 
         foreach(self::getInstances() as $instance) {
-            if($instance->getShipTypePretty() === $shipType) {
+            if($instance->getShipTypeNormalized() === $shipType) {
                 $result[] = $instance;
             }
         }
@@ -96,13 +96,15 @@ class FileCollection
 
     public function getPluginLabel() : string
     {
-        return 'x'.$this->getMultiplier();
+        return 'Increase cargo by x'.$this->getMultiplier();
     }
 
     public function getPluginDescription() : string
     {
         return sprintf(
-            'Increase the cargo size by x%s',
+            'Increases the cargo size for %1$s-sized %2$s by x%3$s.',
+            strtoupper($this->getShipSize()),
+            $this->getShipTypeLabel(),
             $this->getMultiplier()
         );
     }
@@ -111,7 +113,7 @@ class FileCollection
     {
         return sprintf(
             '%s_%s_x%s',
-            CargoSizeExtractor::prettifyShipType($this->getShipType()),
+            CargoSizeExtractor::normalizeShipType($this->getShipType()),
             $this->getShipSize(),
             $this->getMultiplier()
         );
@@ -122,9 +124,14 @@ class FileCollection
         return $this->shipType;
     }
 
-    public function getShipTypePretty() : string
+    public function getShipTypeLabel() : string
     {
-        return CargoSizeExtractor::prettifyShipType($this->getShipType());
+        return CargoSizeExtractor::getTypeLabel($this->getShipType());
+    }
+
+    public function getShipTypeNormalized() : string
+    {
+        return CargoSizeExtractor::normalizeShipType($this->getShipType());
     }
 
     public function getShipSize(): string
