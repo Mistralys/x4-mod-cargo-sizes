@@ -17,11 +17,11 @@ and M-sized mining ships with 2x cargo size.
 ### Nexusmods
 
 The easiest way to install the mod is with the Vortex Mod Manager.
-See the official [Nexus page for the mod](https://www.nexusmods.com/x4foundations/mods/1713).
+See the official [Nexus page for the mod][].
 
 ### Manual ZIP downloads
 
-See the [Releases](https://github.com/Mistralys/x4-mod-cargo-sizes/releases)
+See the [Releases][]
 for all available manual downloads.
 
 ## Features
@@ -36,7 +36,7 @@ for all available manual downloads.
 
 The exact changes to cargo sizes can be reviewed here:
 
-[Reference of cargo sizes](./docs/cargo-size-reference.md)
+[Reference of cargo sizes][]
 
 ## Compatibility
 
@@ -44,10 +44,10 @@ Because the mod changes flight characteristics of ships to compensate
 for the added mass of cargo, it will conflict with any mods that also
 change flight characteristics of ships.
 
-**I recommend that you load this mod after conflicting mods** to make the
-game use the flight characteristics of this mod instead. It is unlikely
-that any other mod that changes flight characteristics will work with the
-increased cargo sizes.
+As it is unlikely that any other mod that changes flight characteristics
+will work with the increased cargo sizes, I have set the mod to high priority.
+This may not work in all cases, so please [report any mod conflicts][] you
+may encounter. 
 
 ## Uninstalling
 
@@ -205,3 +205,9 @@ Still, the values are adjustable to be easily tweaked as needed.
 [X4 Core]: https://github.com/Mistralys/x4-core
 [X4 Savegame Parser]: https://github.com/Mistralys/x4-savegame-parser
 [X4 Cargo Size Mod]: https://github.com/Mistralys/x4-mod-cargo-sizes
+
+
+[report any mod conflicts]: https://github.com/Mistralys/x4-mod-cargo-sizes/issues
+[Nexus page for the mod]: https://www.nexusmods.com/x4foundations/mods/1713
+[Reference of cargo sizes]: ./docs/cargo-size-reference.md
+[Releases]: https://github.com/Mistralys/x4-mod-cargo-sizes/releases
