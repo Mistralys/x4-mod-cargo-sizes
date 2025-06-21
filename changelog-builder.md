@@ -3,6 +3,10 @@
 This changelog only tracks changes to the mod's build tools,
 not the mod content itself.
 
+## v1.3.0 - Fomod installer
+- Build: Updated the Fomod installer to add images for each option.
+- Build: Improved the Fomod installer's wording somewhat.
+
 ## v1.2.0 - Flight Model
 - Build: Now generating flight model settings for all ships.
 
