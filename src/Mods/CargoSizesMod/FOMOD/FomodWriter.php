@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod\FOMOD;
 
+use AppUtils\FileHelper\FileInfo;
 use AppUtils\FileHelper\FolderInfo;
 use AppUtils\ZIPHelper;
 use Misc\Mods\CargoSizesMod\FOMOD\FileCollection;
@@ -48,6 +49,7 @@ class FomodWriter
         $this->writeContentXML();
         $this->writeModuleConfig();
         $this->writeFiles();
+        $this->writeImages();
 
         $this->zip->save();
 
@@ -129,6 +131,14 @@ XML;
         $this->zip->addString($this->generateConfigXML(), 'fomod/ModuleConfig.xml');
     }
 
+    private function writeImages() : void
+    {
+        foreach($this->images as $image)
+        {
+            $this->zip->addFile($image->getImageFile()->getPath(), $image->getZIPPath());
+        }
+    }
+
     private const CONFIG_XML_TEMPLATE = <<<'XML'
 <?xml version="1.0" encoding="utf-8"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd">
@@ -191,7 +201,9 @@ XML;
                 $stepNumber,
                 $totalSteps,
                 CargoSizeExtractor::getTypeLabel($step['shipType']).' ('.strtoupper($step['shipSize']).')',
-                $step['sizeShips']
+                $step['sizeShips'],
+                $step['shipType'],
+                $step['shipSize']
             );
 
             $stepNumber++;
@@ -201,11 +213,11 @@ XML;
     }
 
     private const CONFIG_STEP_TEMPLATE = <<<'XML'
-        <installStep name="%1$s - %3$s of %4$s">
+        <installStep name="%1$s %2$s (%3$s/%4$s)">
             <optionalFileGroups>
-                <group name="Select a cargo capacity change:" type="SelectExactlyOne">
+                <group name="Cargo increase for %2$s-sized %1$s" type="SelectExactlyOne">
                     <plugins order="Explicit">
-%2$s
+%5$s
                     </plugins>
                 </group>
             </optionalFileGroups>
@@ -220,35 +232,56 @@ XML;
      * @param FileCollection[] $ships
      * @return string
      */
-    private function generateConfigStep(int $stepNumber, int $totalSteps, string $label, array $ships) : string
+    private function generateConfigStep(int $stepNumber, int $totalSteps, string $label, array $ships, string $shipType, string $shipSize) : string
     {
         Console::line2('Install step [%s] %s/%s', $label, $stepNumber, $totalSteps);
 
         return sprintf(
             self::CONFIG_STEP_TEMPLATE,
-            $label,
-            $this->generateConfigPlugins($ships),
+            CargoSizeExtractor::getTypeLabel($shipType),
+            strtoupper($shipSize),
             $stepNumber,
-            $totalSteps
+            $totalSteps,
+            $this->generateConfigPlugins($ships, $shipType, $shipSize)
         );
     }
 
+    private function registerPluginImage(string $shipType, string $shipSize, float|int|null $multiplier) : StepPluginImage
+    {
+        $image = new StepPluginImage($shipType, $shipSize, $multiplier);
+        $this->images[] = $image;
+        return $image;
+    }
+
     /**
-     * @param FileCollection[] $ships
+     * @var StepPluginImage[]
+     */
+    private array $images = array();
+
+    /**
+     * @param FileCollection[] $fileCollections
      * @return string
      */
-    private function generateConfigPlugins(array $ships) : string
+    private function generateConfigPlugins(array $fileCollections, string $shipType, string $shipSize) : string
     {
         $plugins = array();
-        $plugins[] = self::CONFIG_PLUGIN_DEFAULT_TEMPLATE;
+
+        // Add the default plugin for unchanged ships.
+        $plugins[] = sprintf(
+            self::CONFIG_PLUGIN_DEFAULT_TEMPLATE,
+            $this->registerPluginImage($shipType, $shipSize, null)->render()
+        );
 
         foreach($this->multipliers as $multiplier) {
-            foreach($ships as $ship) {
-                if($ship->getMultiplier() !== $multiplier) {
+            foreach($fileCollections as $fileCollection) {
+                if($fileCollection->getMultiplier() !== $multiplier) {
                     continue;
                 }
 
-                $plugins[] = $this->generateConfigPlugin($ship);
+                $plugins[] = $this->generateConfigPlugin(
+                    $fileCollection,
+                    $this->registerPluginImage($shipType, $shipSize, $multiplier)
+                );
             }
         }
 
@@ -258,6 +291,7 @@ XML;
     private const CONFIG_PLUGIN_TEMPLATE = <<<'XML'
                         <plugin name="%1$s">
                             <description>%2$s</description>
+                            %5$s
                             <files>
                                 <folder source="%3$s" destination="%4$s"/>
                             </files>
@@ -266,20 +300,22 @@ XML;
 
 XML;
 
-    private function generateConfigPlugin(FileCollection $collection) : string
+    private function generateConfigPlugin(FileCollection $collection, StepPluginImage $image) : string
     {
         return sprintf(
             self::CONFIG_PLUGIN_TEMPLATE,
             $collection->getPluginLabel(),
             $collection->getPluginDescription(),
             $collection->getInputFolderName(),
-            $collection->getOutputFolderName()
+            $collection->getOutputFolderName(),
+            $image->render()
         );
     }
 
     private const CONFIG_PLUGIN_DEFAULT_TEMPLATE = <<<'XML'
                         <plugin name="Unchanged">
                             <description>Do not change this ship category.</description>
+                            %1$s
                             <typeDescriptor><type name="Recommended" /></typeDescriptor>
                         </plugin>
 
