@@ -5,10 +5,12 @@ transports, mining ships, auxiliaries and carriers.
 
 ## Mix and match cargo sizes
 
-The mod's files are organized into ZIP files by cargo size multiplier,
-and ship type. This allows you to mix it any way you want.
-For example, transport ships with 10x cargo size, and mining ships with 
-2x cargo size.
+The mod's files are organized into ZIP files by cargo size multiplier
+and change the cargo size of all ship types by default.
+
+A separate FOMOD installer ZIP lets you choose cargo increases by ship
+type and size. For example, L-sized transport ships with 10x cargo size, 
+and M-sized mining ships with 2x cargo size.
 
 ## Downloads
 
@@ -22,22 +24,19 @@ See the official [Nexus page for the mod](https://www.nexusmods.com/x4foundation
 See the [Releases](https://github.com/Mistralys/x4-mod-cargo-sizes/releases)
 for all available manual downloads.
 
+## Features
+
+- Automatic flight model adjustments to compensate for increased cargo sizes.
+- Affects NPC and player ships.
+- Cargo values are increased for both new and existing ships.
+- Can be installed and uninstalled at any time.
+- _Haul away, me mateys!_
+
 ## Reference of cargo sizes
 
 The exact changes to cargo sizes can be reviewed here:
 
 [Reference of cargo sizes](./docs/cargo-size-reference.md)
-
-## Features and limitations
-
-- The mod affects NPC and player ships.
-- Cargo values are increased for both new and existing ships.
-- Can be installed and uninstalled at any time.
-- After uninstalling, ships may carry more cargo than they
-  normally would, but this has no adverse effects.
-- One slightly tricky side effect of increasing cargo sizes is 
-  that ships actually transport more value and are juicier 
-  targets for piracy as a result.
 
 ## Compatibility
 
@@ -46,9 +45,56 @@ for the added mass of cargo, it will conflict with any mods that also
 change flight characteristics of ships.
 
 **I recommend that you load this mod after conflicting mods** to make the
-game use the flight characteristics of this mod instead. It is unlikely 
-that any other mod that changes flight characteristics will work with the 
+game use the flight characteristics of this mod instead. It is unlikely
+that any other mod that changes flight characteristics will work with the
 increased cargo sizes.
+
+## Uninstalling
+
+The mod can be uninstalled at any time. However, ships may end up
+carrying way more cargo than their unmodified storage allows. While
+this causes no errors in the game, it can cause ships to become
+unresponsive as their engines cannot move that much mass.
+
+There are several ways you can deal with this:
+
+- Drop the excess cargo from the ship's hold.
+- Drop off the cargo before uninstalling the mod.
+
+## Limitations
+
+### Ship flight handling changes
+
+To compensate for the increased cargo sizes, the mod
+adjusts the flight characteristics of ships. Ideally, they should
+perform roughly the same way as before. However, due to how
+physics works, changes in flight behavior are unavoidable, especially
+for larger ships and higher cargo multipliers.
+
+### Increased piracy (unverified)
+
+Theoretically, a tricky side effect of increasing cargo sizes is
+that ships actually transport more value and are juicier targets for 
+piracy as a result.
+
+In my games, I have not been able to verify this. It seems to me that
+the piracy happens just as often as before. On the contrary, in the few
+piracy cases I was able to observe, my traders only dropped a fraction
+of their cargo. 
+
+> In one case, the pirates did not even bother to pick up the loot:
+> I was able to send my trader to pick up the dropped cargo again
+> when the pirates left.
+
+### Mining delays (unverified)
+
+Theoretically, miners should take a lot longer to fill their cargo
+holds, as the mod does not increase the mining yields. 
+
+In my games, however, that did not seem to be the case. The miners working 
+for my metal refinery, for example, will not wait until the hold is full to 
+drop off their ore. I think this is because the station manager recalls them 
+whenever raw resources are needed.
 
 ## Development
 
