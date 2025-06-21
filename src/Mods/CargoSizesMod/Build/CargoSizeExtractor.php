@@ -162,7 +162,7 @@ class CargoSizeExtractor
         $result = array();
 
         foreach(self::SHIP_TYPES as $type => $data) {
-            $pretty = self::prettifyShipType($type);
+            $pretty = self::normalizeShipType($type);
             if(!in_array($pretty, $result)) {
                 $result[] = $pretty;
             }
@@ -337,7 +337,7 @@ class CargoSizeExtractor
     {
         $typeKey = sprintf(
             '%s-%sx',
-            self::prettifyShipType($shipType),
+            self::normalizeShipType($shipType),
             $multiplier
         );
 
@@ -399,13 +399,6 @@ class CargoSizeExtractor
         $this->zips[$this->multiplierKey][$file->getID()] = $file;
 
         FileCollection::create($file->getShipType(), $file->getShipSize(), $multiplier)->addFile($file);
-
-        Console::line2(
-            'Written file [%s].',
-            $file->getName(),
-            $file->getShipType(),
-            $file->getShipSize()
-        );
     }
 
     private function writeZIPFiles(FolderInfo $baseFolder) : void
@@ -476,7 +469,7 @@ TXT;
         );
     }
 
-    public static function prettifyShipType(string $shipType) : string
+    public static function normalizeShipType(string $shipType) : string
     {
         if($shipType === self::SHIP_TYPE_TRANSPORT) {
             return 'transport';
@@ -740,7 +733,7 @@ TXT;
         }
 
         foreach(array_keys(self::SHIP_TYPES) as $rawType) {
-            $pretty = self::prettifyShipType($rawType);
+            $pretty = self::normalizeShipType($rawType);
             if($pretty === $shipType) {
                 return self::getTypeLabel($rawType);
             }
