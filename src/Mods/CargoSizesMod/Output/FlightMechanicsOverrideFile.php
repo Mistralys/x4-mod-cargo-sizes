@@ -7,6 +7,7 @@ namespace Mistralys\X4\Mods\CargoSizesMod\Output;
 use Mistralys\X4\Mods\CargoSizesMod\BaseOverrideFile;
 use Mistralys\X4\Mods\CargoSizesMod\BaseXMLFile;
 use Mistralys\X4\Mods\CargoSizesMod\CargoSizeBuildTools;
+use Mistralys\X4\Mods\CargoSizesMod\Output\Jerk\AdjustedJerk;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedAccelerationFactors;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedDrag;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedInertia;
@@ -96,11 +97,6 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
         );
     }
 
-    private function calcIncrease(float $value, float $multiplier) : float
-    {
-        return $value + ($value * $multiplier);
-    }
-
     private function resolveDragValues() : AdjustedDrag
     {
         return new AdjustedDrag(
@@ -113,49 +109,13 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
     {
         $jerk = $this->ship->getShipXMLFile()->getJerk();
 
-        $this->overrideJerkMovement($jerk->getForward());
-        $this->overrideJerkMovement($jerk->getTravel());
-        $this->overrideJerkBoost($jerk->getBoost());
-        $this->overrideJerkStrafe($jerk);
-    }
-
-    private function overrideJerkStrafe(Jerk $jerk) : void
-    {
-        $this->multiplierIncreaseFloat(
-            'properties/jerk/strafe/@value',
-            $jerk->getStrafe(),
-            2,
-            $this->mass->getMultiplier()
-        );
-    }
-
-    private function overrideJerkMovement(BaseJerkMovement $movement) : void
-    {
-        $multiplier = $this->mass->getMultiplier();
-
-        $this->multiplierIncreaseFloat(
-            'properties/jerk/'.$movement->getTagName().'/@accel',
-            $movement->getAcceleration(),
-            2,
-            $multiplier
-        );
-
-        $this->multiplierIncreaseFloat(
-            'properties/jerk/'.$movement->getTagName().'/@decel',
-            $movement->getDeceleration(),
-            2,
-            $multiplier
-        );
-    }
-
-    private function overrideJerkBoost(JerkBoost $boost) : void
-    {
-        $this->multiplierIncreaseFloat(
-            'properties/jerk/forward_boost/@accel',
-            $boost->getAcceleration(),
-            2,
-            $this->mass->getMultiplier()
-        );
+        $this->addCustomOverride(new JerkOverrideDef(
+            $this->getXMLFile()->getMacroName(),
+            new AdjustedJerk(
+                $jerk,
+                $this->mass->getMultiplier()
+            )
+        ));
     }
 
     public function getXMLFile() : BaseXMLFile

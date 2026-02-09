@@ -25,8 +25,17 @@ trait AdjustedValuesTrait
         return $this->multiplier;
     }
 
-    private function addValue(string $label, float $originalValue, float $newValue) : void
+    protected function addValue(string $label, float $originalValue, float $newValue) : void
     {
+        if($originalValue === $newValue) {
+            $this->addComment(sprintf(
+                '%s: %s (no change)',
+                $label,
+                dec($newValue, $this->getPrecision())
+            ));
+            return;
+        }
+
         $sign = '+';
         if(!$this->isIncrease()) {
             $sign = '-';
@@ -45,7 +54,7 @@ trait AdjustedValuesTrait
         ));
     }
 
-    private function addComment(string $comment, ...$args) : void
+    protected function addComment(string $comment, ...$args) : void
     {
         $this->comments[] = vsprintf($comment, $args);
     }
