@@ -66,14 +66,42 @@ Since engine thrust cannot be adjusted per-ship and players choose engines dynam
 
 ## Solution: Tier-Based Ship-Level Physics Adjustments
 
-### Core Philosophy
+### Core Philosophy - **RESEARCH-VALIDATED** ✅
 
 1. **Fix backwards physics** - Jerk should DECREASE with mass, not increase
-2. **Tier-based reductions** - Use cargo multiplier (2x, 4x, 10x) not mass ratio to ensure uniform behavior
-3. **Safety-capped adjustments** - Maximum 70% drag reduction even at extreme cargo levels
-4. **Full configurability** - Let users tune tier thresholds and reduction percentages
-5. **Ship-level only** - No global engine overrides (avoids side effects)
-6. **Maintain pilotability** - All ships with same cargo multiplier behave consistently
+2. **Tier-based drag reductions** - Use cargo multiplier (2x, 4x, 10x) to ensure uniform behavior
+3. **Scale acceleration factors proportionally** - Maintains `AccelFactor/Mass` ratio for responsiveness
+4. **Safety-capped adjustments** - Maximum 70% drag reduction to prevent instability
+5. **Full configurability** - Let users tune tier thresholds and reduction percentages
+6. **Ship-level only** - No global engine overrides (avoids side effects)
+7. **Maintain pilotability** - All ships with same cargo multiplier behave consistently
+
+### Physics Model Confirmed by Research
+
+**Top Speed** (determined by Thrust and Drag):
+```
+v_max = Thrust / DragCoefficient
+```
+- Thrust is FIXED (engine property, cannot modify per-ship)
+- To maintain top speed with heavier ship: REDUCE drag
+- This is why drag reduction tiers are correct ✅
+
+**Responsiveness** (determined by Acceleration Factor and Mass):
+```
+Δv ∝ (AccelerationFactor / Mass)
+```
+- When mass increases 4x, responsiveness becomes 1/4
+- To maintain responsiveness: SCALE acceleration factor by 4x
+- This maintains the ratio: `(4×AccelFactor) / (4×Mass) = original ratio` ✅
+
+**Why Original Plan Was Partially Right:**
+- Drag reduction IS correct (compensates for fixed thrust)
+- But acceleration factors need proportional scaling (not formula-based reduction)
+
+**Why Physics Audit Was Partially Right:**
+- Identified that `F/m` ratio is critical
+- Correct that we need to scale something proportionally
+- But wrong about scaling drag UP (would decrease top speed)
 
 ### KEY CHANGE: Tier-Based System vs Formula-Based
 
@@ -138,8 +166,7 @@ This documentation is REQUIRED for users to understand and tune the tier-based s
     "inertiaImpactFactor": 0.5,
     "steeringIncreaseFactor": 1.0,
     "useEffectiveRatioCap": true,
-    "adjustAccelerationFactors": true,
-    "accelerationFactorAdjustment": 1.0
+    "accelerationResponsiveness": 1.0
   }
 }
 ```
@@ -337,35 +364,59 @@ $newInertia = $originalInertia * $massRatio * $inertiaFactor;
 
 ---
 
-### 5. Review Acceleration Factor Logic
+### 5. Fix Acceleration Factor Logic - **RESEARCH CONFIRMED** ✅
 
 **File:** [src/Mods/CargoSizesMod/Output/Physics/AdjustedAccelerationFactors.php](src/Mods/CargoSizesMod/Output/Physics/AdjustedAccelerationFactors.php)
 
 **Current:**
 ```php
-$value = $original * (1 + $massMultiplier);
+$value = $original * (1 + $massMultiplier);  // Incorrect formula
 ```
 
-**Issue:** Unclear what "acceleration factors" actually control in X4 physics engine.
+**RESEARCH FINDINGS - Acceleration Factors Explained:**
 
-**Options:**
-1. If they're **thrust multipliers** → Should increase with mass (compensates)
-2. If they're **time constants** → Should decrease with mass
-3. If they're **acceleration ratios** → May not need adjustment
+Acceleration factors are **rate-of-change scalars** (responsiveness), NOT thrust multipliers:
 
-**Solution:** Make it configurable with research-based default.
+- **Thrust** determines **top speed** (fighting drag): `v_max = Thrust / DragCoefficient`
+- **Acceleration Factor** determines **time-to-speed** (how quickly you reach top speed)
 
-**New Implementation:**
+**The Physics Formula:**
+```
+Δv ∝ (AccelerationFactor / Mass) × BaseForce
+```
+
+**Critical Insight:**
+- When mass increases 4x, the `AccelFactor/Mass` ratio becomes 1/4
+- Ship takes **4x longer** to reach top speed (even if top speed is maintained)
+- For travel mode: Controls the "slope" of the acceleration ramp-up
+- Low factor with high mass = feels like freight train trying to move
+
+**New Implementation (Correct):**
 ```php
-$adjustEnabled = $config->getAdjustAccelerationFactors();  // Default true
-$adjustmentFactor = $config->getAccelerationFactorAdjustment();  // Default 1.0
+// Acceleration factors must scale WITH mass to maintain responsiveness
+// Formula: Δv ∝ (AccelFactor / Mass)
+// To maintain constant Δv: newAccelFactor = oldAccelFactor * massRatio
 
-if ($adjustEnabled) {
-    $newValue = $originalValue * $massRatio * $adjustmentFactor;
-} else {
-    $newValue = $originalValue;  // No adjustment
-}
+$responsivenessFactor = $config->getAccelerationResponsiveness();  // Default 1.0
+
+// Scale acceleration factor proportionally to mass to maintain time-to-speed
+$newValue = $originalValue * $massRatio * $responsivenessFactor;
+
+// Example: 4x mass with factor 1.0
+//   newAccel = oldAccel * 4.0
+//   Result: (4×AccelFactor) / (4×Mass) = AccelFactor/Mass (maintained!)
 ```
+
+**Why This Works:**
+- Maintains the `AccelFactor/Mass` ratio → preserves responsiveness
+- Ship still reaches its new top speed in same time as vanilla
+- Travel mode acceleration ramp works correctly
+- Configurable factor allows tuning "snappiness"
+
+**Configuration Options:**
+- `responsivenessFactor = 1.0` → Full compensation (vanilla-like response)
+- `responsivenessFactor = 0.7` → 70% compensation (feels heavier, more realistic)
+- `responsivenessFactor = 1.2` → Extra responsive (lighter feel than physics dictates)
 
 **Apply to all 4 components:**
 - Forward
@@ -373,7 +424,7 @@ if ($adjustEnabled) {
 - Horizontal
 - Vertical
 
-**XML Comments:** Add detailed explanations of what this does for user understanding.
+**XML Comments:** Explain responsiveness scaling for user understanding.
 
 ---
 
@@ -400,8 +451,7 @@ if ($adjustEnabled) {
   "flight-mechanics": {
     "dragReductionTiers": [
       { "maxMultiplier": 2.0, "reductionPercent": 0.10 },
-      { "maxMultiplier": 4.0, "reductionPercent": 0.30 },
-      { "maxMultiplier": 8.0, "reductionPercent": 0.50 },
+    ccelerationResponsiveness` | float | `1.0` | Controls how much acceleration factors scale with mass (1.0 = full compensation for responsiveness, <1.0 = heavier feel)
       { "maxMultiplier": 999, "reductionPercent": 0.70 }
     ],
     "jerkReductionTiers": [
@@ -441,8 +491,7 @@ public function getInertiaImpactFactor(): float
 public function getSteeringIncreaseFactor(): float
 public function getUseEffectiveRatioCap(): bool
 public function getAdjustAccelerationFactors(): bool
-public function getAccelerationFactorAdjustment(): float
-public function findDragTierForMultiplier(float $multiplier): ReductionTier
+public function getAccelerationResponsiveness $multiplier): ReductionTier
 public function findJerkTierForMultiplier(float $multiplier): ReductionTier
 ```
 
@@ -1126,20 +1175,56 @@ Leave at `true` unless testing extreme physics scenarios.
 
 ---
 
-### Acceleration Factors
+### Acceleration Responsiveness - **RESEARCH CONFIRMED** ✅
 
-**What they do:** Unclear - X4 physics engine internals. May affect thrust application.
+**What it does:** Controls how "snappy" ships feel when accelerating/decelerating.
+
+**The Physics:**
+```
+Δv ∝ (AccelerationFactor / Mass)
+```
+
+When mass increases, the `AccelFactor/Mass` ratio decreases, making ships feel sluggish (like freight trains). This parameter scales acceleration factors to compensate.
 
 **Configuration:**
 ```json
-"adjustAccelerationFactors": true,
-"accelerationFactorAdjustment": 1.0
+"accelerationResponsiveness": 1.0
 ```
 
-**Tuning tips:**
-- If unsure, leave at defaults
-- If ships accelerate poorly, try `"adjustAccelerationFactors": false`
-- If that helps, tune `accelerationFactorAdjustment` between 0.5-2.0
+**How it works:**
+- `1.0` = Full compensation (maintains vanilla responsiveness)
+  - 4x mass → 4x acceleration factor → same `AccelFactor/Mass` ratio
+- `0.7` = Partial compensation (70% of vanilla responsiveness, heavier feel)
+  - 4x mass → 2.8x acceleration factor → ship feels 30% less responsive
+- `1.2` = Over-compensation (extra snappy, lighter than physics dictates)
+
+**Effects: - Three-Pronged Approach:**
+```json
+// 1. Increase drag reduction (improves top speed)
+"dragReductionTiers": [
+  { "maxMultiplier": 2.0, "reductionPercent": 0.10 },
+  { "maxMultiplier": 4.0, "reductionPercent": 0.35 },  // Increased from 0.30
+  { "maxMultiplier": 8.0, "reductionPercent": 0.60 },  // Increased from 0.50  
+  { "maxMultiplier": 999, "reductionPercent": 0.80 }  // Increased from 0.70
+],
+
+// 2. Increase acceleration responsiveness (faster ramp-up)
+"accelerationResponsiveness": 1.3,  // Was 1.0 (30% more responsive)
+
+// 3. Reduce travel jerk reduction (smoother entry)
+"jerkReductionTiers": [
+  { "maxMultiplier": 2.0, "reductionPercent": 0.05 },
+  { "maxMultiplier": 4.0, "reductionPercent": 0.12 },  // Decreased from 0.15
+  { "maxMultiplier": 8.0, "reductionPercent": 0.20 },  // Decreased from 0.25
+  { "maxMultiplier": 999, "reductionPercent": 0.25 }  // Decreased from 0.35
+]
+```
+
+**Why This Works:**
+- Higher drag reduction → ship CAN reach higher speeds (top speed increased)
+- Higher responsiveness → ship GETS TO those speeds faster (acceleration improved)
+- Lower jerk reduction → travel mode entry is smoother (less "freight train" feel)
+**Note:** This is separate from top speed (controlled by drag reduction). You can have fast top speed but slow acceleration, or vice versa.
 
 ---
 
@@ -1182,17 +1267,25 @@ Leave at `true` unless testing extreme physics scenarios.
 
 // Increase jerk reduction (heavier feel)
 { "maxMultiplier": 999, "reductionPercent": 0.50 }  // Was 0.35
-```
+```PRIMARY FIX: Increase acceleration responsiveness
+"accelerationResponsiveness": 1.3,  // Was 1.0 (30% more responsive)
 
-### Scenario 3: Ships Too Sluggish
-
-**Symptoms:** Even 2x cargo makes ships feel like flying through mud.
-
-**Solution:**
-```json
-// Increase drag reduction across all tiers
+// SECONDARY: Increase drag reduction (improves top speed)
 "dragReductionTiers": [
   { "maxMultiplier": 2.0, "reductionPercent": 0.20 },  // Was 0.10
+  { "maxMultiplier": 4.0, "reductionPercent": 0.45 },  // Was 0.30
+  { "maxMultiplier": 8.0, "reductionPercent": 0.65 },  // Was 0.50
+  { "maxMultiplier": 999, "reductionPercent": 0.80 }  // Was 0.70
+],
+
+// TERTIARY: Reduce inertia impact (turns faster)
+"inertiaImpactFactor": 0.3  // Was 0.5
+```
+
+**Why This Order:**
+1. **Responsiveness** affects how quickly you reach ANY speed (most noticeable)
+2. **Drag reduction** affects top speed ceiling
+3. **Inertia** affects turning only "maxMultiplier": 2.0, "reductionPercent": 0.20 },  // Was 0.10
   { "maxMultiplier": 4.0, "reductionPercent": 0.45 },  // Was 0.30
   { "maxMultiplier": 8.0, "reductionPercent": 0.65 },  // Was 0.50
   { "maxMultiplier": 999, "reductionPercent": 0.80 }  // Was 0.70
@@ -1266,11 +1359,14 @@ You can create any tier structure you want:
   { "maxMultiplier": 999, "reductionPercent": 0.75 }
 ]
 
-// Exponential: Steeper curve
-"dragReductionTiers": [
-  { "maxMultiplier": 2.0, "reductionPercent": 0.05 },
-  { "maxMultiplier": 4.0, "reductionPercent": 0.25 },
-  { "maxMultiplier": 8.0, "reductionPercent": 0.60 },
+// Expoat about acceleration factors - don't they increase thrust?**  
+A: No! Research confirms acceleration factors control **responsiveness** (time-to-speed), not top speed. Top speed is determined by the Thrust/Drag ratio. Acceleration factors must scale with mass to prevent ships feeling like "freight trains."
+
+**Q: Why tier-based instead of formula-based?**  
+A: Ships vary wildly in cargo-to-mass ratios. Formulas based on mass ratio would make cargo ships undriveable (99% drag reduction) while barely affecting combat ships. Tiers ensure consistent behavior.
+
+**Q: What if I want pure realism?**  
+A: Use low drag/jerk reductions, low responsiveness (0.7), and high inertia factor (0.8-1.0)
   { "maxMultiplier": 999, "reductionPercent": 0.85 }
 ]
 ```
@@ -1322,8 +1418,7 @@ A: Test in-game! The mod generates XML comments showing exact values. You can al
     "inertiaImpactFactor": 0.5,
     "steeringIncreaseFactor": 1.0,
     "useEffectiveRatioCap": true,
-    "adjustAccelerationFactors": true,
-    "accelerationFactorAdjustment": 1.0
+    "accelerationResponsiveness": 1.0
   }
 }
 ```
