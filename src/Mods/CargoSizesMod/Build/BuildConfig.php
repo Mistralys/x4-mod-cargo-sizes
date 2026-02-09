@@ -1,4 +1,8 @@
 <?php
+/**
+ * @package Build Tools
+ * @subpackage Configuration
+ */
 
 declare(strict_types=1);
 
@@ -7,6 +11,10 @@ namespace Mistralys\X4\Mods\CargoSizesMod\Build;
 use AppUtils\ArrayDataCollection;
 use AppUtils\FileHelper\JSONFile;
 
+/**
+ * @package Build Tools
+ * @subpackage Configuration
+ */
 class BuildConfig
 {
     public const KEY_DRAG_REDUCTION_FACTOR = 'dragReductionFactor';
