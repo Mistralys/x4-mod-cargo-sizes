@@ -6,11 +6,13 @@ namespace Mistralys\X4\Mods\CargoSizesMod\Output;
 
 use Mistralys\X4\Mods\CargoSizesMod\BaseOverrideFile;
 use Mistralys\X4\Mods\CargoSizesMod\BaseXMLFile;
+use Mistralys\X4\Mods\CargoSizesMod\Build\ReductionTier;
 use Mistralys\X4\Mods\CargoSizesMod\CargoSizeBuildTools;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Jerk\AdjustedJerk;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedAccelerationFactors;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedDrag;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedInertia;
+use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\PhysicsCalculator;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\BaseJerkMovement;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Jerk;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkBoost;
@@ -22,8 +24,32 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
 {
     private MassAdjustment $mass;
     private float $dragReductionMultiplier;
+    private float $jerkReductionPercent;
     private float $steeringIncreaseMultiplier;
     private float $inertiaIncreaseMultiplier;
+    private float $accelerationScalingFactor;
+    private static ?DiagnosticsLogger $diagnosticsLogger = null;
+
+    /**
+     * Sets the diagnostics logger for physics calculations.
+     *
+     * @param DiagnosticsLogger $logger Diagnostics logger
+     * @return void
+     */
+    public static function setDiagnosticsLogger(DiagnosticsLogger $logger): void
+    {
+        self::$diagnosticsLogger = $logger;
+    }
+
+    /**
+     * Clears the diagnostics logger.
+     *
+     * @return void
+     */
+    public static function clearDiagnosticsLogger(): void
+    {
+        self::$diagnosticsLogger = null;
+    }
 
     protected function preRender() : void
     {
@@ -93,7 +119,7 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
     {
         return new AdjustedAccelerationFactors(
             $this->ship->getShipXMLFile()->getAccelerationFactors(),
-            $this->mass->getMultiplier()
+            $this->accelerationScalingFactor
         );
     }
 
@@ -113,7 +139,7 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
             $this->getXMLFile()->getMacroName(),
             new AdjustedJerk(
                 $jerk,
-                $this->mass->getMultiplier()
+                $this->jerkReductionPercent
             )
         ));
     }
@@ -136,21 +162,125 @@ class FlightMechanicsOverrideFile extends BaseOverrideFile
         $this->addComment('Ship adjusted cargo: %s', dec($this->getAdjustedCargo(), 0));
 
         $this->addComment(
-            'Mass multiplier: x%s (= original full load mass / new full load mass = %s / %s)',
-            $this->mass->formatMultiplier(),
-            dec($this->mass->getOriginalFullLoadMass(), 0),
-            dec($this->mass->getAdjustedFullLoadMass(), 0)
+            'Mass ratio: x%s (= adjusted full mass / original full mass = %s / %s)',
+            $this->mass->formatMassRatio(),
+            dec($this->mass->getAdjustedFullLoadMass(), 0),
+            dec($this->mass->getOriginalFullLoadMass(), 0)
         );
 
-        $massMultiplier = $this->mass->getMultiplier();
         $config = CargoSizeBuildTools::getConfig();
 
-        $this->dragReductionMultiplier = (float)($massMultiplier * $config->getDragReductionFactor());
-        $this->steeringIncreaseMultiplier = (float)($massMultiplier * $config->getSteeringIncreaseFactor());
-        $this->inertiaIncreaseMultiplier = (float)($massMultiplier * $config->getInertiaIncreaseFactor());
+        // Use tier-based configuration if available
+        if ($config->hasTierBasedConfiguration()) {
+            $cargoMultiplier = $this->getMultiplier();
+            
+            // Drag reduction: tier-based
+            $dragTier = $config->findDragTierForMultiplier($cargoMultiplier);
+            $this->dragReductionMultiplier = $dragTier->getReductionPercent();
+            
+            $this->addComment(
+                'Drag reduction: %d%% (cargo tier: <= %.1fx)',
+                (int)($this->dragReductionMultiplier * 100),
+                $dragTier->getMaxMultiplier()
+            );
+            
+            // Jerk reduction: tier-based (CRITICAL FIX - was backwards!)
+            $jerkTier = $config->findJerkTierForMultiplier($cargoMultiplier);
+            $this->jerkReductionPercent = $jerkTier->getReductionPercent();
+            
+            $this->addComment(
+                'Jerk reduction: %d%% (cargo tier: <= %.1fx) - PHYSICS-CORRECT',
+                (int)($this->jerkReductionPercent * 100),
+                $jerkTier->getMaxMultiplier()
+            );
+            
+            // Steering: use legacy factor
+            $this->steeringIncreaseMultiplier = (float)($this->mass->getMultiplier() * $config->getSteeringIncreaseFactor());
+            $this->addComment(
+                'Steering increase: x%s (= inverse mass ratio * %s)',
+                dec3($this->steeringIncreaseMultiplier),
+                dec2($config->getSteeringIncreaseFactor())
+            );
+            
+            // Inertia: dampened scaling
+            $inertiaImpactFactor = $config->getInertiaImpactFactor();
+            $massIncrease = $this->mass->getMassRatio() - 1.0;
+            $dampenedIncrease = $massIncrease * $inertiaImpactFactor;
+            $this->inertiaIncreaseMultiplier = $dampenedIncrease;
+            
+            $this->addComment(
+                'Inertia increase: x%s (= (mass ratio - 1.0) * impact factor = %.2f * %.2f)',
+                dec3($this->inertiaIncreaseMultiplier),
+                $massIncrease,
+                $inertiaImpactFactor
+            );
+            
+            // Acceleration: scale proportionally with mass to maintain responsiveness
+            $responsiveness = $config->getAccelerationResponsiveness();
+            $this->accelerationScalingFactor = $this->mass->getMassRatio() * $responsiveness;
+            
+            $this->addComment(
+                'Acceleration scaling: x%s (= mass ratio * responsiveness = %.2f * %.2f)',
+                dec3($this->accelerationScalingFactor),
+                $this->mass->getMassRatio(),
+                $responsiveness
+            );
+            $this->addComment('Physics: AccelFactor/Mass ratio maintained (preserves time-to-speed)');
+            
+            // Log to diagnostics if logger is set
+            $this->logToDiagnostics($config, $dragTier, $jerkTier);
+            
+        } else {
+            // Legacy factor-based calculation
+            $massMultiplier = $this->mass->getMultiplier();
+            
+            $this->dragReductionMultiplier = (float)($massMultiplier * $config->getDragReductionFactor());
+            $this->jerkReductionPercent = $massMultiplier; // Legacy: use backwards multiplier
+            $this->steeringIncreaseMultiplier = (float)($massMultiplier * $config->getSteeringIncreaseFactor());
+            $this->inertiaIncreaseMultiplier = (float)($massMultiplier * $config->getInertiaIncreaseFactor());
+            $this->accelerationScalingFactor = (float)($massMultiplier * $config->getSteeringIncreaseFactor()); // Legacy uses same factor
 
-        $this->addComment('Steering increase: x%s (= mass multiplier * %s)', dec3($this->steeringIncreaseMultiplier), dec2($config->getSteeringIncreaseFactor()));
-        $this->addComment('Drag reduction: x%s (= mass multiplier * %s)', dec3($this->dragReductionMultiplier), dec2($config->getDragReductionFactor()));
-        $this->addComment('Inertia increase: x%s (= mass multiplier * %s)', dec3($this->inertiaIncreaseMultiplier), dec2($config->getInertiaIncreaseFactor()));
+            $this->addComment('Legacy factor-based calculation');
+            $this->addComment('Steering increase: x%s (= mass multiplier * %s)', dec3($this->steeringIncreaseMultiplier), dec2($config->getSteeringIncreaseFactor()));
+            $this->addComment('Drag reduction: x%s (= mass multiplier * %s)', dec3($this->dragReductionMultiplier), dec2($config->getDragReductionFactor()));
+            $this->addComment('Inertia increase: x%s (= mass multiplier * %s)', dec3($this->inertiaIncreaseMultiplier), dec2($config->getInertiaIncreaseFactor()));
+        }
+    }
+
+    /**
+     * Logs calculations to diagnostics logger if available.
+     *
+     * @param \Mistralys\X4\Mods\CargoSizesMod\Build\BuildConfig $config Build configuration
+     * @param ReductionTier $dragTier Drag reduction tier applied
+     * @param ReductionTier $jerkTier Jerk reduction tier applied
+     * @return void
+     */
+    private function logToDiagnostics(
+        \Mistralys\X4\Mods\CargoSizesMod\Build\BuildConfig $config,
+        ReductionTier $dragTier,
+        ReductionTier $jerkTier
+    ): void
+    {
+        if (self::$diagnosticsLogger === null) {
+            return;
+        }
+
+        // Create PhysicsCalculator with the same data
+        $physics = new PhysicsCalculator(
+            $this->mass->getMass(),
+            $this->getCargo(),
+            $this->getAdjustedCargo(),
+            $this->getMultiplier(),
+            $config->getUseEffectiveRatioCap()
+        );
+
+        // Log ship calculations
+        self::$diagnosticsLogger->logShip(
+            $this->ship,
+            $physics,
+            $dragTier,
+            $jerkTier,
+            $config
+        );
     }
 }

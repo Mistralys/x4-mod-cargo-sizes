@@ -40,7 +40,12 @@ abstract class BaseXMLFile
 
     public function getRelativePath() : string
     {
-        $macroDef = MacroFileDefs::getInstance()->getByID($this->xmlFile->getBaseName());
+        // Use getByMacroName() with the data folder ID to properly handle namespaced macros
+        // (e.g., "ego_dlc_boron::ship_bor_s_miner_solid_01_a_macro")
+        $macroDef = MacroFileDefs::getInstance()->getByMacroName(
+            $this->xmlFile->getBaseName(),
+            $this->dataFolder->getID()
+        );
 
         $path = $macroDef->getFullPath().'.xml';
 

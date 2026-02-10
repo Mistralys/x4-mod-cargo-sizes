@@ -4,3 +4,4 @@
 composer.phar
 dev-config.php
 docs/nexus-description.bbcode
+.phpunit.result.cache

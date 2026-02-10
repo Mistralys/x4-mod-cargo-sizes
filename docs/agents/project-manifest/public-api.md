@@ -1,7 +1,7 @@
 # Public API Reference
 
 > **Version:** 1.0  
-> **Last Updated:** February 9, 2026  
+> **Last Updated:** February 10, 2026  
 > **Purpose:** Complete public API signatures (NO implementations)
 
 ---
@@ -142,6 +142,11 @@ const KEY_STEERING_INCREASE_FACTOR = 'steeringIncreaseFactor';
 const KEY_INERTIA_INCREASE_FACTOR = 'inertiaIncreaseFactor';
 const KEY_MULTIPLIERS = 'cargo-multipliers';
 const KEY_FLIGHT_MECHANICS = 'flight-mechanics';
+const KEY_DRAG_REDUCTION_TIERS = 'dragReductionTiers';
+const KEY_JERK_REDUCTION_TIERS = 'jerkReductionTiers';
+const KEY_INERTIA_IMPACT_FACTOR = 'inertiaImpactFactor';
+const KEY_USE_EFFECTIVE_RATIO_CAP = 'useEffectiveRatioCap';
+const KEY_ACCELERATION_RESPONSIVENESS = 'accelerationResponsiveness';
 ```
 
 #### Public Methods
@@ -155,7 +160,7 @@ public function getMultipliers(): array // Returns float[]
 ```
 
 ```php
-public function getDragReductionFactor(): float
+public function getDragReductionFactor(): float // Legacy - still supported
 ```
 
 ```php
@@ -163,7 +168,60 @@ public function getSteeringIncreaseFactor(): float
 ```
 
 ```php
-public function getInertiaIncreaseFactor(): float
+public function getInertiaIncreaseFactor(): float // Legacy - still supported
+```
+
+```php
+public function getDragReductionTiers(): array // Returns ReductionTier[]
+```
+
+```php
+public function getJerkReductionTiers(): array // Returns ReductionTier[]
+```
+
+```php
+public function findDragTierForMultiplier(float $multiplier): ReductionTier
+```
+
+```php
+public function findJerkTierForMultiplier(float $multiplier): ReductionTier
+```
+
+```php
+public function getInertiaImpactFactor(): float // Default 0.5
+```
+
+```php
+public function getUseEffectiveRatioCap(): bool // Default true
+```
+
+```php
+public function getAccelerationResponsiveness(): float // Default 1.0
+```
+
+---
+
+### ReductionTier
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Build`  
+**File:** [src/Mods/CargoSizesMod/Build/ReductionTier.php](../../../src/Mods/CargoSizesMod/Build/ReductionTier.php)
+
+#### Public Methods
+
+```php
+public function __construct(float $maxMultiplier, float $reductionPercent)
+```
+
+```php
+public function getMaxMultiplier(): float
+```
+
+```php
+public function getReductionPercent(): float
+```
+
+```php
+public function appliesToMultiplier(float $multiplier): bool
 ```
 
 ---
@@ -899,7 +957,27 @@ public function getMass(): float
 ```
 
 ```php
-public function getMultiplier(): float
+public function getMultiplier(): float // Legacy - Returns < 1.0 (DEPRECATED)
+```
+
+```php
+public function getMassRatio(): float // Returns massRatio > 1.0 (physics-correct)
+```
+
+```php
+public function getInverseMassRatio(): float // 1.0 / massRatio
+```
+
+```php
+public function getMassRatioSquared(): float // massRatio²
+```
+
+```php
+public function getMassIncrease(): float // adjustedFullMass - originalFullMass
+```
+
+```php
+public function getMassIncreasePercent(): float // (massRatio - 1.0) * 100
 ```
 
 ```php
@@ -1049,6 +1127,75 @@ public function getComments(): array
 ---
 
 ### Physics Adjustments
+
+#### PhysicsCalculator
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output\Physics`  
+**File:** [src/Mods/CargoSizesMod/Output/Physics/PhysicsCalculator.php](../../../src/Mods/CargoSizesMod/Output/Physics/PhysicsCalculator.php)
+
+**Purpose:** Central calculator for all physics-related mass ratios and derived values.
+
+```php
+public function __construct(
+    float $baseMass,
+    float $originalCargo,
+    float $adjustedCargo,
+    float $cargoMultiplier,
+    bool $useEffectiveRatioCap
+)
+```
+
+##### Core Calculations
+
+```php
+public function getMassRatio(): float // adjustedFullMass / originalFullMass (>1.0)
+```
+
+```php
+public function getCargoMultiplier(): float // User's chosen multiplier (2x, 4x, etc.)
+```
+
+```php
+public function getEffectiveRatio(): float // min(massRatio, cargoMultiplier) if capped
+```
+
+```php
+public function getBaseMass(): float // Ship mass without cargo
+```
+
+```php
+public function getOriginalFullMass(): float // baseMass + originalCargo
+```
+
+```php
+public function getAdjustedFullMass(): float // baseMass + adjustedCargo
+```
+
+```php
+public function getMassIncrease(): float // adjustedFullMass - originalFullMass
+```
+
+```php
+public function getMassIncreasePercent(): float // (massRatio - 1.0) * 100
+```
+
+##### Derived Calculations
+
+```php
+public function getInverseMassRatio(): float // 1.0 / massRatio (for jerk)
+```
+
+```php
+public function getMassRatioSquared(): float // massRatio² (for squared drag mode)
+```
+
+##### Validation
+
+```php
+public function validate(): array // Returns warning strings if any (e.g., extreme ratios)
+```
+
+---
 
 #### AdjustedAccelerationFactors
 

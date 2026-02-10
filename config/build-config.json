@@ -9,6 +9,22 @@
   "flight-mechanics": {
     "dragReductionFactor": 1,
     "steeringIncreaseFactor": 1,
-    "inertiaIncreaseFactor": 1
+    "inertiaIncreaseFactor": 1,
+    "dragReductionTiers": [
+      { "maxMultiplier": 2.0, "reductionPercent": 0.10 },
+      { "maxMultiplier": 4.0, "reductionPercent": 0.30 },
+      { "maxMultiplier": 8.0, "reductionPercent": 0.50 },
+      { "maxMultiplier": 999, "reductionPercent": 0.70 }
+    ],
+    "jerkReductionTiers": [
+      { "maxMultiplier": 2.0, "reductionPercent": 0.05 },
+      { "maxMultiplier": 4.0, "reductionPercent": 0.15 },
+      { "maxMultiplier": 8.0, "reductionPercent": 0.25 },
+      { "maxMultiplier": 999, "reductionPercent": 0.35 }
+    ],
+    "inertiaImpactFactor": 0.5,
+    "useEffectiveRatioCap": true,
+    "accelerationResponsiveness": 1.0
   }
 }
+

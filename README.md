@@ -145,52 +145,62 @@ Because the amount of cargo a ship carries in its hold affects how
 it flies, the mod will automatically adjust the flight model to 
 compensate for the increased cargo size.
 
-The internal calculations of the mod automatically scale things like 
-the ship's acceleration, inertia and steering curve. These calculations 
-are based on a calculated mass multiplier value. 
+### How It Works - Tier-Based Physics
 
-Example: The Argon Shuyaku Vanguard L-sized transport, cargo size x4.
+#### Why Tier-Based?
 
-- Base ship mass: 650
-- Base cargo size: 37,000
-- Adjusted cargo size: **148,000** = 37,000 * 4 _(cargo size * multiplier)_
-- Base full cargo mass: **37,650** = 650 + 37,000 _(mass + cargo)_
-- Adjusted full cargo mass: **148,650** = 650 + 148,000 _(mass + adjusted cargo)_
-- Mass multiplier: **0.25** = 37,650 / 148,650 _(base full cargo mass / adjusted full cargo mass)_
+Ships vary wildly in cargo-to-mass ratios:
+- **Combat ships**: Small cargo (100-2000) vs heavy hull (100-600 mass) → Low impact
+- **Cargo ships**: Massive cargo (15,000-50,000) vs light hull (200-650 mass) → **Extreme impact**
 
-> NOTE: This assumes that one unit of cargo has a mass of 1. 
+Formula-based adjustments would make cargo ships undriveable (99% drag reduction). Tier-based system treats all ships with same cargo multiplier equally (predictable, safe, tunable).
 
-Most values can simply be adjusted using the mass multiplier. Some values
-like the ship's inertia and steering curve require a lighter touch, however.
-The mod solves this by calculating custom multipliers as fractions
-of the mass multiplier (this way they scale along with the mass multiplier).
+#### Configuration
 
-They can be adjusted in the configuration:
+Adjustments organized into **tiers** by cargo multiplier:
 
 ```json
-{
-  "flight-mechanics": {
-    "dragReductionFactor": 0.20,
-    "steeringIncreaseFactor": 0.24,
-    "inertiaIncreaseFactor": 0.40
-  }
-}
+"dragReductionTiers": [
+  { "maxMultiplier": 2.0, "reductionPercent": 0.10 },  // 2x cargo: 10% reduction
+  { "maxMultiplier": 4.0, "reductionPercent": 0.30 },  // 4x cargo: 30% reduction
+  { "maxMultiplier": 8.0, "reductionPercent": 0.50 },  // 8x cargo: 50% reduction
+  { "maxMultiplier": 999, "reductionPercent": 0.70 }   // 10x+: 70% reduction (safety cap)
+]
 ```
 
-Using the Shuyaku example again:
+All ships with 4x cargo get **30% drag reduction** regardless of their mass ratio.
 
-- Inertia multiplier: **0.101** = 0.40 * 0.25 _(inertia factor * mass multiplier)_
-- Pitch: **362.940** = 329.329 + 33.365 (= 329.329 * 0.101) _(base pitch + (base pitch * inertia multiplier))_
-- Drag multiplier: **0.05** = 0.20 * 0.25 _(drag factor * mass multiplier)_
-- Drag: **161.467** = 170.083 - 8.616 (= 170.083 * 0.05) _(base drag - (base drag * drag multiplier))_
+#### What Gets Adjusted
 
-**So why those exact values?**
+1. **Mass** - Directly increased by cargo difference
+2. **Drag** (tier-based) - Reduced to compensate for fixed engine thrust
+3. **Jerk** (tier-based) - Reduced for heavier feel
+4. **Inertia** (dampened) - Increased proportionally to mass
+5. **Acceleration** (scaled) - Maintains responsiveness despite mass increase
 
-They are based on recommendations from X4 modding resources and actual physics
-considerations, seeing that X4's flight model is quite realistic since the 7.5+
-flight model update.
+#### Physics Formulas
 
-Still, the values are adjustable to be easily tweaked as needed.
+- **Drag reduction:** `newDrag = originalDrag × (1 - tierPercent)`
+- **Jerk reduction:** `newJerk = originalJerk × (1 - tierPercent)`
+- **Inertia increase:** `newInertia = originalInertia × (1 + (massRatio-1) × dampFactor)`
+- **Accel scaling:** `newAccel = originalAccel × massRatio × responsiveness`
+
+#### Tuning Your Experience
+
+See [Physics Tuning Guide](docs/physics-tuning-guide.md) for:
+- Detailed parameter explanations
+- Common tuning scenarios (travel mode issues, too sluggish, etc.)
+- Testing workflow
+- Value ranges and safety limits
+
+#### Travel Mode
+
+Travel mode works by:
+1. **Aggressive drag reduction** (70% for high-tier cargo) enables reaching speed
+2. **Jerk reduction** (35% for high-tier) smooths acceleration ramp
+3. **Acceleration scaling** maintains responsiveness
+
+**Note:** Travel speed depends on engine thrust (player-chosen equipment). Ships with weak engines may need upgrades for high cargo multipliers.
 
 ## X4 Tools and libraries
 

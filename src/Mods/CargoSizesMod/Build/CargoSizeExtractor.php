@@ -18,8 +18,10 @@ use Mistralys\X4\Database\Translations\Languages;
 use Mistralys\X4\Database\Translations\TranslationDefs;
 use Mistralys\X4\ExtractedData\DataFolder;
 use Mistralys\X4\ExtractedData\DataFolders;
+use Mistralys\X4\ExtractedData\X4GameInfo;
 use Mistralys\X4\Game\X4Game;
 use Mistralys\X4\Mods\CargoSizesMod\FOMOD\FomodWriter;
+use Mistralys\X4\Mods\CargoSizesMod\Output\DiagnosticsLogger;
 use Mistralys\X4\Mods\CargoSizesMod\Output\FlightMechanicsOverrideFile;
 use Mistralys\X4\Mods\CargoSizesMod\References\BBCodeReference;
 use Mistralys\X4\Mods\CargoSizesMod\References\MarkdownReference;
@@ -123,7 +125,10 @@ class CargoSizeExtractor
         $this->outputFolder = $outputFolder;
         $this->gameVersion = X4Game::create(X4_GAME_FOLDER)->getVersion();
 
-        $this->dataFolders = DataFolders::create($extractedDataFolder);
+        // Use X4GameInfo from x4-data-extractor package (vendored version)
+        // The game-info.json in the data-extractor's data folder contains the dataFolders structure
+        $gameInfo = X4GameInfo::create()->setExtractedDataFolder($extractedDataFolder);
+        $this->dataFolders = $gameInfo->getFolderCollection();
     }
 
     private static ?TranslationDefs $translations = null;
@@ -149,9 +154,37 @@ class CargoSizeExtractor
 
         FileCollection::reset();
 
+        // Create diagnostics logger for physics calculations
+        $diagnosticsLogger = new DiagnosticsLogger();
+        FlightMechanicsOverrideFile::setDiagnosticsLogger($diagnosticsLogger);
+
         $this->analyzeCargoMacros();
         $this->analyzeShipMacros();
         $this->writeFiles();
+        Console::nl();
+        Console::line1('DEBUG: writeFiles() completed successfully');
+        Console::nl();
+        
+        // Write diagnostics report to build folder
+        Console::header('Writing diagnostics report');
+        Console::line1('Total ships logged to diagnostics: %d', $diagnosticsLogger->getShipCount());
+        $diagnosticsPath = $this->outputFolder->getPath() . '/physics-diagnostics.txt';
+        $diagnosticsLogger->writeToFile($diagnosticsPath);
+        Console::line1('Diagnostics written to: [%s]', $diagnosticsPath);
+        
+        // Display warnings summary
+        $warnings = $diagnosticsLogger->getWarnings();
+        if (!empty($warnings)) {
+            Console::nl();
+            Console::header('Physics Warnings');
+            Console::line1('Found %d ships with warnings:', count($warnings));
+            foreach ($warnings as $shipID => $shipWarnings) {
+                Console::line1('  - %s: %s', $shipID, implode(', ', $shipWarnings));
+            }
+        }
+
+        // Clear logger
+        FlightMechanicsOverrideFile::clearDiagnosticsLogger();
     }
 
     /**
@@ -611,9 +644,9 @@ TXT;
 
         foreach(self::SHIP_SIZES as $shipSize) {
             foreach($this->dataFolders->getAll() as $dataFolder) {
-                foreach ($this->getXMLFiles($dataFolder->getFolder() . '/' . sprintf(self::UNITS_FOLDER, $shipSize)) as $file) {
+                foreach ($this->getXMLFiles($dataFolder->getPath()->getPath() . '/' . sprintf(self::UNITS_FOLDER, $shipSize)) as $file) {
                     if (str_starts_with($file->getBaseName(), 'ship_')) {
-                        $this->shipMacros[] = new ShipXMLFile($file, $dataFolder);
+                       $this->shipMacros[] = new ShipXMLFile($file, $dataFolder);
                     }
                 }
             }
@@ -643,13 +676,13 @@ TXT;
 
             $files = array();
 
-            foreach ($this->getXMLFiles($dataFolder->getFolder() . '/' . self::PROPS_FOLDER) as $file) {
+            foreach ($this->getXMLFiles($dataFolder->getPath()->getPath() . '/' . self::PROPS_FOLDER) as $file) {
                 $files[] = $file->setRuntimeProperty(self::FILE_PROP_FOLDER_RELATIVE, self::PROPS_FOLDER);
             }
 
             foreach (self::SHIP_SIZES as $shipSize) {
                 $relative = sprintf(self::UNITS_FOLDER, $shipSize);
-                foreach ($this->getXMLFiles($dataFolder->getFolder() . '/' . $relative) as $file) {
+                foreach ($this->getXMLFiles($dataFolder->getPath()->getPath() . '/' . $relative) as $file) {
                     $files[] = $file->setRuntimeProperty(self::FILE_PROP_FOLDER_RELATIVE, $relative);
                 }
             }

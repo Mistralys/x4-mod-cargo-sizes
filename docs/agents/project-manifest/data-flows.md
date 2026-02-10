@@ -1,7 +1,7 @@
 # Data Flows & Interactions
 
 > **Version:** 1.0  
-> **Last Updated:** February 9, 2026  
+> **Last Updated:** February 10, 2026  
 > **Purpose:** Describes how data flows through the system from input to output
 
 ---
@@ -602,6 +602,175 @@ Embed in content.xml:
 - All file I/O is synchronous
 - Sequential processing
 - Blocking operations
+
+---
+
+## 🧮 Physics Calculation Flow
+
+### Overview
+
+The physics calculation system uses a **tier-based approach** to adjust ship flight mechanics when cargo increases. This ensures predictable, safe adjustments regardless of ship cargo-to-mass ratio variations.
+
+### Complete Physics Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  EXTRACT SHIP DATA                           │
+│  • Mass (base ship mass without cargo)                      │
+│  • Drag (7 components: forward, reverse, h, v, pitch, yaw, roll) │
+│  • Inertia (3 components: pitch, yaw, roll)                 │
+│  • Jerk (strafe, angular, forward, boost, travel)           │
+│  • Acceleration factors (forward, reverse, h, v)            │
+└────────────────────────┬────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│                 EXTRACT CARGO DATA                           │
+│  • Original cargo capacity                                   │
+│  • Adjusted cargo capacity (multiplied)                      │
+└────────────────────────┬────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│              CALCULATE MASS PHYSICS                          │
+│  PhysicsCalculator created with:                             │
+│    • baseMass = ship mass                                    │
+│    • originalCargo = base cargo capacity                     │
+│    • adjustedCargo = multiplied cargo capacity               │
+│    • cargoMultiplier = user's chosen multiplier (2x, 4x, etc.)│
+│                                                              │
+│  Calculations:                                               │
+│    • originalFullMass = baseMass + originalCargo             │
+│    • adjustedFullMass = baseMass + adjustedCargo             │
+│    • massRatio = adjustedFullMass / originalFullMass (> 1.0) │
+│    • effectiveRatio = min(massRatio, cargoMultiplier) if capped│
+└────────────────────────┬────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│              FIND APPROPRIATE TIERS                          │
+│  BuildConfig tier lookup:                                    │
+│    • dragTier = findDragTierForMultiplier(cargoMultiplier)   │
+│    • jerkTier = findJerkTierForMultiplier(cargoMultiplier)   │
+│                                                              │
+│  Example: 4x cargo finds tier with maxMultiplier >= 4.0      │
+│    • Drag tier: 30% reduction (70% drag remains)            │
+│    • Jerk tier: 15% reduction (85% jerk remains)            │
+└────────────────────────┬────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│          CALCULATE TIER-BASED ADJUSTMENTS                    │
+│                                                              │
+│  1. DRAG (AdjustedDrag)                                      │
+│     newDrag = originalDrag * (1.0 - dragTier.reductionPercent)│
+│     Applied to all 7 drag components                         │
+│     Example: 4x cargo → 30% reduction → 70% drag remains     │
+│                                                              │
+│  2. JERK (AdjustedJerk classes)                              │
+│     newJerk = originalJerk * (1.0 - jerkTier.reductionPercent)│
+│     Applied to: strafe, angular, forward, boost, travel      │
+│     Example: 4x cargo → 15% reduction → 85% jerk remains     │
+│                                                              │
+│  3. INERTIA (AdjustedInertia)                                │
+│     massIncrease = massRatio - 1.0                           │
+│     dampenedIncrease = massIncrease * impactFactor           │
+│     newInertia = originalInertia * (1.0 + dampenedIncrease)  │
+│     Example: 2.82x mass, 0.5 factor → 90.9% inertia increase │
+│                                                              │
+│  4. ACCELERATION (AdjustedAccelerationFactors)               │
+│     newAccel = originalAccel * massRatio * responsiveness    │
+│     Maintains AccelFactor/Mass ratio (physics-correct)       │
+│     Example: 2.82x mass, 1.0 responsiveness → 2.82x accel    │
+└────────────────────────┬────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│              GENERATE XML OVERRIDES                          │
+│  FlightMechanicsOverrideFile creates:                        │
+│    • <physics> section with adjusted drag, inertia, accel    │
+│    • <jerk> section with adjusted strafe, angular, forward   │
+│    • Comprehensive XML comments explaining calculations:     │
+│      - Ship identification                                   │
+│      - Mass calculations (base, full, ratio)                 │
+│      - Tiers applied (drag %, jerk %)                        │
+│      - Original vs adjusted values                           │
+│      - Physics formulas used                                 │
+└────────────────────────┬────────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│                 LOG DIAGNOSTICS                              │
+│  DiagnosticsLogger records:                                  │
+│    • Ship name, class, macro ID                              │
+│    • Mass calculations                                       │
+│    • Tiers applied                                           │
+│    • Configuration used                                      │
+│    • Warnings for extreme cases (mass ratio > 5.0)          │
+│                                                              │
+│  Output: build/physics-diagnostics.txt                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Tier System Rationale
+
+**Problem:** Ships vary wildly in cargo-to-mass ratios:
+- **Combat ships**: Small cargo (100-2000) vs heavy hull (100-600 mass)  
+  → 10x cargo = 1.1x heavier
+- **Cargo ships**: Massive cargo (15,000-50,000) vs light hull (200-650 mass)  
+  → 10x cargo = 200x heavier!
+
+**Formula-based approach would fail:**
+- Combat ship: 99% drag reduction = undriveable
+- Cargo ship: Needs 99.9% drag reduction = also undriveable
+
+**Tier-based solution:**
+- All ships with 10x cargo get **70% drag reduction** (safety cap)
+- Predictable behavior regardless of ship type
+- User-tunable per multiplier tier
+- Safe from extreme edge cases
+
+### Physics Formulas Reference
+
+```
+Mass Ratio:
+  massRatio = (baseMass + adjustedCargo) / (baseMass + originalCargo)
+  Always > 1.0 when cargo increases
+
+Tier-Based Drag Reduction:
+  tier = findDragTierForMultiplier(cargoMultiplier)
+  newDrag = originalDrag × (1.0 - tier.reductionPercent)
+
+Tier-Based Jerk Reduction:
+  tier = findJerkTierForMultiplier(cargoMultiplier)
+  newJerk = originalJerk × (1.0 - tier.reductionPercent)
+
+Dampened Inertia Increase:
+  massIncrease = massRatio - 1.0
+  dampenedIncrease = massIncrease × impactFactor
+  newInertia = originalInertia × (1.0 + dampenedIncrease)
+
+Proportional Acceleration Scaling:
+  newAccel = originalAccel × massRatio × responsiveness
+  Maintains AccelFactor/Mass ratio (physics-correct)
+```
+
+### Configuration Impact on Physics
+
+Changes to `build-config.json` tier definitions affect all generated physics:
+
+```json
+// Example: More aggressive drag reduction for travel mode fix
+"dragReductionTiers": [
+  { "maxMultiplier": 2.0, "reductionPercent": 0.10 },
+  { "maxMultiplier": 4.0, "reductionPercent": 0.35 },  // Was 0.30
+  { "maxMultiplier": 8.0, "reductionPercent": 0.60 },  // Was 0.50
+  { "maxMultiplier": 999, "reductionPercent": 0.80 }   // Was 0.70 (careful!)
+]
+```
+
+Impact:
+1. BuildConfig loads new tiers
+2. All ships recalculated with new percentages
+3. XML regenerated with new drag values
+4. Diagnostics show new reduction percentages
+5. Users get faster ships at same cargo multiplier
+
+*See [physics-tuning-guide.md](../../physics-tuning-guide.md) for detailed configuration tuning.*
 
 ---
 

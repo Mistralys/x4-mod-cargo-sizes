@@ -34,6 +34,8 @@
     "roave/security-advisories": "dev-latest"
   },
   "scripts": {
-    "build": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::build"
+    "build": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::build",
+    "test": "phpunit",
+    "analyze": "phpstan analyze"
   }
 }

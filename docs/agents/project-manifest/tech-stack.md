@@ -1,7 +1,7 @@
 # Tech Stack & Architectural Patterns
 
 > **Version:** 1.0  
-> **Last Updated:** February 9, 2026  
+> **Last Updated:** February 10, 2026  
 > **Purpose:** Defines runtime environment, dependencies, and architectural patterns
 
 ---
@@ -285,44 +285,108 @@ Heavy reliance on `mistralys/x4-core` for:
 
 ## Physics Calculations
 
-The mod adjusts ship flight mechanics to compensate for increased cargo mass.
+The mod adjusts ship flight mechanics to compensate for increased cargo mass using a **tier-based system**.
 
-### Core Concept: Mass Multiplier
+### 11. Tier-Based Adjustment System
+
+**Purpose:** Provide uniform, predictable physics adjustments regardless of ship's cargo-to-mass ratio.
+
+**Problem Solved:** Mass ratio varies wildly by ship type (combat: 1.1x, cargo: 9x for same cargo multiplier). Formula-based adjustments would create extreme values for cargo-heavy ships (99% drag reduction = undriveable).
+
+**Structure:**
+- Configuration defines tiers by cargo multiplier threshold
+- Each tier has independent reduction percentage
+- Ships find appropriate tier, apply that tier's adjustment
+- Safety caps prevent extreme adjustments
+
+**Example:**
+```json
+"dragReductionTiers": [
+  { "maxMultiplier": 2.0, "reductionPercent": 0.10 },
+  { "maxMultiplier": 4.0, "reductionPercent": 0.30 },
+  { "maxMultiplier": 8.0, "reductionPercent": 0.50 },
+  { "maxMultiplier": 999, "reductionPercent": 0.70 }
+]
 ```
-mass_multiplier = original_full_mass / adjusted_full_mass
+All ships with ≤4x cargo get 30% drag reduction (70% drag remains).
+
+**Benefits:**
+- Uniform behavior across all ship types
+- Independently tunable per cargo multiplier
+- Safety caps built in (max 70% drag reduction)
+- User-friendly configuration without formula understanding
+
+### Core Concept: Mass Ratio
+```php
+massRatio = (baseMass + adjustedCargo) / (baseMass + originalCargo)
 ```
 
 Where:
-- `original_full_mass = ship_mass + original_cargo_capacity`
-- `adjusted_full_mass = ship_mass + (original_cargo_capacity * cargo_multiplier)`
+- `baseMass` = ship mass without cargo
+- `originalCargo` = base cargo capacity
+- `adjustedCargo` = multiplied cargo capacity (2x, 4x, etc.)
+- `massRatio` > 1.0 when cargo increases
+
+**Example:**
+```
+Shuyaku Vanguard with 4x cargo:
+  baseMass = 650, originalCargo = 37,000, adjustedCargo = 148,000
+  massRatio = (650 + 148,000) / (650 + 37,000) = 3.95x
+```
 
 ### Applied Adjustments
 
-1. **Drag Reduction** - Ships need less drag with more mass
+1. **Drag Reduction (Tier-Based)** - Compensates for fixed engine thrust
+   ```php
+   tier = findDragTierForMultiplier(cargoMultiplier);
+   newDrag = originalDrag * (1.0 - tier.reductionPercent);
    ```
-   drag_multiplier = mass_multiplier * config.dragReductionFactor
-   new_drag = original_drag - (original_drag * drag_multiplier)
-   ```
+   Example: 4x cargo → 30% reduction → 70% drag remains
 
-2. **Inertia Increase** - More mass = more rotational inertia
+2. **Jerk Reduction (Tier-Based)** - Heavier ships accelerate more gradually
+   ```php
+   tier = findJerkTierForMultiplier(cargoMultiplier);
+   newJerk = originalJerk * (1.0 - tier.reductionPercent);
    ```
-   inertia_multiplier = mass_multiplier * config.inertiaIncreaseFactor
-   new_inertia = original_inertia + (original_inertia * inertia_multiplier)
+   Example: 4x cargo → 15% reduction → 85% jerk remains
+
+3. **Inertia Increase (Dampened)** - More mass = more rotational resistance
+   ```php
+   massIncrease = massRatio - 1.0;
+   dampenedIncrease = massIncrease * impactFactor;
+   newInertia = originalInertia * (1.0 + dampenedIncrease);
    ```
+   Example: 2.82x mass, 0.5 factor → 90.9% inertia increase (not 182%)
 
-3. **Steering Adjustment** - Compensate for increased inertia
+4. **Acceleration Factors (Proportional)** - Maintains responsiveness
+   ```php
+   newAccel = originalAccel * massRatio * responsiveness;
    ```
-   steering_multiplier = mass_multiplier * config.steeringIncreaseFactor
-   ```
+   Maintains `AccelFactor/Mass` ratio (physics-correct)
 
-4. **Acceleration Factors** - Adjusted by mass multiplier
+### Configuration Parameters (from build-config.json)
 
-### Configuration Factors (from build-config.json)
-- `dragReductionFactor: 0.20` - 20% of mass multiplier
-- `steeringIncreaseFactor: 0.24` - 24% of mass multiplier
-- `inertiaIncreaseFactor: 0.40` - 40% of mass multiplier
+**Tier Definitions:**
+- `dragReductionTiers` - Arrays of `{ maxMultiplier, reductionPercent }`
+- `jerkReductionTiers` - Arrays of `{ maxMultiplier, reductionPercent }`
 
-**Philosophy:** These factors scale the adjustments based on the mass multiplier, ensuring physics changes are proportional to cargo increase.
+**Dampening Factors:**
+- `inertiaImpactFactor: 0.5` - Dampens inertia increase (0.0-2.0)
+- `steeringIncreaseFactor: 1.0` - Compensates steering for mass (0.1-5.0)
+- `accelerationResponsiveness: 1.0` - Maintains vanilla responsiveness (0.1-5.0)
+
+**Safety Controls:**
+- `useEffectiveRatioCap: true` - Prevents extreme cargo-heavy ships from breaking physics
+
+**Philosophy:** Tier-based system ensures predictable behavior for all ship types. A combat ship and cargo ship with the same cargo multiplier (e.g., 4x) get the same tier adjustments, preventing formula-based extremes.
+
+**Key Classes:**
+- `PhysicsCalculator` - Calculates mass ratios and derived values
+- `ReductionTier` - Represents a single tier configuration
+- `BuildConfig` - Manages tier lookups and configuration access
+- `AdjustedDrag`, `AdjustedJerk`, `AdjustedInertia`, `AdjustedAccelerationFactors` - Apply tier-based calculations
+
+*See [data-flows.md](data-flows.md) for complete physics flow diagrams.*
 
 ---
 
