@@ -179,7 +179,8 @@ class CargoSizeExtractor
             Console::header('Physics Warnings');
             Console::line1('Found %d ships with warnings:', count($warnings));
             foreach ($warnings as $shipID => $shipWarnings) {
-                Console::line1('  - %s: %s', $shipID, implode(', ', $shipWarnings));
+                $shipName = $diagnosticsLogger->getShipName($shipID);
+                Console::line1('  - %s: %s', $shipName, implode(', ', $shipWarnings));
             }
         }
 

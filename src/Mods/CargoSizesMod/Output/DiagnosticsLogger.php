@@ -181,6 +181,17 @@ class DiagnosticsLogger
     }
 
     /**
+     * Gets the ship name for a given ship ID.
+     *
+     * @param string $shipID Ship ID (macro name)
+     * @return string Ship name, or the ID if not found
+     */
+    public function getShipName(string $shipID): string
+    {
+        return $this->ships[$shipID]['name'] ?? $shipID;
+    }
+
+    /**
      * Generates a comprehensive diagnostics report.
      *
      * @return string Report text
