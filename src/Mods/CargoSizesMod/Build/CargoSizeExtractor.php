@@ -25,6 +25,7 @@ use Mistralys\X4\Mods\CargoSizesMod\Output\DiagnosticsLogger;
 use Mistralys\X4\Mods\CargoSizesMod\Output\FlightMechanicsOverrideFile;
 use Mistralys\X4\Mods\CargoSizesMod\References\BBCodeReference;
 use Mistralys\X4\Mods\CargoSizesMod\References\MarkdownReference;
+use Mistralys\X4\Mods\CargoSizesMod\References\ReleaseNotesGenerator;
 use Mistralys\X4\Mods\CargoSizesMod\XML\CargoXMLFile;
 use const Mistralys\X4\X4_GAME_FOLDER;
 
@@ -173,13 +174,7 @@ class CargoSizeExtractor
         // Display warnings summary
         $warnings = $diagnosticsLogger->getWarnings();
         if (!empty($warnings)) {
-            Console::nl();
-            Console::header('Physics Warnings');
-            Console::line1('Found %d ships with warnings:', count($warnings));
-            foreach ($warnings as $shipID => $shipWarnings) {
-                $shipName = $diagnosticsLogger->getShipName($shipID);
-                Console::line1('  - %s: %s', $shipName, implode(', ', $shipWarnings));
-            }
+            Console::line1('Physics warnings generated: %d (see physics-diagnostics.txt for details)', count($warnings));
         }
 
         // Clear logger
@@ -256,6 +251,7 @@ class CargoSizeExtractor
 
         $this->writeNexusBBCodeReference();
         $this->writeMarkdownReference();
+        $this->writeReleaseNotes();
     }
 
     private function writeMarkdownReference() : void
@@ -275,6 +271,16 @@ class CargoSizeExtractor
                 (new BBCodeReference($this->multipliers, $this->getResultsCategorized()))->generate(),
                 FileInfo::factory(__DIR__.'/../../../../docs/nexus-description.bbcode.tpl')->getContents()
             ));
+    }
+
+    private function writeReleaseNotes(): void
+    {
+        Console::header('Writing release notes');
+        
+        $generator = new ReleaseNotesGenerator($this->outputFolder);
+        $generator->generate();
+        
+        Console::line1('Release notes generated successfully.');
     }
 
     private function getResultsCategorized() : array
