@@ -125,6 +125,21 @@ Please refer to the tool's instructions to unpack the game data files.
 4. Run `composer install` to install the dependencies.
 5. Run `composer build-mod` to build the mod.
 
+### Automatic Release Notes Generation
+
+The build process automatically generates release notes from the project changelogs:
+
+- **Main Changelog:** `changelog.md` - Contains mod version changes
+- **Builder Changelog:** `changelog-builder.md` - Contains build system changes
+
+During each build, a `release-notes-v{VERSION}.md` file is generated in the `build/` directory containing:
+- Release heading with version and title from the main changelog
+- All changes from the latest mod version
+- Builder section with build system changes (if builder changelog exists)
+- Installation instructions footer (AIO vs FOMOD)
+
+The generated file is ready for use in GitHub Releases and mod platform updates.
+
 ### Customizing build settings
 
 All configuration settings for the build process are located
