@@ -38,6 +38,29 @@ class OverrideDef implements StringableInterface
         return $this->path;
     }
 
+    public function setTagName(string $tagName) : self
+    {
+        return $this;
+    }
+
+    /**
+     * @param string|string[] $comment
+     * @param mixed ...$args
+     * @return $this
+     */
+    public function addComments(string|array $comment, ...$args) : self
+    {
+        if (is_array($comment)) {
+            foreach ($comment as $c) {
+                $this->setComment($c);
+            }
+            return $this;
+        }
+
+        $this->setComment($comment, ...$args);
+        return $this;
+    }
+
     public function setString(string $value) : self
     {
         $this->value = $value;

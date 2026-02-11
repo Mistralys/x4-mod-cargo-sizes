@@ -13,9 +13,9 @@ use testsuites\Traits\RenderableTests;
  */
 class MassAdjustment
 {
-    private float $mass;
-    private int $cargo;
-    private int $adjustedCargo;
+    public private(set) float $mass;
+    public private(set) int $cargo;
+    public private(set) int $adjustedCargo;
 
     public function __construct(float $mass, int $cargo, int $adjustedCargo)
     {

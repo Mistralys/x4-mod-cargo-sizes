@@ -38,7 +38,7 @@ class AdjustedAccelerationFactors extends AccelerationFactors implements Adjuste
 {
     use AdjustedValuesTrait;
 
-    private ?AccelerationFactors $original;
+    private AccelerationFactors $original;
     private float $scalingFactor;
 
     /**

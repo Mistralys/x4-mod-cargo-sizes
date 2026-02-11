@@ -30,7 +30,7 @@ use Mistralys\X4\XML\DOMExtended;
  */
 class ShipXMLFile extends BaseXMLFile
 {
-    private ?string $size = null;
+    public private(set) ?string $size = null;
 
     public function getSize() : string
     {
@@ -78,7 +78,7 @@ class ShipXMLFile extends BaseXMLFile
         return (float)$this->requireFirstByTagName('physics')->getAttribute('mass');
     }
 
-    private ?AccelerationFactors $accelerationFactors = null;
+    public private(set) ?AccelerationFactors $accelerationFactors = null;
 
     public function getAccelerationFactors() : AccelerationFactors
     {
@@ -128,7 +128,7 @@ class ShipXMLFile extends BaseXMLFile
         return $this->accelerationFactors;
     }
 
-    private ?Drag $drag = null;
+    public private(set) ?Drag $drag = null;
 
     public function getDrag() : Drag
     {
@@ -151,7 +151,7 @@ class ShipXMLFile extends BaseXMLFile
         return $this->drag;
     }
 
-    private ?Inertia $inertia = null;
+    public private(set) ?Inertia $inertia = null;
 
     public function getInertia() : Inertia
     {
@@ -170,7 +170,7 @@ class ShipXMLFile extends BaseXMLFile
         return $this->inertia;
     }
 
-    private ?Jerk $jerk = null;
+    public private(set) ?Jerk $jerk = null;
 
     public function getJerk() : Jerk
     {
@@ -207,7 +207,7 @@ class ShipXMLFile extends BaseXMLFile
         return $this->jerk;
     }
 
-    private ?SteeringCurve $steeringCurve = null;
+    public private(set) ?SteeringCurve $steeringCurve = null;
 
     public function getSteeringCurve() : SteeringCurve
     {

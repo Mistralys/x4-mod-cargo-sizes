@@ -12,10 +12,10 @@ use Mistralys\X4\Mods\CargoSizesMod\StorageOverrideFile;
 
 class FileCollection
 {
-    private string $shipType;
-    private string $shipSize;
-    private int|float $multiplier;
-    private string $id;
+    public private(set) string $shipType;
+    public private(set) string $shipSize;
+    public private(set) int|float $multiplier;
+    public private(set) string $id;
 
     private function __construct(string $id, string $shipType, string $shipSize, int|float $multiplier)
     {
@@ -71,11 +71,10 @@ class FileCollection
     {
         $result = array();
 
-        foreach(self::getInstances() as $instance) {
-            if($instance->getShipTypeNormalized() === $shipType) {
-                $result[] = $instance;
-            }
-        }
+        $result = array_filter(
+            self::getInstances(),
+            fn(FileCollection $instance) => $instance->getShipTypeNormalized() === $shipType
+        );
 
         return $result;
     }

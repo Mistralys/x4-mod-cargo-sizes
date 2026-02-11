@@ -140,7 +140,7 @@ class ReductionTier
     /**
      * Creates a tier from an associative array.
      *
-     * @param array{maxMultiplier: float|int, reductionPercent: float} $data
+     * @param array<string, mixed> $data
      * @return self
      * @throws CargoSizeException
      */

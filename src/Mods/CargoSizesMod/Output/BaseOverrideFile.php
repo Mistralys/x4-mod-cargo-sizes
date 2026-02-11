@@ -99,7 +99,7 @@ abstract class BaseOverrideFile
     }
 
     /**
-     * @var array<string, array{selector: string, value: string}>
+     * @var OverrideDef[]
      */
     private array $overrides = array();
 

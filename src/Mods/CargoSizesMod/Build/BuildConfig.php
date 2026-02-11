@@ -23,29 +23,31 @@ use Mistralys\X4\Mods\CargoSizesMod\CargoSizeException;
 class BuildConfig
 {
     // Legacy keys
-    public const KEY_DRAG_REDUCTION_FACTOR = 'dragReductionFactor';
-    public const KEY_STEERING_INCREASE_FACTOR = 'steeringIncreaseFactor';
-    public const KEY_INERTIA_INCREASE_FACTOR = 'inertiaIncreaseFactor';
+    #[\Deprecated]
+    public const string KEY_DRAG_REDUCTION_FACTOR = 'dragReductionFactor';
+    public const string KEY_STEERING_INCREASE_FACTOR = 'steeringIncreaseFactor';
+    #[\Deprecated]
+    public const string KEY_INERTIA_INCREASE_FACTOR = 'inertiaIncreaseFactor';
     
     // New tier-based keys
-    public const KEY_DRAG_REDUCTION_TIERS = 'dragReductionTiers';
-    public const KEY_JERK_REDUCTION_TIERS = 'jerkReductionTiers';
-    public const KEY_INERTIA_IMPACT_FACTOR = 'inertiaImpactFactor';
-    public const KEY_USE_EFFECTIVE_RATIO_CAP = 'useEffectiveRatioCap';
-    public const KEY_ACCELERATION_RESPONSIVENESS = 'accelerationResponsiveness';
+    public const string KEY_DRAG_REDUCTION_TIERS = 'dragReductionTiers';
+    public const string KEY_JERK_REDUCTION_TIERS = 'jerkReductionTiers';
+    public const string KEY_INERTIA_IMPACT_FACTOR = 'inertiaImpactFactor';
+    public const string KEY_USE_EFFECTIVE_RATIO_CAP = 'useEffectiveRatioCap';
+    public const string KEY_ACCELERATION_RESPONSIVENESS = 'accelerationResponsiveness';
     
-    public const KEY_MULTIPLIERS = 'cargo-multipliers';
-    public const KEY_FLIGHT_MECHANICS = 'flight-mechanics';
+    public const string KEY_MULTIPLIERS = 'cargo-multipliers';
+    public const string KEY_FLIGHT_MECHANICS = 'flight-mechanics';
     
     /**
      * @var float[]
      */
-    private array $multipliers = array();
+    public private(set) array $multipliers = array();
 
     /**
      * @var array<string,int|float|bool>
      */
-    private array $flightMechanics = array(
+    public private(set) array $flightMechanics = array(
         self::KEY_DRAG_REDUCTION_FACTOR => 0.0,
         self::KEY_STEERING_INCREASE_FACTOR => 0.0,
         self::KEY_INERTIA_INCREASE_FACTOR => 0.0,
@@ -57,12 +59,12 @@ class BuildConfig
     /**
      * @var ReductionTier[]
      */
-    private array $dragReductionTiers = [];
+    public private(set) array $dragReductionTiers = [];
 
     /**
      * @var ReductionTier[]
      */
-    private array $jerkReductionTiers = [];
+    public private(set) array $jerkReductionTiers = [];
 
     /**
      * @throws CargoSizeException
@@ -109,9 +111,7 @@ class BuildConfig
     private function loadDragReductionTiers(array $tiersData): void
     {
         foreach ($tiersData as $tierData) {
-            if (is_array($tierData)) {
-                $this->dragReductionTiers[] = ReductionTier::fromArray($tierData);
-            }
+            $this->dragReductionTiers[] = ReductionTier::fromArray($tierData);
         }
 
         $this->validateTierArray($this->dragReductionTiers, 'drag reduction');
@@ -126,9 +126,7 @@ class BuildConfig
     private function loadJerkReductionTiers(array $tiersData): void
     {
         foreach ($tiersData as $tierData) {
-            if (is_array($tierData)) {
-                $this->jerkReductionTiers[] = ReductionTier::fromArray($tierData);
-            }
+            $this->jerkReductionTiers[] = ReductionTier::fromArray($tierData);
         }
 
         $this->validateTierArray($this->jerkReductionTiers, 'jerk reduction');
@@ -269,10 +267,10 @@ class BuildConfig
      */
     private function findTierForMultiplier(array $tiers, float $multiplier, string $name): ReductionTier
     {
-        foreach ($tiers as $tier) {
-            if ($tier->appliesToMultiplier($multiplier)) {
-                return $tier;
-            }
+        $tier = array_find($tiers, fn(ReductionTier $tier) => $tier->appliesToMultiplier($multiplier));
+
+        if ($tier !== null) {
+            return $tier;
         }
 
         throw new CargoSizeException(

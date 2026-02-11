@@ -85,12 +85,21 @@ class TagOverrideDef extends OverrideDef
         return $this;
     }
 
-    public function addComments(array $comments) : self
+    /**
+     * @param string|string[] $comment
+     * @param mixed ...$args
+     * @return $this
+     */
+    public function addComments(string|array $comment, ...$args) : self
     {
-        foreach($comments as $comment) {
-            $this->addComment($comment);
+        if (is_array($comment)) {
+            foreach($comment as $c) {
+                $this->addComment($c);
+            }
+            return $this;
         }
 
+        $this->addComment($comment, ...$args);
         return $this;
     }
 

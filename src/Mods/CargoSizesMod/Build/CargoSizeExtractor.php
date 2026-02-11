@@ -39,20 +39,20 @@ use const Mistralys\X4\X4_GAME_FOLDER;
  */
 class CargoSizeExtractor
 {
-    public const SHIP_TYPE_TRANSPORT = 'trans';
-    public const SHIP_TYPE_STORAGE = 'storage';
-    public const SHIP_TYPE_MINER = 'miner';
-    public const SHIP_TYPE_AUXILIARY = 'resupplier';
-    public const SHIP_TYPE_CARRIER = 'carrier';
+    public const string SHIP_TYPE_TRANSPORT = 'trans';
+    public const string SHIP_TYPE_STORAGE = 'storage';
+    public const string SHIP_TYPE_MINER = 'miner';
+    public const string SHIP_TYPE_AUXILIARY = 'resupplier';
+    public const string SHIP_TYPE_CARRIER = 'carrier';
 
-    public const HOMEPAGE_URL = 'https://github.com/Mistralys/x4-mod-cargo-sizes';
-    public const MOD_PREFIX = 'cargo-size';
-    public const AUTHOR_NAME = 'AeonsOfTime';
-    public const PROPS_FOLDER = 'assets/props/StorageModules/macros';
-    const UNITS_FOLDER = 'assets/units/size_%s/macros';
-    const FILE_PROP_FOLDER_RELATIVE = 'folderRelative';
+    public const string HOMEPAGE_URL = 'https://github.com/Mistralys/x4-mod-cargo-sizes';
+    public const string MOD_PREFIX = 'cargo-size';
+    public const string AUTHOR_NAME = 'AeonsOfTime';
+    public const string PROPS_FOLDER = 'assets/props/StorageModules/macros';
+    const string UNITS_FOLDER = 'assets/units/size_%s/macros';
+    const string FILE_PROP_FOLDER_RELATIVE = 'folderRelative';
 
-    public const SHIP_SIZES = array(
+    public const array SHIP_SIZES = array(
         'xs',
         's',
         'm',
@@ -116,12 +116,10 @@ class CargoSizeExtractor
      */
     private array $keyNames = array();
 
-    private FolderInfo $extractedDataFolder;
     private DataFolders $dataFolders;
 
     public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder)
     {
-        $this->extractedDataFolder = $extractedDataFolder;
         $this->outputFolder = $outputFolder;
         $this->gameVersion = X4Game::create(X4_GAME_FOLDER)->getVersion();
 
@@ -206,7 +204,7 @@ class CargoSizeExtractor
     }
 
     /**
-     * @var array<string,StorageOverrideFile[]>
+     * @var array<string,array<string,BaseOverrideFile>>
      */
     private array $zips = array();
 
@@ -522,13 +520,10 @@ TXT;
     {
         $parts = ConvertHelper::explodeTrim('_', $macroName);
 
-        foreach(array_keys(self::SHIP_TYPES) as $type) {
-            if(in_array($type, $parts)) {
-                return $type;
-            }
-        }
-
-        return null;
+        return array_find(
+            array_keys(self::SHIP_TYPES),
+            fn(string $type) => in_array($type, $parts)
+        );
     }
 
     private function analyzeShipMacros() : void
@@ -545,7 +540,7 @@ TXT;
 
     private function addMessage(string $message, ...$args) : void
     {
-        $this->messages[] = vsprintf($message, $args);
+        Console::line2('SKIP | '.$message, ...$args);
     }
 
     private function analyzeShipMacro(ShipXMLFile $shipXMLFile) : void
@@ -554,18 +549,18 @@ TXT;
 
         $shipType = $this->resolveShipType($macroName);
         if($shipType === null) {
-            $this->addMessage("SKIP | Unsupported ship type in [%s]", $macroName);
+            $this->addMessage('Unsupported ship type in [%s]', $macroName);
             return;
         }
 
         $cargoMacroID = $this->resolveCargoConnection($shipXMLFile);
         if ($cargoMacroID === null) {
-            $this->addMessage('SKIP | No cargo connection found in [%s].', $macroName);
+            $this->addMessage('No cargo connection found in [%s].', $macroName);
             return;
         }
 
         if(!isset($this->cargoMacros[$cargoMacroID])) {
-            $this->addMessage('SKIP | No cargo macro found in [%s]. Expected macro [%s] but it does not exist.', $cargoMacroID);
+            $this->addMessage('No cargo macro found in [%s]. Expected macro [%s] but it does not exist.', $cargoMacroID);
             return;
         }
 
@@ -573,7 +568,7 @@ TXT;
 
         $label = $this->resolveShipLabel($shipXMLFile);
         if(empty($label)) {
-            $this->addMessage('SKIP | No ship label found for [%s].', $macroName);
+            $this->addMessage('No ship label found for [%s].', $macroName);
             return;
         }
 
@@ -699,7 +694,6 @@ TXT;
         Console::nl();
     }
 
-    private array $messages = array();
 
     private function analyzeCargoMacro(FileInfo $file, DataFolder $dataFolder) : void
     {

@@ -10,18 +10,18 @@ use Mistralys\X4\Database\Translations\TranslationExtractor;
 
 class Translation
 {
-    public const TYPE_DESCR_AIO = 'descr-aio';
-    public const TYPE_DESCR_TRANSPORT = 'descr-transport';
-    public const TYPE_DESCR_MINER = 'descr-miner';
-    public const TYPE_NAME_AIO = 'name-aio';
-    public const TYPE_NAME_TRANSPORT = 'name-transport';
-    public const TYPE_NAME_MINER = 'name-miner';
-    public const TYPE_NAME_AUXILIARY = 'name-auxiliary';
-    public const TYPE_DESCR_AUXILIARY = 'descr-auxiliary';
-    public const TYPE_NAME_CARRIER = 'name-carrier';
-    public const TYPE_DESCR_CARRIER = 'descr-carrier';
-    public const TYPE_NAME_FOMOD = 'name-fomod';
-    public const TYPE_DESCR_FOMOD = 'descr-fomod';
+    public const string TYPE_DESCR_AIO = 'descr-aio';
+    public const string TYPE_DESCR_TRANSPORT = 'descr-transport';
+    public const string TYPE_DESCR_MINER = 'descr-miner';
+    public const string TYPE_NAME_AIO = 'name-aio';
+    public const string TYPE_NAME_TRANSPORT = 'name-transport';
+    public const string TYPE_NAME_MINER = 'name-miner';
+    public const string TYPE_NAME_AUXILIARY = 'name-auxiliary';
+    public const string TYPE_DESCR_AUXILIARY = 'descr-auxiliary';
+    public const string TYPE_NAME_CARRIER = 'name-carrier';
+    public const string TYPE_DESCR_CARRIER = 'descr-carrier';
+    public const string TYPE_NAME_FOMOD = 'name-fomod';
+    public const string TYPE_DESCR_FOMOD = 'descr-fomod';
 
     /**
      * @var string[]
@@ -90,10 +90,10 @@ class Translation
             $id = Languages::LANGUAGE_ENGLISH; // Fallback to English if the requested language is not available.
         }
 
-        if(empty($this->translations[$id])) {
+        if(empty($this->translations[$id] ?? null)) {
             return '';
         }
 
-        return sprintf($this->translations[$id] ?? '', ...$this->placeholders);
+        return sprintf($this->translations[$id], ...$this->placeholders);
     }
 }
