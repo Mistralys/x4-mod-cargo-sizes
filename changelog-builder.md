@@ -3,6 +3,10 @@
 This changelog only tracks changes to the mod's build tools,
 not the mod content itself.
 
+## v1.4.0 - Flight Model
+- Core: Comprehensive physics calculation overhaul.
+- Core: Player-piloted ships can now engage travel mode again.
+
 ## v1.3.0 - Fomod installer
 - Build: Updated the Fomod installer to add images for each option.
 - Build: Improved the Fomod installer's wording somewhat.

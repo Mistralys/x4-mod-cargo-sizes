@@ -1,4 +1,13 @@
-# Cargo Sizes Mod - Changelog 
+# Cargo Sizes Mod - Changelog
+
+## v3.0.0 for X4 v7.6 - PHP 8.4 Upgrade (2026-02-10)
+- Core: Upgraded project to target PHP 8.4.
+- Core: Implemented asymmetric visibility for core properties to reduce boilerplate.
+- Core: Added explicit types to all public constants.
+- Core: Refactored iteration logic using modern PHP 8.4 array functions (`array_find`, `array_filter`).
+- Core: Adopted arrow functions and first-class callables for cleaner logic.
+- Core: Marked legacy factor-based flight mechanics constants as deprecated.
+- Documentation: Updated manifest and AGENTS documentation to reflect PHP 8.4 standards.
 
 ## v2.1.1 for X4 v7.6 - Fomod installer improvements
 - Fomod: Added images for each ship type and cargo size multiplier.
