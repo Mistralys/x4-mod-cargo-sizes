@@ -1,7 +1,7 @@
 # Data Flows & Interactions
 
-> **Version:** 1.0  
-> **Last Updated:** February 10, 2026  
+> **Version:** 1.1  
+> **Last Updated:** February 11, 2026  
 > **Purpose:** Describes how data flows through the system from input to output
 
 ---
@@ -397,6 +397,57 @@ Write to:
 ```
 
 **Purpose:** Provides human-readable documentation of all cargo size changes.
+
+---
+
+### Step 9b: Release Notes Generation
+
+```
+CargoSizeExtractor::writeReleaseNotes()
+    ↓
+Create ReleaseNotesGenerator with build folder
+    ↓
+ReleaseNotesGenerator::generate()
+    ↓
+Parse changelog.md:
+  • Read file from project root
+  • Extract latest version with ChangelogParser
+  • Get version number, label, and changes
+    ↓
+Parse changelog-builder.md (optional):
+  • Check if file exists
+  • If missing: Log warning, continue without builder section
+  • If present: Parse latest version
+    ↓
+Format main changelog:
+  # Release v{VERSION} - {LABEL}
+  - Change 1
+  - Change 2
+    ↓
+Format builder changelog (if present):
+  ## Builder v{VERSION} - {LABEL}
+  - Builder change 1
+    ↓
+Format footer:
+  ----
+  Choose your ZIP file...
+  AIO = All In One
+  FOMOD = Installer to choose by ship type
+    ↓
+Write to:
+  build/release-notes-v{VERSION}.md
+    ↓
+Console output:
+  ✓ Release notes written to build/release-notes-v{VERSION}.md
+```
+
+**Purpose:** Automatically generates formatted release notes for distribution.
+
+**Error Handling:**
+- Missing `changelog.md`: Throws `CargoSizeException::ERROR_MISSING_CHANGELOG` (critical failure)
+- Missing `changelog-builder.md`: Logs warning, continues without builder section
+- Parse errors: Throws `CargoSizeException::ERROR_CHANGELOG_PARSE`
+- File write errors: Throws `CargoSizeException::ERROR_FILE_WRITE`
 
 ---
 

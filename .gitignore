@@ -6,3 +6,4 @@ dev-config.php
 docs/nexus-description.bbcode
 .phpunit.result.cache
 docs/agents/project-ledger-schema.md
+docs/agents/project-ledger.json

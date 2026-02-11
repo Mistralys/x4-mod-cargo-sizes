@@ -106,6 +106,9 @@ const ERROR_UNHANDLED_SHIP_TYPE = 178001;
 const ERROR_MISSING_XML_TAG = 178002;
 const ERROR_UNRECOGNIZED_SHIP_SIZE = 178003;
 const ERROR_MISSING_RELATIVE_PATH = 178004;
+const ERROR_MISSING_CHANGELOG = 178005;
+const ERROR_CHANGELOG_PARSE = 178006;
+const ERROR_FILE_WRITE = 178007;
 ```
 
 ---
@@ -1610,9 +1613,41 @@ public function getFileName(): string
 
 ---
 
+### ReleaseNotesGenerator
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\References`  
+**File:** [src/Mods/CargoSizesMod/References/ReleaseNotesGenerator.php](../../../src/Mods/CargoSizesMod/References/ReleaseNotesGenerator.php)
+
+#### Purpose
+
+Generates release notes from changelog files during the build process. Parses `changelog.md` and optionally `changelog-builder.md` to create a formatted release notes file.
+
+#### Public Methods
+
+```php
+public function __construct(FolderInfo $buildFolder)
+```
+
+```php
+public function generate(): void
+```
+
+**Throws:**
+- `CargoSizeException::ERROR_MISSING_CHANGELOG` - When changelog.md is not found
+- `CargoSizeException::ERROR_CHANGELOG_PARSE` - When changelog parsing fails
+- `CargoSizeException::ERROR_FILE_WRITE` - When file write operation fails
+
+**Generated Output:**
+- File: `build/release-notes-v{VERSION}.md`
+- Format: Markdown with main changelog (H1), optional builder changelog (H2), and installation footer
+- Content: Latest version changes from both changelogs
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | Feb 9, 2026 | Initial public API documentation |
 | 1.1 | Feb 10, 2026 | Updated for PHP 8.4: added asymmetric visibility, typed constants, and refactored iteration logic. |
+| 1.2 | Feb 11, 2026 | Added ReleaseNotesGenerator class, three new CargoSizeException error constants (ERROR_MISSING_CHANGELOG, ERROR_CHANGELOG_PARSE, ERROR_FILE_WRITE). |

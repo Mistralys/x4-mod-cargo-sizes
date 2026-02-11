@@ -1,7 +1,7 @@
 # Project File Tree
 
-> **Version:** 1.0  
-> **Last Updated:** February 9, 2026  
+> **Version:** 1.1  
+> **Last Updated:** February 11, 2026  
 > **Purpose:** Complete directory structure for navigation and file location
 
 ---
@@ -93,7 +93,8 @@ CargoSizesMod/
 ├── References/                     # Reference documentation generators
 │   ├── BaseReferenceRenderer.php   # Abstract reference base
 │   ├── BBCodeReference.php         # BBCode format (for forums)
-│   └── MarkdownReference.php       # Markdown format (for GitHub)
+│   ├── MarkdownReference.php       # Markdown format (for GitHub)
+│   └── ReleaseNotesGenerator.php   # Auto-generates release notes from changelogs
 │
 ├── XML/                            # XML file processing
 │   ├── ShipXML/                    # Ship XML value objects
