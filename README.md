@@ -100,7 +100,7 @@ whenever raw resources are needed.
 
 ### Requirements
 
-1. PHP 8.2 or higher.
+1. PHP 8.4 or higher.
 2. [Composer](https://getcomposer.org/).
 
 ### Building from game sources
