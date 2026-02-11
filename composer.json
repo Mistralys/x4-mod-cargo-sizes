@@ -25,7 +25,7 @@
   },
   "require": {
     "mistralys/x4-core": "dev-main",
-    "php": ">=8.2",
+    "php": ">=8.4",
     "ext-dom": "*"
   },
   "require-dev": {
