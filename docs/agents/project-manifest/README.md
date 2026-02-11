@@ -1,8 +1,8 @@
 # X4 Cargo Sizes Mod - Project Manifest
 
 > **AI Agent Operating System Documentation**  
-> **Version:** 1.0  
-> **Last Updated:** February 9, 2026  
+> **Version:** 1.1
+> **Last Updated:** February 11, 2026
 > **Purpose:** Source of Truth for AI Agents and Future Development
 
 ---
@@ -97,7 +97,7 @@ This manifest is organized into **6 core documents**, each serving a specific pu
 ### 1. [tech-stack.md](tech-stack.md) - Foundation Knowledge
 
 **Read this to understand:**
-- PHP 8.2+ runtime requirements
+- PHP 8.4+ runtime requirements
 - Composer dependencies (x4-core, PHPUnit, PHPStan)
 - 11 Architectural Patterns:
   1. Extractor-Builder Pattern
@@ -446,6 +446,7 @@ An agent has successfully integrated with this codebase when:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1 | Feb 11, 2026 | Synchronized with PHP 8.4 upgrade changes. |
 | 1.0 | Feb 9, 2026 | Initial project manifest with 6 core documents |
 
 ---

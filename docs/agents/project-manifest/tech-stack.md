@@ -1,7 +1,7 @@
 # Tech Stack & Architectural Patterns
 
-> **Version:** 1.0  
-> **Last Updated:** February 10, 2026  
+> **Version:** 1.1
+> **Last Updated:** February 10, 2026
 > **Purpose:** Defines runtime environment, dependencies, and architectural patterns
 
 ---
@@ -9,7 +9,7 @@
 ## Runtime Environment
 
 ### PHP Requirements
-- **PHP Version:** 8.2 or higher
+- **PHP Version:** 8.4 or higher
 - **Required Extensions:**
   - `ext-dom` - XML manipulation
 
@@ -17,7 +17,14 @@
 
 #### Production Dependencies
 - **mistralys/x4-core** (dev-main) - Core library for X4 game data access (OOP interface to game data)
-- **PHP 8.2+** - Modern PHP features (typed properties, constructor property promotion, etc.)
+- **PHP 8.4+** - Modern PHP features (typed properties, constructor property promotion, asymmetric visibility, etc.)
+
+### PHP 8.4 Feature Adoption
+The project adopts the following PHP 8.4 features:
+- **Asymmetric Visibility:** Using `public private(set)` for properties that should be readable but not writable from outside.
+- **Typed Class Constants:** All class constants must have explicit type declarations.
+- **Modern Array Functions:** Prefer `array_find()`, `array_any()`, `array_all()` over manual loops.
+- **Deprecated Attribute:** Use `#[\Deprecated]` for legacy code instead of just DocBlock tags.
 - **ext-dom** - DOM manipulation for XML files
 
 #### Development Dependencies

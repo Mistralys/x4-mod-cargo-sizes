@@ -1,7 +1,7 @@
 # Project Constraints & Rules
 
-> **Version:** 1.0  
-> **Last Updated:** February 9, 2026  
+> **Version:** 1.1
+> **Last Updated:** February 10, 2026
 > **Purpose:** Non-negotiable rules, conventions, and coding standards
 
 ---
@@ -12,7 +12,7 @@ This project follows **strict conventions** to maintain consistency and reliabil
 
 1. **X4 Game Compatibility** - Must work with X4 game engine requirements
 2. **X4 Core Library Patterns** - Inherits patterns from parent library
-3. **PHP Best Practices** - Modern PHP 8.2+ standards
+3. **PHP Best Practices** - Modern PHP 8.4+ standards
 4. **Maintainability** - Code must be readable and extensible
 
 **When in doubt, follow the existing pattern in the codebase.**
@@ -140,7 +140,31 @@ public function __construct(
 
 ---
 
-### 5. Exception Hierarchy
+### 5. Asymmetric Visibility
+
+**RULE:** Use asymmetric visibility for properties that need to be read-only from the outside but modifiable within the class or hierarchy.
+
+**Required:**
+```php
+public private(set) string $name;
+```
+
+**Note:** Always keep existing getter methods for backward compatibility with the public API.
+
+---
+
+### 6. Typed Constants
+
+**RULE:** All class constants MUST have explicit type declarations.
+
+**Required:**
+```php
+public const string MY_CONSTANT = 'value';
+```
+
+---
+
+### 7. Exception Hierarchy
 
 **RULE:** All exceptions MUST extend `CargoSizeException`.
 
@@ -169,7 +193,7 @@ throw new CargoSizeException(
 
 ---
 
-### 6. No eval() or Dynamic Code Execution
+### 8. No eval() or Dynamic Code Execution
 
 **RULE:** NEVER use `eval()`, `create_function()`, or similar.
 
@@ -184,7 +208,7 @@ assert($code); // with callback
 
 ---
 
-### 7. Namespace Structure
+### 9. Namespace Structure
 
 **RULE:** All code MUST be in `Mistralys\X4\Mods\CargoSizesMod` namespace.
 

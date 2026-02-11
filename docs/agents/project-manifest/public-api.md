@@ -1,7 +1,7 @@
 # Public API Reference
 
-> **Version:** 1.0  
-> **Last Updated:** February 10, 2026  
+> **Version:** 1.1
+> **Last Updated:** February 10, 2026
 > **Purpose:** Complete public API signatures (NO implementations)
 
 ---
@@ -131,22 +131,31 @@ public static function getConfig(): BuildConfig
 
 ### BuildConfig
 
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Build`  
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Build`
 **File:** [src/Mods/CargoSizesMod/Build/BuildConfig.php](../../../src/Mods/CargoSizesMod/Build/BuildConfig.php)
 
 #### Constants
 
 ```php
-const KEY_DRAG_REDUCTION_FACTOR = 'dragReductionFactor';
-const KEY_STEERING_INCREASE_FACTOR = 'steeringIncreaseFactor';
-const KEY_INERTIA_INCREASE_FACTOR = 'inertiaIncreaseFactor';
-const KEY_MULTIPLIERS = 'cargo-multipliers';
-const KEY_FLIGHT_MECHANICS = 'flight-mechanics';
-const KEY_DRAG_REDUCTION_TIERS = 'dragReductionTiers';
-const KEY_JERK_REDUCTION_TIERS = 'jerkReductionTiers';
-const KEY_INERTIA_IMPACT_FACTOR = 'inertiaImpactFactor';
-const KEY_USE_EFFECTIVE_RATIO_CAP = 'useEffectiveRatioCap';
-const KEY_ACCELERATION_RESPONSIVENESS = 'accelerationResponsiveness';
+public const string KEY_DRAG_REDUCTION_FACTOR = 'dragReductionFactor';
+public const string KEY_STEERING_INCREASE_FACTOR = 'steeringIncreaseFactor';
+public const string KEY_INERTIA_INCREASE_FACTOR = 'inertiaIncreaseFactor';
+public const string KEY_DRAG_REDUCTION_TIERS = 'dragReductionTiers';
+public const string KEY_JERK_REDUCTION_TIERS = 'jerkReductionTiers';
+public const string KEY_INERTIA_IMPACT_FACTOR = 'inertiaImpactFactor';
+public const string KEY_USE_EFFECTIVE_RATIO_CAP = 'useEffectiveRatioCap';
+public const string KEY_ACCELERATION_RESPONSIVENESS = 'accelerationResponsiveness';
+public const string KEY_MULTIPLIERS = 'cargo-multipliers';
+public const string KEY_FLIGHT_MECHANICS = 'flight-mechanics';
+```
+
+#### Properties
+
+```php
+public private(set) array $multipliers = array(); // float[]
+public private(set) array $flightMechanics = array(...);
+public private(set) array $dragReductionTiers = []; // ReductionTier[]
+public private(set) array $jerkReductionTiers = []; // ReductionTier[]
 ```
 
 #### Public Methods
@@ -234,19 +243,17 @@ public function appliesToMultiplier(float $multiplier): bool
 #### Constants
 
 ```php
-const SHIP_TYPE_TRANSPORT = 'trans';
-const SHIP_TYPE_STORAGE = 'storage';
-const SHIP_TYPE_MINER = 'miner';
-const SHIP_TYPE_AUXILIARY = 'resupplier';
-const SHIP_TYPE_CARRIER = 'carrier';
-const HOMEPAGE_URL = 'https://github.com/Mistralys/x4-mod-cargo-sizes';
-const MOD_PREFIX = 'cargo-size';
-const AUTHOR_NAME = 'AeonsOfTime';
-const PROPS_FOLDER = 'assets/props/StorageModules/macros';
-const UNITS_FOLDER = 'assets/units/size_%s/macros';
-const FILE_PROP_FOLDER_RELATIVE = 'folderRelative';
-const SHIP_SIZES = array('xs', 's', 'm', 'l', 'xl');
-const SHIP_TYPES = array(...); // Associative array with ship type data
+public const string SHIP_TYPE_TRANSPORT = 'trans';
+public const string SHIP_TYPE_STORAGE = 'storage';
+public const string SHIP_TYPE_MINER = 'miner';
+public const string SHIP_TYPE_AUXILIARY = 'resupplier';
+public const string SHIP_TYPE_CARRIER = 'carrier';
+public const string HOMEPAGE_URL = 'https://github.com/Mistralys/x4-mod-cargo-sizes';
+public const string MOD_PREFIX = 'cargo-size';
+public const string AUTHOR_NAME = 'AeonsOfTime';
+public const string PROPS_FOLDER = 'assets/props/StorageModules/macros';
+public const string SHIP_SIZES = array(...);
+public const string SHIP_TYPES = array(...);
 ```
 
 #### Public Methods
@@ -394,18 +401,18 @@ public function calculateCargoValue(float|int $multiplier): int
 #### Constants
 
 ```php
-const TYPE_DESCR_AIO = 'descr-aio';
-const TYPE_DESCR_TRANSPORT = 'descr-transport';
-const TYPE_DESCR_MINER = 'descr-miner';
-const TYPE_NAME_AIO = 'name-aio';
-const TYPE_NAME_TRANSPORT = 'name-transport';
-const TYPE_NAME_MINER = 'name-miner';
-const TYPE_NAME_AUXILIARY = 'name-auxiliary';
-const TYPE_DESCR_AUXILIARY = 'descr-auxiliary';
-const TYPE_NAME_CARRIER = 'name-carrier';
-const TYPE_DESCR_CARRIER = 'descr-carrier';
-const TYPE_NAME_FOMOD = 'name-fomod';
-const TYPE_DESCR_FOMOD = 'descr-fomod';
+public const string TYPE_DESCR_AIO = 'descr-aio';
+public const string TYPE_DESCR_TRANSPORT = 'descr-transport';
+public const string TYPE_DESCR_MINER = 'descr-miner';
+public const string TYPE_NAME_AIO = 'name-aio';
+public const string TYPE_NAME_TRANSPORT = 'name-transport';
+public const string TYPE_NAME_MINER = 'name-miner';
+public const string TYPE_NAME_AUXILIARY = 'name-auxiliary';
+public const string TYPE_DESCR_AUXILIARY = 'descr-auxiliary';
+public const string TYPE_NAME_CARRIER = 'name-carrier';
+public const string TYPE_DESCR_CARRIER = 'descr-carrier';
+public const string TYPE_NAME_FOMOD = 'name-fomod';
+public const string TYPE_DESCR_FOMOD = 'descr-fomod';
 ```
 
 #### Public Methods
@@ -514,6 +521,17 @@ public function getAllByName(string $name): array // Returns DOMElement[]
 **Namespace:** `Mistralys\X4\Mods\CargoSizesMod\XML`  
 **File:** [src/Mods/CargoSizesMod/XML/ShipXMLFile.php](../../../src/Mods/CargoSizesMod/XML/ShipXMLFile.php)  
 **Extends:** `BaseXMLFile`
+
+#### Properties
+
+```php
+public private(set) ?string $size = null;
+public private(set) ?AccelerationFactors $accelerationFactors = null;
+public private(set) ?Drag $drag = null;
+public private(set) ?Inertia $inertia = null;
+public private(set) ?Jerk $jerk = null;
+public private(set) ?SteeringCurve $steeringCurve = null;
+```
 
 #### Public Methods
 
@@ -945,6 +963,14 @@ public function getXMLFile(): BaseXMLFile
 
 **Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output`  
 **File:** [src/Mods/CargoSizesMod/Output/MassAdjustment.php](../../../src/Mods/CargoSizesMod/Output/MassAdjustment.php)
+
+#### Properties
+
+```php
+public private(set) float $mass;
+public private(set) int $cargo;
+public private(set) int $adjustedCargo;
+```
 
 #### Public Methods
 
@@ -1402,6 +1428,15 @@ public function __construct(string $macroName, AdjustedJerk $jerk)
 **Namespace:** `Mistralys\X4\Mods\CargoSizesMod\FOMOD`  
 **File:** [src/Mods/CargoSizesMod/FOMOD/FileCollection.php](../../../src/Mods/CargoSizesMod/FOMOD/FileCollection.php)
 
+#### Properties
+
+```php
+public private(set) string $shipType;
+public private(set) string $shipSize;
+public private(set) int|float $multiplier;
+public private(set) string $id;
+```
+
 #### Public Methods
 
 ```php
@@ -1580,3 +1615,4 @@ public function getFileName(): string
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | Feb 9, 2026 | Initial public API documentation |
+| 1.1 | Feb 10, 2026 | Updated for PHP 8.4: added asymmetric visibility, typed constants, and refactored iteration logic. |
