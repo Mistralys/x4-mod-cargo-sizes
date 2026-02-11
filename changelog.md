@@ -3,6 +3,7 @@
 ## v3.0.0 for X4 v8.0 - Physics Fix
 - Core: Fixed physics calculations preventing player-piloted ships from using travel drive.
 - Core: Upgraded project to target PHP 8.4.
+- Core: Added release note generation.
 - Docs: Added agentic coding support.
 
 ## v2.1.1 for X4 v7.6 - Fomod installer improvements
