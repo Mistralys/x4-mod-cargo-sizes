@@ -8,6 +8,10 @@
 
 ---
 
+> 📘 **Quick Start:** New to the codebase? Start with the [Project Manifest](project-manifest/README.md) for a structured overview of the system architecture, constraints, and data flows.
+
+---
+
 ## Table of Contents
 
 1. [Overview](#overview)

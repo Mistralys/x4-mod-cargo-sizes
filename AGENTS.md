@@ -1,7 +1,7 @@
 # AI Agent Operating System - X4 Cargo Sizes Mod
 
-> **Version:** 1.1
-> **Last Updated:** February 11, 2026
+> **Version:** 1.2
+> **Last Updated:** February 12, 2026
 > **Purpose:** Source of Truth and Operating Procedures for AI Agents
 
 ---
@@ -104,9 +104,42 @@ If code contradicts the manifest, the **code is likely wrong** and should be fla
 
 ### What is This?
 
-**X4 Cargo Sizes Mod** is a **build tool** and **mod generator** for the X4: Foundations space simulation game. It is NOT a web application or service.
+**X4 Cargo Sizes Mod** is a **build tool** and **mod generator** for the X4: Foundations space simulation game. The project consists of two main components:
 
-### Core Purpose
+#### 1. Core Mod (CLI Build System)
+A command-line tool for building X4 mod packages using PHP 8.4+.
+
+**Features:**
+- Extract XML ship definitions from X4 game files
+- Calculate cargo size multipliers (2x, 4x, 8x, 10x, etc.)
+- Adjust flight mechanics to compensate for increased mass
+- Generate mod XML files that override game defaults
+- Package mods into distributable formats (ZIP, FOMOD installer)
+
+**Manifest:** `/docs/agents/project-manifest/` (this directory)
+
+#### 2. Physics Tuning GUI (Web Interface)
+An interactive web-based GUI for real-time physics parameter tuning.
+
+**Features:**
+- Visual configuration with sliders and forms
+- Real-time physics calculation feedback (<500ms)
+- Ship and engine data browsing
+- Configuration management (read/write `build-config.json`)
+- Used for tuning parameters before running CLI build
+
+**Location:** `/gui` subdirectory  
+**Manifest:** `/gui/docs/project-manifest/` → [GUI Manifest](gui/docs/project-manifest/README.md)  
+**Start:** `composer gui:start-win` or `cd gui && ./start-dev.sh`
+
+**Typical Workflow:**
+1. Use GUI to tune physics parameters visually
+2. Save configuration to `build-config.json`
+3. Run CLI build: `composer build`
+4. Test mod in X4 game
+5. Iterate as needed
+
+### Core Purpose (CLI Build System)
 
 1. Extract XML ship definitions from X4 game files
 2. Calculate cargo size multipliers (2x, 4x, 8x, 10x, etc.)
@@ -116,13 +149,20 @@ If code contradicts the manifest, the **code is likely wrong** and should be fla
 
 ### Tech Stack Quick Reference
 
+**Core Mod (CLI):**
 - **Language:** PHP 8.4+
 - **CLI Tool:** Yes (Composer scripts)
-- **Web UI:** No
 - **Database:** No (XML files only)
 - **Dependencies:** mistralys/x4-core library
 - **Build System:** Custom Extractor-Builder pattern
 - **Output Format:** X4 game mod files (XML)
+
+**Physics Tuning GUI:**
+- **Backend:** PHP 8.4+ with Slim Framework 4 (REST API)
+- **Frontend:** React 18 + TypeScript + Vite + TailwindCSS v4
+- **Architecture:** Stateless REST API with reactive frontend
+- **Ports:** Backend (8080), Frontend (5173)
+- **Shared Config:** `config/build-config.json`
 
 ### Project Type
 
@@ -439,6 +479,7 @@ This project depends heavily on the **mistralys/x4-core** library. When working 
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2 | Feb 12, 2026 | Added Physics Tuning GUI documentation and manifest references. |
 | 1.1 | Feb 11, 2026 | Synchronized with PHP 8.4 upgrade. |
 | 1.0 | Feb 9, 2026 | Initial AGENTS.md with complete manifest integration |
 

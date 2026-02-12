@@ -6,6 +6,10 @@
 
 ---
 
+> 📘 **Quick Start:** New to the codebase? Start with the [Project Manifest](project-manifest/README.md) for system architecture. This document provides development workflow, coding standards, and contributor guidelines.
+
+---
+
 ## Table of Contents
 
 1. [Getting Started](#getting-started)

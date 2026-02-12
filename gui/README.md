@@ -2,6 +2,8 @@
 
 > **Interactive web-based GUI for real-time physics tuning and visualization**
 
+> 🤖 **For AI Agents & Developers:** See the [Project Manifest](docs/project-manifest/README.md) for a structured overview of architecture, constraints, and data flows.
+
 This GUI provides a visual interface for configuring and testing the X4 Cargo Sizes Mod's physics adjustments. You can adjust drag reduction, inertia, acceleration parameters, and instantly see how they affect ship performance with different cargo multipliers.
 
 ## Features
