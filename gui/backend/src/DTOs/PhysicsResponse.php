@@ -17,6 +17,8 @@ class PhysicsResponse
      * @param float $originalFullMass Original full mass
      * @param float $adjustedFullMass Adjusted full mass
      * @param float $massIncrease Mass increase amount
+     * @param float $originalCargo Original cargo capacity
+     * @param float $adjustedCargo Adjusted cargo capacity
      * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float} $dragOriginal Original drag values
      * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float} $dragAdjusted Adjusted drag values
      * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float} $dragPercentChange Drag percentage changes
@@ -35,6 +37,8 @@ class PhysicsResponse
         public float $originalFullMass,
         public float $adjustedFullMass,
         public float $massIncrease,
+        public float $originalCargo,
+        public float $adjustedCargo,
         public array $dragOriginal,
         public array $dragAdjusted,
         public array $dragPercentChange,
@@ -59,6 +63,8 @@ class PhysicsResponse
             'originalFullMass' => $this->originalFullMass,
             'adjustedFullMass' => $this->adjustedFullMass,
             'massIncrease' => $this->massIncrease,
+            'originalCargo' => $this->originalCargo,
+            'adjustedCargo' => $this->adjustedCargo,
             'drag' => [
                 'original' => $this->dragOriginal,
                 'adjusted' => $this->dragAdjusted,

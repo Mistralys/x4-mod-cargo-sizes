@@ -14,12 +14,17 @@ import { EnginePicker } from './EnginePicker';
 import { Card } from '../UI/Card';
 import { Spinner } from '../UI/Spinner';
 
+import type { ShipDetails } from '../../types/ships';
+import type { EngineDef } from '../../types/physics';
+
 interface ShipSelectorProps {
   onShipChange?: (shipId: string | null) => void;
   onEngineChange?: (engineId: string | null) => void;
+  onShipDetailsChange?: (details: ShipDetails | null) => void;
+  onEnginesChange?: (engines: EngineDef[]) => void;
 }
 
-export function ShipSelector({ onShipChange, onEngineChange }: ShipSelectorProps) {
+export function ShipSelector({ onShipChange, onEngineChange, onShipDetailsChange, onEnginesChange }: ShipSelectorProps) {
   const {
     shipTypes,
     ships,
@@ -64,15 +69,22 @@ export function ShipSelector({ onShipChange, onEngineChange }: ShipSelectorProps
     if (shipDetails) {
       loadEnginesForShip(shipDetails.id);
       onShipChange?.(shipDetails.id);
+      onShipDetailsChange?.(shipDetails);
     } else {
       onShipChange?.(null);
+      onShipDetailsChange?.(null);
     }
-  }, [shipDetails, loadEnginesForShip, onShipChange]);
+  }, [shipDetails, loadEnginesForShip, onShipChange, onShipDetailsChange]);
 
   // Notify parent of engine changes
   useEffect(() => {
     onEngineChange?.(selectedEngineId);
   }, [selectedEngineId, onEngineChange]);
+
+  // Notify parent when engines list changes
+  useEffect(() => {
+    onEnginesChange?.(engines);
+  }, [engines, onEnginesChange]);
 
   const handleTypeChange = useCallback((type: ShipType) => {
     setSelectedType(type);

@@ -102,6 +102,8 @@ class PhysicsService
                 originalFullMass: $calculator->getOriginalFullMass(),
                 adjustedFullMass: $calculator->getAdjustedFullMass(),
                 massIncrease: $calculator->getMassIncrease(),
+                originalCargo: $request->originalCargo,
+                adjustedCargo: $request->adjustedCargo,
                 dragOriginal: [
                     'forward' => $originalDrag->getForward(),
                     'reverse' => $originalDrag->getReverse(),

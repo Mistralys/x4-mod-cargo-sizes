@@ -27,6 +27,18 @@ export function PhysicsOverview({ data }: PhysicsOverviewProps) {
         variant={data.effectiveRatio < data.massRatio ? 'positive' : 'neutral'}
       />
       <MetricCard
+        label="Original Cargo"
+        value={data.originalCargo.toLocaleString()}
+        unit="m³"
+        variant="neutral"
+      />
+      <MetricCard
+        label="Adjusted Cargo"
+        value={data.adjustedCargo.toLocaleString()}
+        unit="m³"
+        variant="positive"
+      />
+      <MetricCard
         label="Original Full Mass"
         value={data.originalFullMass.toLocaleString()}
         unit="kg"

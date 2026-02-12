@@ -34,45 +34,45 @@ export function ComparisonView({ data, engine }: ComparisonViewProps) {
         <div className="space-y-1">
           <ValueComparison
             label="Forward Drag"
-            original={data.dragOriginal.forward}
-            adjusted={data.dragAdjusted.forward}
-            percent={data.dragAdjusted.forwardPercent}
+            original={data.drag.original.forward}
+            adjusted={data.drag.adjusted.forward}
+            percent={data.drag.percentChange.forward}
           />
           <ValueComparison
             label="Reverse Drag"
-            original={data.dragOriginal.reverse}
-            adjusted={data.dragAdjusted.reverse}
-            percent={data.dragAdjusted.reversePercent}
+            original={data.drag.original.reverse}
+            adjusted={data.drag.adjusted.reverse}
+            percent={data.drag.percentChange.reverse}
           />
           <ValueComparison
             label="Horizontal Drag"
-            original={data.dragOriginal.horizontal}
-            adjusted={data.dragAdjusted.horizontal}
-            percent={data.dragAdjusted.horizontalPercent}
+            original={data.drag.original.horizontal}
+            adjusted={data.drag.adjusted.horizontal}
+            percent={data.drag.percentChange.horizontal}
           />
           <ValueComparison
             label="Vertical Drag"
-            original={data.dragOriginal.vertical}
-            adjusted={data.dragAdjusted.vertical}
-            percent={data.dragAdjusted.verticalPercent}
+            original={data.drag.original.vertical}
+            adjusted={data.drag.adjusted.vertical}
+            percent={data.drag.percentChange.vertical}
           />
           <ValueComparison
             label="Pitch Drag"
-            original={data.dragOriginal.pitch}
-            adjusted={data.dragAdjusted.pitch}
-            percent={data.dragAdjusted.pitchPercent}
+            original={data.drag.original.pitch}
+            adjusted={data.drag.adjusted.pitch}
+            percent={data.drag.percentChange.pitch}
           />
           <ValueComparison
             label="Yaw Drag"
-            original={data.dragOriginal.yaw}
-            adjusted={data.dragAdjusted.yaw}
-            percent={data.dragAdjusted.yawPercent}
+            original={data.drag.original.yaw}
+            adjusted={data.drag.adjusted.yaw}
+            percent={data.drag.percentChange.yaw}
           />
           <ValueComparison
             label="Roll Drag"
-            original={data.dragOriginal.roll}
-            adjusted={data.dragAdjusted.roll}
-            percent={data.dragAdjusted.rollPercent}
+            original={data.drag.original.roll}
+            adjusted={data.drag.adjusted.roll}
+            percent={data.drag.percentChange.roll}
           />
         </div>
       ),
@@ -84,21 +84,21 @@ export function ComparisonView({ data, engine }: ComparisonViewProps) {
         <div className="space-y-1">
           <ValueComparison
             label="Pitch Inertia"
-            original={data.inertiaOriginal.pitch}
-            adjusted={data.inertiaAdjusted.pitch}
-            percent={data.inertiaAdjusted.pitchPercent}
+            original={data.inertia.original.pitch}
+            adjusted={data.inertia.adjusted.pitch}
+            percent={data.inertia.percentChange.pitch}
           />
           <ValueComparison
             label="Yaw Inertia"
-            original={data.inertiaOriginal.yaw}
-            adjusted={data.inertiaAdjusted.yaw}
-            percent={data.inertiaAdjusted.yawPercent}
+            original={data.inertia.original.yaw}
+            adjusted={data.inertia.adjusted.yaw}
+            percent={data.inertia.percentChange.yaw}
           />
           <ValueComparison
             label="Roll Inertia"
-            original={data.inertiaOriginal.roll}
-            adjusted={data.inertiaAdjusted.roll}
-            percent={data.inertiaAdjusted.rollPercent}
+            original={data.inertia.original.roll}
+            adjusted={data.inertia.adjusted.roll}
+            percent={data.inertia.percentChange.roll}
           />
         </div>
       ),
@@ -113,17 +113,17 @@ export function ComparisonView({ data, engine }: ComparisonViewProps) {
             <div className="space-y-1">
               <ValueComparison
                 label="Acceleration"
-                original={data.jerkOriginal.forward.accel}
-                adjusted={data.jerkAdjusted.forward.accel}
-                percent={data.jerkAdjusted.forward.accelPercent}
+                original={data.jerk.original.forward.accel}
+                adjusted={data.jerk.adjusted.forward.accel}
+                percent={data.jerk.percentChange.forward.accel}
                 unit="m/s³"
                 decimals={1}
               />
               <ValueComparison
                 label="Deceleration"
-                original={data.jerkOriginal.forward.decel}
-                adjusted={data.jerkAdjusted.forward.decel}
-                percent={data.jerkAdjusted.forward.decelPercent}
+                original={data.jerk.original.forward.decel}
+                adjusted={data.jerk.adjusted.forward.decel}
+                percent={data.jerk.percentChange.forward.decel}
                 unit="m/s³"
                 decimals={1}
               />
@@ -135,17 +135,17 @@ export function ComparisonView({ data, engine }: ComparisonViewProps) {
             <div className="space-y-1">
               <ValueComparison
                 label="Acceleration"
-                original={data.jerkOriginal.boost.accel}
-                adjusted={data.jerkAdjusted.boost.accel}
-                percent={data.jerkAdjusted.boost.accelPercent}
+                original={data.jerk.original.boost.accel}
+                adjusted={data.jerk.adjusted.boost.accel}
+                percent={data.jerk.percentChange.boost.accel}
                 unit="m/s³"
                 decimals={1}
               />
               <ValueComparison
                 label="Deceleration"
-                original={data.jerkOriginal.boost.decel}
-                adjusted={data.jerkAdjusted.boost.decel}
-                percent={data.jerkAdjusted.boost.decelPercent}
+                original={data.jerk.original.boost.decel}
+                adjusted={data.jerk.adjusted.boost.decel}
+                percent={data.jerk.percentChange.boost.decel}
                 unit="m/s³"
                 decimals={1}
               />
@@ -157,17 +157,17 @@ export function ComparisonView({ data, engine }: ComparisonViewProps) {
             <div className="space-y-1">
               <ValueComparison
                 label="Acceleration"
-                original={data.jerkOriginal.travel.accel}
-                adjusted={data.jerkAdjusted.travel.accel}
-                percent={data.jerkAdjusted.travel.accelPercent}
+                original={data.jerk.original.travel.accel}
+                adjusted={data.jerk.adjusted.travel.accel}
+                percent={data.jerk.percentChange.travel.accel}
                 unit="m/s³"
                 decimals={1}
               />
               <ValueComparison
                 label="Deceleration"
-                original={data.jerkOriginal.travel.decel}
-                adjusted={data.jerkAdjusted.travel.decel}
-                percent={data.jerkAdjusted.travel.decelPercent}
+                original={data.jerk.original.travel.decel}
+                adjusted={data.jerk.adjusted.travel.decel}
+                percent={data.jerk.percentChange.travel.decel}
                 unit="m/s³"
                 decimals={1}
               />

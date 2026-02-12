@@ -12,18 +12,19 @@ import { ConfigPanel } from './components/ConfigPanel/ConfigPanel';
 import { ShipSelector } from './components/ShipSelector/ShipSelector';
 import { ResultsPanel } from './components/ResultsPanel/ResultsPanel';
 import { usePhysicsCalculation } from './hooks/usePhysicsCalculation';
-import { useShipData } from './hooks/useShipData';
 import type { BuildConfig } from './types/config';
-import type { PhysicsConfig } from './types/physics';
+import type { PhysicsConfig, EngineDef } from './types/physics';
+import type { ShipDetails } from './types/ships';
 
 function App() {
   const { result, loading, error, calculate } = usePhysicsCalculation();
-  const { shipDetails, engines } = useShipData();
 
   const [currentConfig, setCurrentConfig] = useState<BuildConfig | null>(null);
   const [selectedMultiplier, setSelectedMultiplier] = useState<number>(2);
   const [selectedEngineId, setSelectedEngineId] = useState<string | null>(null);
   const [selectedEngine, setSelectedEngine] = useState<any>(null);
+  const [shipDetails, setShipDetails] = useState<ShipDetails | null>(null);
+  const [engines, setEngines] = useState<EngineDef[]>([]);
 
   // Update selected engine when engine ID or engines array changes
   useEffect(() => {
@@ -75,10 +76,22 @@ function App() {
     setSelectedEngineId(engineId);
   }, []);
 
+  const handleShipDetailsChange = useCallback((details: ShipDetails | null) => {
+    setShipDetails(details);
+  }, []);
+
+  const handleEnginesChange = useCallback((enginesList: EngineDef[]) => {
+    setEngines(enginesList);
+  }, []);
+
   const leftPanel = (
     <div className="space-y-6">
+      <ShipSelector 
+        onEngineChange={handleEngineChange}
+        onShipDetailsChange={handleShipDetailsChange}
+        onEnginesChange={handleEnginesChange}
+      />
       <ConfigPanel onChange={handleConfigChange} />
-      <ShipSelector onEngineChange={handleEngineChange} />
     </div>
   );
 

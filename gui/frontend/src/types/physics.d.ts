@@ -99,12 +99,24 @@ export interface PhysicsResponse {
   effectiveRatio: number;
   originalFullMass: number;
   adjustedFullMass: number;
-  dragOriginal: Record<string, number>;
-  dragAdjusted: AdjustedDrag;
-  inertiaOriginal: Record<string, number>;
-  inertiaAdjusted: AdjustedInertia;
-  jerkOriginal: Record<string, Record<string, number>>;
-  jerkAdjusted: AdjustedJerk;
+  massIncrease: number;
+  originalCargo: number;
+  adjustedCargo: number;
+  drag: {
+    original: Record<string, number>;
+    adjusted: Record<string, number>;
+    percentChange: Record<string, number>;
+  };
+  inertia: {
+    original: Record<string, number>;
+    adjusted: Record<string, number>;
+    percentChange: Record<string, number>;
+  };
+  jerk: {
+    original: Record<string, Record<string, number>>;
+    adjusted: Record<string, Record<string, number>>;
+    percentChange: Record<string, Record<string, number>>;
+  };
   enginePerformance?: EnginePerformance | null;
   activeTier: string;
 }
