@@ -44,10 +44,10 @@ export function EnginePerformanceDisplay({ enginePerformance, engine }: EnginePe
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
           <div className="text-sm font-semibold text-blue-900">Engine: {engine.name}</div>
           <div className="text-xs text-blue-700 mt-1 grid grid-cols-2 gap-2">
-            <div>Forward: {engine.forwardThrust.toLocaleString()} N</div>
-            <div>Reverse: {engine.reverseThrust.toLocaleString()} N</div>
-            <div>Boost: {engine.boostThrust.toLocaleString()} N</div>
-            <div>Travel: {engine.travelThrust.toLocaleString()} N</div>
+            <div>Forward: {engine.thrustForward.toLocaleString()} kN</div>
+            {engine.thrustReverse !== undefined && <div>Reverse: {engine.thrustReverse.toLocaleString()} kN</div>}
+            {engine.thrustBoost !== undefined && <div>Boost: {engine.thrustBoost.toLocaleString()} kN</div>}
+            {engine.thrustTravel !== undefined && <div>Travel: {engine.thrustTravel.toLocaleString()} kN</div>}
           </div>
         </div>
       )}

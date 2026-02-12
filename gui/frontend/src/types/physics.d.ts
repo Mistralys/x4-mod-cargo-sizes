@@ -115,8 +115,8 @@ export interface PhysicsResponse {
 export interface EngineDef {
   id: string;
   name: string;
-  forwardThrust: number;
-  reverseThrust: number;
-  boostThrust: number;
-  travelThrust: number;
+  thrustForward: number;
+  thrustReverse?: number;
+  thrustBoost?: number;
+  thrustTravel?: number;
 }

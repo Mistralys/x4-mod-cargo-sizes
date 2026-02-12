@@ -93,17 +93,23 @@ export function EnginePicker({
           <div className="text-sm font-medium text-green-900 mb-2">{selectedEngine.name}</div>
           <div className="grid grid-cols-2 gap-2 text-xs text-green-700">
             <div>
-              <span className="font-medium">Forward:</span> {selectedEngine.forwardThrust.toLocaleString()}N
+              <span className="font-medium">Forward:</span> {selectedEngine.thrustForward.toLocaleString()} kN
             </div>
-            <div>
-              <span className="font-medium">Reverse:</span> {selectedEngine.reverseThrust.toLocaleString()}N
-            </div>
-            <div>
-              <span className="font-medium">Boost:</span> {selectedEngine.boostThrust.toLocaleString()}N
-            </div>
-            <div>
-              <span className="font-medium">Travel:</span> {selectedEngine.travelThrust.toLocaleString()}N
-            </div>
+            {selectedEngine.thrustReverse !== undefined && (
+              <div>
+                <span className="font-medium">Reverse:</span> {selectedEngine.thrustReverse.toLocaleString()} kN
+              </div>
+            )}
+            {selectedEngine.thrustBoost !== undefined && (
+              <div>
+                <span className="font-medium">Boost:</span> {selectedEngine.thrustBoost.toLocaleString()} kN
+              </div>
+            )}
+            {selectedEngine.thrustTravel !== undefined && (
+              <div>
+                <span className="font-medium">Travel:</span> {selectedEngine.thrustTravel.toLocaleString()} kN
+              </div>
+            )}
           </div>
         </div>
       )}
