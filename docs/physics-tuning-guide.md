@@ -4,6 +4,10 @@
 
 This guide explains how the cargo size mod adjusts ship physics and how to tune the configuration for optimal flight characteristics.
 
+> **💡 New: Physics Tuning GUI Available**  
+> An interactive web-based GUI is now available for real-time physics tuning. Instead of manually editing JSON files, you can use the GUI to adjust parameters, select ships/engines, and see results instantly. See [gui/README.md](../gui/README.md) for setup instructions.  
+> Run with: `composer gui:start` (Linux/Mac) or `composer gui:start-win` (Windows) from the project root.
+
 ## Understanding the System
 
 ### The Core Problem
