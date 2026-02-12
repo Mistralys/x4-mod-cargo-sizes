@@ -30,6 +30,7 @@ for all available manual downloads.
 - Affects NPC and player ships.
 - Cargo values are increased for both new and existing ships.
 - Can be installed and uninstalled at any time.
+- **Interactive Physics Tuning GUI** - Real-time visual tool for testing and configuring physics adjustments.
 - _Haul away, me mateys!_
 
 ## Reference of cargo sizes
@@ -97,6 +98,37 @@ drop off their ore. I think this is because the station manager recalls them
 whenever raw resources are needed.
 
 ## Development
+
+### Physics Tuning GUI
+
+An interactive web-based GUI is available for real-time physics tuning and visualization. The GUI allows you to:
+
+- **Adjust physics parameters** (drag reduction, inertia, jerk) and see results instantly
+- **Select specific ships and engines** from extracted game data
+- **Compare original vs. adjusted values** with visual color-coded changes
+- **Save configurations** directly to `build-config.json` for use with `composer build`
+- **Test different cargo multipliers** with real ship/engine combinations
+
+**Quick Start:**
+
+```bash
+# Install GUI dependencies (from project root)
+composer gui:install
+
+# Run the development server (Linux/Mac)
+composer gui:start
+
+# Or on Windows
+composer gui:start-win
+```
+
+The GUI will open automatically at `http://localhost:5173` with the backend API on port 8080.
+
+**Documentation:**
+- [GUI README](gui/README.md) - Complete setup, usage, and troubleshooting guide
+- [API Documentation](gui/docs/API.md) - REST API endpoint specifications
+- [Architecture Overview](gui/docs/ARCHITECTURE.md) - System design and data flows
+- [Development Guide](gui/docs/DEVELOPMENT.md) - Contributing and code standards
 
 ### Requirements
 
