@@ -37,6 +37,12 @@
   "scripts": {
     "build": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::build",
     "test": "phpunit",
-    "analyze": "phpstan analyze"
+    "analyze": "phpstan analyze",
+    "gui:install": [
+      "cd gui/backend && composer install",
+      "cd gui/frontend && npm install"
+    ],
+    "gui:start": "cd gui && ./start-dev.sh",
+    "gui:start-win": "cd gui && start-dev.bat"
   }
 }
