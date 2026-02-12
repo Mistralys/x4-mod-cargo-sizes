@@ -1,8 +1,8 @@
 # X4 Cargo Sizes Mod - Project Manifest
 
 > **AI Agent Operating System Documentation**  
-> **Version:** 1.1
-> **Last Updated:** February 11, 2026
+> **Version:** 1.2
+> **Last Updated:** February 12, 2026
 > **Purpose:** Source of Truth for AI Agents and Future Development
 
 ---
@@ -89,6 +89,36 @@ This manifest is organized into **6 core documents**, each serving a specific pu
 
 **Total onboarding time:** 15-20 minutes  
 **Alternative without manifest:** 4+ hours of code reading
+
+---
+
+## 🧩 Project Components
+
+This project consists of two main components:
+
+### 1. **Core Mod (CLI Build System)**
+
+The main CLI-based build system that generates X4 mod files.
+
+- **Location:** Project root (`/src`, `/config`, `/build`)
+- **Purpose:** Extract game data, calculate physics, generate mods
+- **Runtime:** PHP 8.4+ CLI
+- **Entry Point:** `composer build`
+- **Manifest:** This directory
+
+### 2. **Physics Tuning GUI (Web Interface)**
+
+An interactive web-based GUI for real-time physics tuning and configuration.
+
+- **Location:** `/gui` subdirectory
+- **Purpose:** Visual parameter tuning, real-time feedback, configuration management
+- **Runtime:** PHP 8.4+ (backend) + Node.js 18+ (frontend)
+- **Entry Points:** `composer gui:start-win` or `/gui/start-dev.sh`
+- **Manifest:** [/gui/docs/project-manifest/](../../../gui/docs/project-manifest/README.md)
+
+**When to use which:**
+- **Core Mod:** Building final mod packages for distribution
+- **GUI:** Tuning physics parameters, testing configurations, visual feedback
 
 ---
 
@@ -289,6 +319,29 @@ public static function getShipTypesPretty(): array // Returns string[]
 
 ---
 
+### Task: Work with Physics Tuning GUI
+
+**Documents to consult:**
+1. [GUI Project Manifest](../../../gui/docs/project-manifest/README.md) → GUI architecture and constraints
+2. [GUI tech-stack.md](../../../gui/docs/project-manifest/tech-stack.md) → React + PHP stack
+3. [GUI data-flows.md](../../../gui/docs/project-manifest/data-flows.md) → UI interaction flows
+
+**Files to work with:**
+- `config/build-config.json` (shared between CLI and GUI)
+- `gui/backend/src/Services/*` (backend services)
+- `gui/frontend/src/components/*` (UI components)
+
+**Start GUI:**
+```bash
+composer gui:start-win  # Windows
+# or
+cd gui && ./start-dev.sh  # Linux/Mac
+```
+
+**Note:** The GUI has its own manifest system. Always consult the GUI manifest before modifying GUI code.
+
+---
+
 ## 🔍 Efficient Information Gathering
 
 ### Decision Tree: "Where Do I Find X?"
@@ -409,6 +462,9 @@ An agent has successfully integrated with this codebase when:
 
 ## 🔗 External Resources
 
+### Related Components
+- **[Physics Tuning GUI](../../../gui/docs/project-manifest/README.md)** - Interactive web GUI for physics tuning (see [GUI Manifest](../../../gui/docs/project-manifest/README.md))
+
 ### Related Projects
 - **[X4 Core](https://github.com/Mistralys/x4-core)** - Parent library for X4 game data access
 - **[X4 Data Extractor](https://github.com/Mistralys/x4-data-extractor)** - Extracts game files (required for build)
@@ -446,6 +502,7 @@ An agent has successfully integrated with this codebase when:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2 | Feb 12, 2026 | Added Physics Tuning GUI manifest references and project components section. |
 | 1.1 | Feb 11, 2026 | Synchronized with PHP 8.4 upgrade changes. |
 | 1.0 | Feb 9, 2026 | Initial project manifest with 6 core documents |
 
