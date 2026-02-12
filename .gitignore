@@ -7,3 +7,5 @@ docs/nexus-description.bbcode
 .phpunit.result.cache
 docs/agents/project-ledger-schema.md
 docs/agents/project-ledger.json
+/gui/backend/vendor/
+/node_modules/
