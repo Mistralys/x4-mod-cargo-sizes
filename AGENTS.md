@@ -587,10 +587,10 @@ This project is tightly integrated with **mistralys/x4-core**. Key integration p
 
 ### After Every Code Change
 1. ✅ Update manifest documents
-2. ✅ Run PHPUnit tests (`composer test`)
-3. ✅ Run PHPStan analysis (`composer analyze`)
-4. ✅ Test build process (`composer build`)
-5. ✅ Commit with clear message
+2. ✅ Run `composer dump-autoload` if new classes were created
+3. ✅ Run PHPUnit tests (`composer test`)
+4. ✅ Run PHPStan analysis (`composer analyze`)
+5. ✅ Test build process (`composer build`)
 
 ### When Stuck
 1. ✅ Re-read constraints.md
