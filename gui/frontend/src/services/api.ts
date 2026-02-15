@@ -6,7 +6,7 @@
 
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
-import type { PhysicsConfig, PhysicsResponse, EngineDef } from '../types/physics';
+import type { PhysicsConfig, PhysicsResponse, EngineDef, ClassRangeRequest, ClassRangeResponse } from '../types/physics';
 import type { ShipTypeInfo, ShipInfo, ShipDetails } from '../types/ships';
 import type { BuildConfig, ValidationResult } from '../types/config';
 
@@ -41,6 +41,19 @@ export const physicsApi = {
       requests,
     });
     return response.data.results;
+  },
+};
+
+/**
+ * Class-range calculation API methods.
+ */
+export const classRangeApi = {
+  /**
+   * Calculate min/max/median ranges for all ships of a given type.
+   */
+  async calculate(request: ClassRangeRequest): Promise<ClassRangeResponse> {
+    const response = await apiClient.post<ClassRangeResponse>('/calculate/class-range', request);
+    return response.data;
   },
 };
 

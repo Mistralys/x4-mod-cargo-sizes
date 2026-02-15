@@ -1,7 +1,7 @@
 # File Tree - Directory Structure
 
-> **Version:** 1.0  
-> ** Updated:** February 12, 2026  
+> **Version:** 1.1  
+> **Last Updated:** February 15, 2026  
 > **Purpose:** Visual directory structure for quick file location
 
 ---
@@ -47,6 +47,7 @@ gui/
 │   │   │   │
 │   │   │   ├── Endpoints/              # API endpoint handlers
 │   │   │   │   ├── PhysicsEndpoint.php # Physics calculation routes
+│   │   │   │   ├── ClassRangeEndpoint.php # Class-range calculation routes
 │   │   │   │   ├── ShipsEndpoint.php   # Ship/engine data routes
 │   │   │   │   └── ConfigEndpoint.php  # Configuration routes
 │   │   │   │
@@ -55,6 +56,7 @@ gui/
 │   │   │
 │   │   ├── Services/                   # 🔨 Service layer (business logic wrappers)
 │   │   │   ├── PhysicsService.php      # Physics calculations
+│   │   │   ├── ClassRangeService.php   # Class-wide aggregation service
 │   │   │   ├── ShipDataService.php     # Ship/engine data access
 │   │   │   └── ConfigService.php       # Configuration management
 │   │   │
@@ -63,6 +65,10 @@ gui/
 │   │   │   ├── PhysicsResponse.php     # Output contract for physics calc
 │   │   │   ├── EnginePerformance.php   # Engine performance data
 │   │   │   ├── ShipDetails.php         # Ship detail data
+│   │   │   ├── ClassRangeRequest.php   # Input contract for class-range calc
+│   │   │   ├── ClassRangeResponse.php  # Output contract for class-range calc
+│   │   │   ├── RangeMetric.php         # Min/max/median range for a metric
+│   │   │   ├── ShipMetricSummary.php   # Worst/best case ship summary
 │   │   │   └── ValidationResult.php    # Config validation result
 │   │   │
 │   │   └── Exceptions/                 # ⚠️ Exception classes
@@ -119,11 +125,15 @@ gui/
     │   │   │
     │   │   ├── ResultsPanel/           # Results display components
     │   │   │   ├── ResultsPanel.tsx    # Main results panel
+    │   │   │   ├── PhysicsOverview.tsx # Physics overview with absolute metrics
+    │   │   │   ├── AbsoluteMetricCard.tsx # Absolute metric display card
+    │   │   │   ├── ClassRangePanel.tsx # Class-wide range panel
+    │   │   │   ├── WorstCaseCard.tsx   # Worst/best case ship display
     │   │   │   ├── MassRatioDisplay.tsx
     │   │   │   ├── DragComparison.tsx  # Drag before/after comparison
     │   │   │   ├── InertiaComparison.tsx
     │   │   │   ├── JerkComparison.tsx
-    │   │   │   ├── EnginePerformanceCard.tsx
+    │   │   │   ├── EnginePerformanceDisplay.tsx
     │   │   │   └── ...
     │   │   │
     │   │   └── UI/                     # Reusable UI components
@@ -131,10 +141,12 @@ gui/
     │   │       ├── Input.tsx           # Input component
     │   │       ├── Slider.tsx          # Slider component
     │   │       ├── Card.tsx            # Card container
+    │   │       ├── RangeBar.tsx        # Horizontal range bar component
     │   │       └── ...
     │   │
     │   ├── hooks/                      # 🎣 Custom React hooks
     │   │   ├── usePhysicsCalculation.ts # Physics calculation hook
+    │   │   ├── useClassRange.ts        # Class-range calculation hook
     │   │   ├── useShipData.ts          # Ship data fetching hook
     │   │   └── useConfig.ts            # Configuration management hook
     │   │
@@ -146,6 +158,9 @@ gui/
     │   │   ├── physics.d.ts            # Physics-related types
     │   │   ├── ships.d.ts              # Ship/engine types
     │   │   └── config.d.ts             # Configuration types
+    │   │
+    │   ├── utils/                      # 🔧 Utility functions
+    │   │   └── metricContext.ts        # Contextual phrases for physics metrics
     │   │
     │   └── styles/                     # 🎨 Shared styles
     │       └── globals.css             # Global CSS (Tailwind imports)

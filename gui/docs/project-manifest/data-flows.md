@@ -1,7 +1,7 @@
 # Data Flows & System Interactions
 
-> **Version:** 1.0  
-> **Last Updated:** February 12, 2026  
+> **Version:** 1.1  
+> **Last Updated:** February 15, 2026  
 > **Purpose:** How data moves through the system
 
 ---
@@ -10,11 +10,12 @@
 
 1. [Overview](#overview)
 2. [Physics Calculation Flow](#physics-calculation-flow)
-3. [Ship Data Retrieval Flow](#ship-data-retrieval-flow)
-4. [Configuration Management Flow](#configuration-management-flow)
-5. [User Interaction Patterns](#user-interaction-patterns)
-6. [Error Handling Flow](#error-handling-flow)
-7. [Performance Optimization Flows](#performance-optimization-flows)
+3. [Class-Wide Range Calculation Flow](#class-wide-range-calculation-flow)
+4. [Ship Data Retrieval Flow](#ship-data-retrieval-flow)
+5. [Configuration Management Flow](#configuration-management-flow)
+6. [User Interaction Patterns](#user-interaction-patterns)
+7. [Error Handling Flow](#error-handling-flow)
+8. [Performance Optimization Flows](#performance-optimization-flows)
 
 ---
 
@@ -233,6 +234,162 @@ User Sees Results (<500ms total)
 | **User sees results** | **366-425ms** | **~400ms avg** |
 
 **Target:** <500ms (✅ Achieved)
+
+---
+
+## Class-Wide Range Calculation Flow
+
+### Purpose
+
+Class-wide range calculations aggregate physics metrics across all ships of a type (e.g., all Transport ships) to show min/max/median ranges and identify worst-case/best-case ships. This helps modders understand the full impact of physics changes across an entire ship class.
+
+### Flow Diagram
+
+```
+User Adjusts Slider or Selects Ship Type
+        ↓
+App.tsx Component (useEffect)
+        ↓ triggers both:
+        ├─ triggerCalculation() [single-ship, 300ms debounce]
+        └─ triggerClassRangeCalculation() [class-range, 500ms debounce]
+        ↓
+useClassRange Hook (500ms debounce)
+        ↓ calculate(classRangeRequest)
+classRangeApi.calculate(ClassRangeRequest)
+        ↓ Axios POST
+Backend: POST /api/calculate/class-range
+        ↓
+ClassRangeEndpoint::calculate()
+        ↓ Parse JSON body
+Validate ClassRangeRequest DTO
+        {
+          "shipType": "transport",
+          "cargoMultiplier": 4.0,
+          "engineId": "engine_arg_m_travel_01_mk1",
+          "dragReductionTiers": [...],
+          "jerkReductionTiers": [...],
+          // ... all physics config
+        }
+        ↓
+ClassRangeService::calculateClassRange()
+        ↓
+Get All Ships of Type
+        ShipDataService::getShipsByType($request->shipType)
+        ↓ returns array of ShipDef objects
+Iterate All Ships (~80 for Transport)
+        For each ShipDef:
+          ├─ Get real physics data (drag, inertia, jerk)
+          ├─ Get cargo capacity
+          ├─ Calculate mass ratio
+          ├─ Apply PhysicsCalculator
+          ├─ Store metrics (massRatio, dragChange, topSpeed, etc.)
+          └─ Skip ships with zero cargo (avoid division-by-zero)
+        ↓
+Aggregate Metrics
+        For each metric (massRatio, dragChange, topSpeed, acceleration):
+          ├─ Sort values
+          ├─ Calculate min = values[0]
+          ├─ Calculate max = values[count-1]
+          └─ Calculate median = values[count/2]
+        ↓
+Identify Worst/Best Cases
+        Worst Case = Ship with highest mass ratio
+        Best Case = Ship with lowest mass ratio
+        ↓
+Construct ClassRangeResponse DTO
+        new ClassRangeResponse(
+          shipCount: 78,
+          metrics: {
+            "massRatio": RangeMetric(min: 1.2, max: 1.8, median: 1.5),
+            "topSpeed": RangeMetric(min: 380.5, max: 520.3, median: 412.0),
+            // ... all metrics
+          },
+          worstCase: ShipMetricSummary(
+            shipId: "ship_arg_l_trans_container_01_a",
+            shipName: "Colossus",
+            massRatio: 1.8,
+            topSpeed: { original: 450.2, adjusted: 380.5 }
+          ),
+          bestCase: ShipMetricSummary(...)
+        )
+        ↓
+Serialize to JSON
+        $response->withJson($classRangeResponse->toArray())
+        ↓ HTTP 200 OK
+        {
+          "shipCount": 78,
+          "metrics": {
+            "massRatio": {
+              "min": 1.2,
+              "max": 1.8,
+              "median": 1.5,
+              "unit": "ratio",
+              "label": "Mass Ratio"
+            },
+            "topSpeed": { "min": 380.5, "max": 520.3, "median": 412.0, "unit": "m/s", "label": "Top Speed" },
+            // ...
+          },
+          "worstCase": { "shipId": "...", "shipName": "Colossus", ... },
+          "bestCase": { ... }
+        }
+        ↓
+Frontend: Axios Receives Response
+        ↓
+useClassRange Hook
+        ↓ response.data
+Set Result State (ClassRangeResponse)
+        ↓
+Set Loading State (false)
+        ↓
+React Re-renders
+        ↓
+ResultsPanel → ClassRangePanel Component
+        ↓ Displays class-wide ranges
+For each metric:
+  ├─ AbsoluteMetricCard (top speed, acceleration with context phrases)
+  ├─ RangeBar (min ─── median ─── max visualization)
+  └─ WorstCaseCard (worst-case and best-case ship identification)
+        ↓
+User Sees Class-Wide Results (<600ms total)
+```
+
+### Timeline
+
+| Step | Time | Cumulative |
+|------|------|------------|
+| User adjusts slider | 0ms | 0ms |
+| React state update | ~5ms | 5ms |
+| Debounce starts | instant | 5ms |
+| **Debounce wait** | 500ms | 505ms |
+| API call sent | instant | 505ms |
+| Backend processing (80 ships × calculations) | ~50-80ms | 555-585ms |
+| JSON serialization | ~5ms | 560-590ms |
+| Network transfer (localhost) | ~1-5ms | 561-595ms |
+| Frontend receives response | instant | 561-595ms |
+| React re-render | ~5-10ms | 566-605ms |
+| **User sees results** | **566-605ms** | **~580ms avg** |
+
+**Target:** <600ms (✅ Achieved)
+
+### Key Performance Optimizations
+
+- **500ms debounce** (vs 300ms for single-ship) accounts for heavier backend computation
+- **Early ship filtering:** Ships with zero cargo capacity skipped immediately
+- **Efficient median calculation:** Sort once, index middle value (O(n log n))
+- **Shared PhysicsCalculator instance:** Reused across all ship iterations
+- **Engine-dependent metrics:** Top speed and acceleration only calculated when engineId provided
+
+### Differences from Single-Ship Calculation
+
+| Aspect | Single-Ship | Class-Wide Range |
+|--------|-------------|------------------|
+| **Debounce** | 300ms | 500ms (heavier computation) |
+| **Scope** | One ship | ~80 ships (entire class) |
+| **Backend Service** | `PhysicsService` | `ClassRangeService` |
+| **Endpoint** | `POST /calculate/physics` | `POST /calculate/class-range` |
+| **Response** | Detailed physics breakdown | Aggregated min/max/median ranges |
+| **Typical Response Time** | 50-100ms | 50-80ms (optimized iteration) |
+| **Primary Use Case** | Real-time feedback for current ship | Class-wide impact assessment |
 
 ---
 

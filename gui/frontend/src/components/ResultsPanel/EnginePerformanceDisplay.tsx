@@ -38,6 +38,8 @@ export function EnginePerformanceDisplay({ enginePerformance, engine }: EnginePe
     );
   }
 
+  const hasTopSpeedData = enginePerformance.topSpeed !== undefined && enginePerformance.topSpeed !== null;
+
   return (
     <Card title="Engine Performance">
       {engine && (
@@ -52,22 +54,68 @@ export function EnginePerformanceDisplay({ enginePerformance, engine }: EnginePe
         </div>
       )}
 
-      <div className="space-y-1">
-        <ValueComparison
-          label="Thrust-to-Weight Ratio (TWR)"
-          original={enginePerformance.originalTWR}
-          adjusted={enginePerformance.adjustedTWR}
-          percent={enginePerformance.reductionPercent}
-          decimals={3}
-        />
-        <ValueComparison
-          label="Estimated Acceleration"
-          original={enginePerformance.originalAcceleration}
-          adjusted={enginePerformance.adjustedAcceleration}
-          percent={enginePerformance.reductionPercent}
-          unit="m/s²"
-          decimals={2}
-        />
+      <div className="space-y-4">
+        {/* TWR and Acceleration */}
+        <div className="space-y-1">
+          <ValueComparison
+            label="Thrust-to-Weight Ratio (TWR)"
+            original={enginePerformance.originalTWR}
+            adjusted={enginePerformance.adjustedTWR}
+            percent={enginePerformance.reductionPercent}
+            decimals={3}
+          />
+          <ValueComparison
+            label="Estimated Acceleration"
+            original={enginePerformance.originalAcceleration}
+            adjusted={enginePerformance.adjustedAcceleration}
+            percent={enginePerformance.reductionPercent}
+            unit="m/s²"
+            decimals={2}
+          />
+        </div>
+
+        {/* Top Speeds (when available) */}
+        {hasTopSpeedData && (
+          <div className="pt-4 border-t border-gray-200">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2">Top Speeds by Flight Mode</h4>
+            <div className="space-y-1">
+              {enginePerformance.topSpeed != null && enginePerformance.topSpeedAdjusted != null && (
+                <ValueComparison
+                  label="Normal Flight"
+                  original={enginePerformance.topSpeed}
+                  adjusted={enginePerformance.topSpeedAdjusted}
+                  percent={((enginePerformance.topSpeedAdjusted - enginePerformance.topSpeed) / enginePerformance.topSpeed) * 100}
+                  unit="m/s"
+                  decimals={1}
+                />
+              )}
+              {enginePerformance.topSpeedReverse != null && (
+                <div className="flex justify-between py-1 px-2 bg-gray-50 rounded text-sm">
+                  <span className="text-gray-600">Reverse</span>
+                  <span className="font-medium text-gray-900">
+                    {enginePerformance.topSpeedReverse.toFixed(1)} m/s
+                  </span>
+                </div>
+              )}
+              {enginePerformance.topSpeedBoost != null && (
+                <div className="flex justify-between py-1 px-2 bg-gray-50 rounded text-sm">
+                  <span className="text-gray-600">Boost</span>
+                  <span className="font-medium text-gray-900">
+                    {enginePerformance.topSpeedBoost.toFixed(1)} m/s
+                  </span>
+                </div>
+              )}
+              {enginePerformance.topSpeedTravel != null && (
+                <div className="flex justify-between py-1 px-2 bg-gray-50 rounded text-sm">
+                  <span className="text-gray-600">Travel</span>
+                  <span className="font-medium text-gray-900">
+                    {enginePerformance.topSpeedTravel.toFixed(1)} m/s
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">

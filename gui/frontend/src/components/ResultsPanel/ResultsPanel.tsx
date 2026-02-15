@@ -4,10 +4,12 @@
  * @package X4 Cargo Sizes Mod - Physics Tuning GUI
  */
 
-import type { PhysicsResponse, PhysicsConfig, EngineDef } from '../../types/physics';
+import type { PhysicsResponse, PhysicsConfig, EngineDef, ClassRangeResponse } from '../../types/physics';
 import { PhysicsOverview } from './PhysicsOverview';
 import { ComparisonView } from './ComparisonView';
 import { DiagnosticsPanel } from './DiagnosticsPanel';
+import { AbsoluteMetricCard } from './AbsoluteMetricCard';
+import { ClassRangePanel } from './ClassRangePanel';
 import { Card } from '../UI/Card';
 import { Spinner } from '../UI/Spinner';
 
@@ -17,9 +19,23 @@ interface ResultsPanelProps {
   engine?: EngineDef | null;
   loading?: boolean;
   error?: string | null;
+  classRangeData?: ClassRangeResponse | null;
+  classRangeLoading?: boolean;
+  classRangeError?: string | null;
+  shipSize?: string;
 }
 
-export function ResultsPanel({ data, config, engine, loading, error }: ResultsPanelProps) {
+export function ResultsPanel({ 
+  data, 
+  config, 
+  engine, 
+  loading, 
+  error,
+  classRangeData,
+  classRangeLoading = false,
+  classRangeError = null,
+  shipSize = 'M'
+}: ResultsPanelProps) {
   // Loading state
   if (loading) {
     return (
@@ -91,18 +107,55 @@ export function ResultsPanel({ data, config, engine, loading, error }: ResultsPa
   }
 
   // Results display
+  const hasAbsoluteMetrics = data.topSpeed || data.acceleration;
+
   return (
     <div className="space-y-6">
       {/* Overview Cards */}
       <Card title="Physics Overview">
-        <PhysicsOverview data={data} />
+        <PhysicsOverview data={data} shipSize={shipSize} />
       </Card>
+
+      {/* Absolute Metrics (if engine selected) */}
+      {hasAbsoluteMetrics && (
+        <Card title="Absolute Performance Metrics">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.topSpeed && (
+              <AbsoluteMetricCard
+                label="Top Speed"
+                originalValue={data.topSpeed.original}
+                adjustedValue={data.topSpeed.adjusted}
+                unit=" m/s"
+                contextPhrase="Maximum velocity with current engine configuration"
+              />
+            )}
+            {data.acceleration && (
+              <AbsoluteMetricCard
+                label="Acceleration"
+                originalValue={data.acceleration.original}
+                adjustedValue={data.acceleration.adjusted}
+                unit=" m/s²"
+                contextPhrase="Time to reach top speed affected by mass changes"
+              />
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* Comparison Tabs */}
       <ComparisonView data={data} engine={engine} />
+
+      {/* Class-Wide Impact Analysis */}
+      <ClassRangePanel
+        data={classRangeData || null}
+        loading={classRangeLoading}
+        error={classRangeError || null}
+        engineSelected={!!engine}
+      />
 
       {/* Diagnostics */}
       <DiagnosticsPanel activeTier={data.activeTier} config={config} />
     </div>
   );
 }
+

@@ -1,7 +1,7 @@
 # Tech Stack & Architectural Patterns
 
-> **Version:** 1.0  
-> **Last Updated:** February 12, 2026  
+> **Version:** 1.1  
+> **Last Updated:** February 15, 2026  
 > **Purpose:** Runtime, dependencies, and architectural patterns reference
 
 ---
@@ -371,6 +371,77 @@ class ConfigService {
 - Human-readable configuration
 - Version control friendly
 - Shareable between GUI and CLI build system
+
+### 9. **Class-Wide Aggregation Pattern**
+
+Aggregate physics calculations across all ships of a type to show min/max/median ranges and identify worst/best case ships.
+
+**Purpose:**  
+Modders need to understand the full impact of physics changes across an entire ship class, not just one ship. This pattern efficiently computes class-wide metrics and identifies edge cases.
+
+**Implementation:**
+```php
+class ClassRangeService {
+    public function calculateClassRange(ClassRangeRequest $request): ClassRangeResponse {
+        // 1. Get all ships of requested type
+        $ships = $this->shipDataService->getShipsByType($request->shipType);
+        
+        // 2. Calculate physics for each ship
+        $shipMetrics = [];
+        foreach ($ships as $shipDef) {
+            $metrics = $this->calculateShipMetrics($shipDef, $request);
+            if ($metrics !== null) { // Skip ships with zero cargo
+                $shipMetrics[] = $metrics;
+            }
+        }
+        
+        // 3. Aggregate into min/max/median ranges
+        $ranges = $this->aggregateRanges($shipMetrics);
+        
+        // 4. Identify worst/best cases
+        $worstCase = $this->findWorstCase($shipMetrics);
+        $bestCase = $this->findBestCase($shipMetrics);
+        
+        return new ClassRangeResponse(
+            shipCount: count($shipMetrics),
+            metrics: $ranges,
+            worstCase: $worstCase,
+            bestCase: $bestCase
+        );
+    }
+}
+```
+
+**Frontend Integration:**
+```typescript
+// Separate hook with 500ms debounce (vs 300ms for single-ship)
+function useClassRange() {
+  const [result, setResult] = useState<ClassRangeResponse | null>(null);
+  
+  const calculate = useCallback((request: ClassRangeRequest) => {
+    clearTimeout(debounceTimerRef.current);
+    
+    debounceTimerRef.current = setTimeout(async () => {
+      const response = await classRangeApi.calculate(request);
+      setResult(response);
+    }, 500); // Longer debounce for heavier computation
+  }, []);
+  
+  return { result, loading, calculate };
+}
+```
+
+**Benefits:**
+- Modders see worst-case and best-case ships immediately
+- Min/max/median ranges show full distribution
+- Performance optimized: 80 ships × calculations complete in <100ms
+- Separate debounce tuning (500ms vs 300ms) prevents API spam
+
+**Key Optimizations:**
+- Ships with zero cargo skipped early (prevents division-by-zero)
+- Shared `PhysicsCalculator` instance reused across iterations
+- Engine-dependent metrics (top speed, acceleration) only calculated when engineId provided
+- Efficient median calculation: sort once, index middle value (O(n log n))
 
 ---
 

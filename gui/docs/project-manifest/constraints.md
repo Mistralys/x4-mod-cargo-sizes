@@ -1,7 +1,7 @@
 # Constraints & Conventions
 
-> **Version:** 1.0  
-> **Last Updated:** February 12, 2026  
+> **Version:** 1.1  
+> **Last Updated:** February 15, 2026  
 > **Purpose:** Non-negotiable rules and established conventions
 
 ---
@@ -504,19 +504,43 @@ export function usePhysicsCalculation(): UsePhysicsCalculationResult {
 
 ---
 
-### 2. **Debounce Delay**
+### 2. **Debounce Delays**
 
-**RULE:** Frontend MUST debounce physics calculations by 300ms.
+**RULE:** Frontend MUST debounce calculations to prevent API spam.
 
-**Implementation:** `usePhysicsCalculation` hook with `setTimeout`.
+**Required Debounce Values:**
+
+| Calculation Type | Debounce | Hook | Rationale |
+|-----------------|----------|------|-----------|
+| **Single-Ship Physics** | 300ms | `usePhysicsCalculation` | Fast response for real-time feedback |
+| **Class-Wide Range** | 500ms | `useClassRange` | Heavier computation (~80 ships) needs longer debounce |
+
+**Implementation Example:**
 
 ```typescript
-debounceTimerRef.current = setTimeout(async () => {
-  await physicsApi.calculate(config);
-}, 300);
+// Single-ship: 300ms
+function usePhysicsCalculation() {
+  debounceTimerRef.current = setTimeout(async () => {
+    await physicsApi.calculate(config);
+  }, 300);
+}
+
+// Class-range: 500ms
+function useClassRange() {
+  debounceTimerRef.current = setTimeout(async () => {
+    await classRangeApi.calculate(request);
+  }, 500);
+}
 ```
 
-**Rationale:** Prevents API spam when user drags sliders.
+**Why Different Debounce Values?**
+- **300ms** for single-ship: Balances responsiveness with API efficiency
+- **500ms** for class-range: Accounts for heavier backend computation (iterating ~80 ships)
+
+**Combined User Experience:**
+- Single-ship results appear at ~400ms (300ms debounce + ~100ms API)
+- Class-range results appear at ~600ms (500ms debounce + ~100ms API)
+- Both feel near-instantaneous to the user
 
 ---
 

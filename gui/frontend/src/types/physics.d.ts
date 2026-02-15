@@ -27,6 +27,7 @@ export interface PhysicsConfig {
   dragReductionTiers: Tier[];
   jerkReductionTiers: Tier[];
   engineId?: string | null;
+  shipId?: string | null;
 }
 
 /**
@@ -89,6 +90,12 @@ export interface EnginePerformance {
   reductionPercent: number;
   originalAcceleration: number;
   adjustedAcceleration: number;
+  engineCount?: number;
+  topSpeed?: number | null;
+  topSpeedAdjusted?: number | null;
+  topSpeedReverse?: number | null;
+  topSpeedBoost?: number | null;
+  topSpeedTravel?: number | null;
 }
 
 /**
@@ -119,11 +126,74 @@ export interface PhysicsResponse {
   };
   enginePerformance?: EnginePerformance | null;
   activeTier: string;
+  topSpeed?: {
+    original: number;
+    adjusted: number;
+  } | null;
+  acceleration?: {
+    original: number;
+    adjusted: number;
+  } | null;
 }
 
 /**
  * Engine definition.
  */
+
+/**
+ * Range metric with min/max/median values.
+ */
+export interface RangeMetric {
+  min: number;
+  max: number;
+  median: number;
+  unit: string;
+  label: string;
+}
+
+/**
+ * Summary of a single ship's metrics for worst/best case identification.
+ */
+export interface ShipMetricSummary {
+  shipId: string;
+  shipName: string;
+  size: string;
+  massRatio: number;
+  topSpeed?: {
+    original: number;
+    adjusted: number;
+  } | null;
+  acceleration?: {
+    original: number;
+    adjusted: number;
+  } | null;
+  dragChangePercent: number;
+}
+
+/**
+ * Class-range calculation request.
+ */
+export interface ClassRangeRequest {
+  shipType: string;
+  cargoMultiplier: number;
+  dragReductionTiers: Tier[];
+  jerkReductionTiers: Tier[];
+  inertiaImpactFactor: number;
+  useEffectiveRatioCap: boolean;
+  dragReductionFactor: number;
+  accelerationResponsiveness: number;
+  engineId?: string | null;
+}
+
+/**
+ * Class-range calculation response.
+ */
+export interface ClassRangeResponse {
+  shipCount: number;
+  metrics: Record<string, RangeMetric>;
+  worstCase: ShipMetricSummary;
+  bestCase: ShipMetricSummary;
+}
 export interface EngineDef {
   id: string;
   name: string;

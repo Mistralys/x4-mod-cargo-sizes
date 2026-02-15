@@ -42,4 +42,9 @@ export interface ShipDetails {
   mass: number;
   cargo: number;
   engines: string[];
+  engineCount?: number;
+  cargoType?: string;
+  dragOriginal?: Record<string, number>;
+  inertiaOriginal?: Record<string, number>;
+  jerkOriginal?: Record<string, number>;
 }

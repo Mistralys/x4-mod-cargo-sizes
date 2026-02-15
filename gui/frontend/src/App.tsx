@@ -12,12 +12,14 @@ import { ConfigPanel } from './components/ConfigPanel/ConfigPanel';
 import { ShipSelector } from './components/ShipSelector/ShipSelector';
 import { ResultsPanel } from './components/ResultsPanel/ResultsPanel';
 import { usePhysicsCalculation } from './hooks/usePhysicsCalculation';
+import { useClassRange } from './hooks/useClassRange';
 import type { BuildConfig } from './types/config';
-import type { PhysicsConfig, EngineDef } from './types/physics';
+import type { PhysicsConfig, EngineDef, ClassRangeRequest } from './types/physics';
 import type { ShipDetails } from './types/ships';
 
 function App() {
   const { result, loading, error, calculate } = usePhysicsCalculation();
+  const { result: classRangeResult, loading: classRangeLoading, error: classRangeError, calculate: calculateClassRange } = useClassRange();
 
   const [currentConfig, setCurrentConfig] = useState<BuildConfig | null>(null);
   const [selectedMultiplier, setSelectedMultiplier] = useState<number>(2);
@@ -25,6 +27,10 @@ function App() {
   const [selectedEngine, setSelectedEngine] = useState<any>(null);
   const [shipDetails, setShipDetails] = useState<ShipDetails | null>(null);
   const [engines, setEngines] = useState<EngineDef[]>([]);
+  
+  // Extract shipId and shipType for class-range calculations
+  const [shipId, setShipId] = useState<string | null>(null);
+  const [shipType, setShipType] = useState<string | null>(null);
 
   // Update selected engine when engine ID or engines array changes
   useEffect(() => {
@@ -57,15 +63,40 @@ function App() {
       dragReductionTiers: flightMechanics.dragReductionTiers,
       jerkReductionTiers: flightMechanics.jerkReductionTiers,
       engineId: selectedEngineId,
+      shipId: shipDetails.id, // Add shipId to enable real per-ship data lookup
     };
 
     calculate(physicsConfig);
   }, [currentConfig, shipDetails, selectedMultiplier, selectedEngineId, calculate]);
 
-  // Trigger calculation when dependencies change
+  // Trigger class-range calculation when all required data is available
+  const triggerClassRangeCalculation = useCallback(() => {
+    if (!currentConfig || !shipType) {
+      return;
+    }
+
+    const flightMechanics = currentConfig['flight-mechanics'];
+
+    const classRangeRequest: ClassRangeRequest = {
+      shipType,
+      cargoMultiplier: selectedMultiplier,
+      useEffectiveRatioCap: flightMechanics.useEffectiveRatioCap,
+      dragReductionFactor: flightMechanics.dragReductionFactor,
+      inertiaImpactFactor: flightMechanics.inertiaImpactFactor,
+      accelerationResponsiveness: flightMechanics.accelerationResponsiveness,
+      dragReductionTiers: flightMechanics.dragReductionTiers,
+      jerkReductionTiers: flightMechanics.jerkReductionTiers,
+      engineId: selectedEngineId,
+    };
+
+    calculateClassRange(classRangeRequest);
+  }, [currentConfig, shipType, selectedMultiplier, selectedEngineId, calculateClassRange]);
+
+  // Trigger both calculations when dependencies change
   useEffect(() => {
     triggerCalculation();
-  }, [triggerCalculation]);
+    triggerClassRangeCalculation();
+  }, [triggerCalculation, triggerClassRangeCalculation]);
 
   const handleConfigChange = useCallback((config: BuildConfig, multiplier: number) => {
     setCurrentConfig(config);
@@ -78,6 +109,14 @@ function App() {
 
   const handleShipDetailsChange = useCallback((details: ShipDetails | null) => {
     setShipDetails(details);
+    // Extract shipId and shipType for class-range calculations
+    if (details) {
+      setShipId(details.id);
+      setShipType(details.type);
+    } else {
+      setShipId(null);
+      setShipType(null);
+    }
   }, []);
 
   const handleEnginesChange = useCallback((enginesList: EngineDef[]) => {
@@ -113,12 +152,17 @@ function App() {
               dragReductionTiers: currentConfig['flight-mechanics'].dragReductionTiers,
               jerkReductionTiers: currentConfig['flight-mechanics'].jerkReductionTiers,
               engineId: selectedEngineId,
+              shipId: shipId,
             }
           : null
       }
       engine={selectedEngine}
       loading={loading}
       error={error}
+      classRangeData={classRangeResult}
+      classRangeLoading={classRangeLoading}
+      classRangeError={classRangeError}
+      shipSize={shipDetails?.size || 'M'}
     />
   );
 
@@ -134,4 +178,3 @@ function App() {
 }
 
 export default App;
-

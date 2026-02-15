@@ -1,7 +1,7 @@
 # Public API - Signatures Only
 
-> **Version:** 1.0  
-> **Last Updated:** February 12, 2026  
+> **Version:** 1.1  
+> **Last Updated:** February 15, 2026  
 > **Purpose:** Public method signatures and contracts (NO implementations)
 
 ---
@@ -113,6 +113,28 @@ class ShipDataService
 
 ---
 
+### ClassRangeService
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\Services`
+
+**Purpose:** Class-wide aggregation service for calculating min/max/median ranges across all ships of a type.
+
+```php
+class ClassRangeService
+{
+    /**
+     * Calculates class-wide metric ranges for all ships of a given type.
+     *
+     * @param ClassRangeRequest $request Class-range calculation parameters
+     * @return ClassRangeResponse Aggregated min/max/median metrics with worst/best case ships
+     * @throws GUIException
+     */
+    public function calculateClassRange(ClassRangeRequest $request): ClassRangeResponse;
+}
+```
+
+---
+
 ### ConfigService
 
 **Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\Services`
@@ -176,19 +198,21 @@ class PhysicsRequest
      * @param array<array{maxMultiplier: float, reductionPercent: float}> $dragReductionTiers Drag reduction tiers
      * @param array<array{maxMultiplier: float, reductionPercent: float}> $jerkReductionTiers Jerk reduction tiers
      * @param string|null $engineId Optional engine ID for performance calculations
+     * @param string|null $shipId Optional ship ID for real per-ship data lookup
      */
     public function __construct(
-        public float $baseMass,
-        public float $originalCargo,
-        public float $adjustedCargo,
-        public float $cargoMultiplier,
-        public bool $useEffectiveRatioCap,
-        public float $dragReductionFactor,
-        public float $inertiaImpactFactor,
-        public float $accelerationResponsiveness,
-        public array $dragReductionTiers,
-        public array $jerkReductionTiers,
-        public ?string $engineId = null
+        public readonly float $baseMass,
+        public readonly float $originalCargo,
+        public readonly float $adjustedCargo,
+        public readonly float $cargoMultiplier,
+        public readonly bool $useEffectiveRatioCap,
+        public readonly float $dragReductionFactor,
+        public readonly float $inertiaImpactFactor,
+        public readonly float $accelerationResponsiveness,
+        public readonly array $dragReductionTiers,
+        public readonly array $jerkReductionTiers,
+        public readonly ?string $engineId = null,
+        public readonly ?string $shipId = null
     );
     
     /**
@@ -231,24 +255,28 @@ class PhysicsResponse
      * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float, decel: float}, travel: array{accel: float, decel: float}} $jerkPercentChange Jerk percentage changes
      * @param EnginePerformance|null $enginePerformance Optional engine performance metrics
      * @param string $activeTier Active tier description
+     * @param array{original: float, adjusted: float}|null $topSpeed Optional top speed in m/s (original and adjusted)
+     * @param array{original: float, adjusted: float}|null $acceleration Optional acceleration in m/s² (original and adjusted)
      */
     public function __construct(
-        public float $massRatio,
-        public float $effectiveRatio,
-        public float $originalFullMass,
-        public float $adjustedFullMass,
-        public float $massIncrease,
-        public array $dragOriginal,
-        public array $dragAdjusted,
-        public array $dragPercentChange,
-        public array $inertiaOriginal,
-        public array $inertiaAdjusted,
-        public array $inertiaPercentChange,
-        public array $jerkOriginal,
-        public array $jerkAdjusted,
-        public array $jerkPercentChange,
-        public ?EnginePerformance $enginePerformance = null,
-        public string $activeTier = ''
+        public readonly float $massRatio,
+        public readonly float $effectiveRatio,
+        public readonly float $originalFullMass,
+        public readonly float $adjustedFullMass,
+        public readonly float $massIncrease,
+        public readonly array $dragOriginal,
+        public readonly array $dragAdjusted,
+        public readonly array $dragPercentChange,
+        public readonly array $inertiaOriginal,
+        public readonly array $inertiaAdjusted,
+        public readonly array $inertiaPercentChange,
+        public readonly array $jerkOriginal,
+        public readonly array $jerkAdjusted,
+        public readonly array $jerkPercentChange,
+        public readonly ?EnginePerformance $enginePerformance = null,
+        public readonly string $activeTier = '',
+        public readonly ?array $topSpeed = null,
+        public readonly ?array $acceleration = null
     );
     
     /**
@@ -281,15 +309,27 @@ class EnginePerformance
      * @param float $twrReductionPercent Percentage reduction in TWR
      * @param float $originalAcceleration Original estimated acceleration in m/s²
      * @param float $adjustedAcceleration Adjusted estimated acceleration in m/s²
+     * @param int $engineCount Number of engines used for calculations
+     * @param float|null $topSpeed Top speed in normal flight (m/s)
+     * @param float|null $topSpeedAdjusted Adjusted top speed after mass increase
+     * @param float|null $topSpeedReverse Top speed in reverse flight (m/s)
+     * @param float|null $topSpeedBoost Top speed in boost flight (m/s)
+     * @param float|null $topSpeedTravel Top speed in travel flight (m/s)
      */
     public function __construct(
-        public string $engineId,
-        public float $thrustForward,
-        public float $originalTWR,
-        public float $adjustedTWR,
-        public float $twrReductionPercent,
-        public float $originalAcceleration,
-        public float $adjustedAcceleration
+        public readonly string $engineId,
+        public readonly float $thrustForward,
+        public readonly float $originalTWR,
+        public readonly float $adjustedTWR,
+        public readonly float $twrReductionPercent,
+        public readonly float $originalAcceleration,
+        public readonly float $adjustedAcceleration,
+        public readonly int $engineCount = 1,
+        public readonly ?float $topSpeed = null,
+        public readonly ?float $topSpeedAdjusted = null,
+        public readonly ?float $topSpeedReverse = null,
+        public readonly ?float $topSpeedBoost = null,
+        public readonly ?float $topSpeedTravel = null
     );
     
     /**
@@ -322,15 +362,184 @@ class ShipDetails
      * @param float $mass Ship base mass
      * @param float $cargo Ship cargo capacity
      * @param array<string> $engines List of compatible engine IDs
+     * @param int $engineCount Number of engine slots
+     * @param string $cargoType Cargo connection type
+     * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float}|null $dragOriginal Real drag values from ShipDef
+     * @param array{pitch: float, yaw: float, roll: float}|null $inertiaOriginal Real inertia values from ShipDef
+     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float, decel: float}, travel: array{accel: float, decel: float}}|null $jerkOriginal Real jerk values from ShipDef
      */
     public function __construct(
-        public string $id,
-        public string $name,
-        public string $type,
-        public string $size,
-        public float $mass,
-        public float $cargo,
-        public array $engines = []
+        public readonly string $id,
+        public readonly string $name,
+        public readonly string $type,
+        public readonly string $size,
+        public readonly float $mass,
+        public readonly float $cargo,
+        public readonly array $engines = [],
+        public readonly int $engineCount = 0,
+        public readonly string $cargoType = '',
+        public readonly ?array $dragOriginal = null,
+        public readonly ?array $inertiaOriginal = null,
+        public readonly ?array $jerkOriginal = null
+    );
+    
+    /**
+     * Convert to array for JSON serialization.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array;
+}
+```
+
+---
+
+### ClassRangeRequest
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs`
+
+**Purpose:** Input contract for class-wide range calculations.
+
+```php
+class ClassRangeRequest
+{
+    /**
+     * Constructor.
+     *
+     * @param string $shipType Ship type filter (transport, mining, auxiliary, carrier)
+     * @param float $cargoMultiplier Cargo multiplier (2x, 4x, 8x, etc.)
+     * @param array<array{maxMultiplier: float, reductionPercent: float}> $dragReductionTiers Drag reduction tiers
+     * @param array<array{maxMultiplier: float, reductionPercent: float}> $jerkReductionTiers Jerk reduction tiers
+     * @param float $inertiaImpactFactor Inertia impact factor config
+     * @param bool $useEffectiveRatioCap Whether to cap effective ratio
+     * @param float $dragReductionFactor Drag reduction factor config
+     * @param float $accelerationResponsiveness Acceleration responsiveness config
+     * @param string|null $engineId Optional engine ID for engine-dependent metrics
+     */
+    public function __construct(
+        public readonly string $shipType,
+        public readonly float $cargoMultiplier,
+        public readonly array $dragReductionTiers,
+        public readonly array $jerkReductionTiers,
+        public readonly float $inertiaImpactFactor,
+        public readonly bool $useEffectiveRatioCap,
+        public readonly float $dragReductionFactor,
+        public readonly float $accelerationResponsiveness,
+        public readonly ?string $engineId = null
+    );
+    
+    /**
+     * Create from array (typically from JSON request).
+     *
+     * @param array<string, mixed> $data
+     * @return self
+     */
+    public static function fromArray(array $data): self;
+}
+```
+
+---
+
+### RangeMetric
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs`
+
+**Purpose:** Min/max/median range for a single metric.
+
+```php
+class RangeMetric
+{
+    /**
+     * Constructor.
+     *
+     * @param float $min Minimum value across all ships
+     * @param float $max Maximum value across all ships
+     * @param float $median Median value across all ships
+     * @param string $unit Unit of measurement (m/s, m/s², %, ratio)
+     * @param string $label Human-readable label
+     */
+    public function __construct(
+        public readonly float $min,
+        public readonly float $max,
+        public readonly float $median,
+        public readonly string $unit,
+        public readonly string $label
+    );
+    
+    /**
+     * Convert to array for JSON serialization.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array;
+}
+```
+
+---
+
+### ShipMetricSummary
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs`
+
+**Purpose:** Worst/best case ship identification with metrics.
+
+```php
+class ShipMetricSummary
+{
+    /**
+     * Constructor.
+     *
+     * @param string $shipId Ship identifier
+     * @param string $shipName Ship name
+     * @param string $size Ship size (s, m, l, xl)
+     * @param float $massRatio Mass ratio for this ship
+     * @param array{original: float, adjusted: float}|null $topSpeed Top speed metrics (when engine selected)
+     * @param array{original: float, adjusted: float}|null $acceleration Acceleration metrics (when engine selected)
+     * @param float $dragChangePercent Forward drag percent change (most impactful axis)
+     */
+    public function __construct(
+        public readonly string $shipId,
+        public readonly string $shipName,
+        public readonly string $size,
+        public readonly float $massRatio,
+        public readonly ?array $topSpeed,
+        public readonly ?array $acceleration,
+        public readonly float $dragChangePercent
+    );
+    
+    /**
+     * Convert to array for JSON serialization.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array;
+}
+```
+
+---
+
+### ClassRangeResponse
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs`
+
+**Purpose:** Output contract for class-wide range calculations with aggregated metrics.
+
+```php
+class ClassRangeResponse
+{
+    /**
+     * Constructor.
+     *
+     * @param int $shipCount Number of ships included in calculation
+     * @param array<string, RangeMetric> $metrics Map of metric name to range (massRatio, dragChange, inertiaChange, jerkChange, topSpeed, acceleration)
+     * @param ShipMetricSummary $worstCase Worst-case ship (highest mass ratio)
+     * @param ShipMetricSummary $bestCase Best-case ship (lowest mass ratio)
+     */
+    public function __construct(
+        public readonly int $shipCount,
+        public readonly array $metrics,
+        public readonly ShipMetricSummary $worstCase,
+        public readonly ShipMetricSummary $bestCase
     );
     
     /**
@@ -455,6 +664,16 @@ export const physicsApi: {
 };
 
 /**
+ * Class-wide range calculation API methods.
+ */
+export const classRangeApi: {
+  /**
+   * Calculate class-wide metric ranges for all ships of a type.
+   */
+  calculate(request: ClassRangeRequest): Promise<ClassRangeResponse>;
+};
+
+/**
  * Ship and engine data API methods.
  */
 export const shipsApi: {
@@ -528,6 +747,29 @@ interface UsePhysicsCalculationResult {
  * Hook for performing physics calculations with 300ms debounce.
  */
 export function usePhysicsCalculation(): UsePhysicsCalculationResult;
+```
+
+---
+
+### useClassRange
+
+**Module:** `src/hooks/useClassRange.ts`
+
+**Purpose:** Class-wide range calculation hook with 500ms debouncing.
+
+```typescript
+interface UseClassRangeResult {
+  result: ClassRangeResponse | null;
+  loading: boolean;
+  error: string | null;
+  calculate: (request: ClassRangeRequest) => void;
+  reset: () => void;
+}
+
+/**
+ * Hook for performing class-wide range calculations with 500ms debounce.
+ */
+export function useClassRange(): UseClassRangeResult;
 ```
 
 ---
@@ -759,6 +1001,149 @@ export interface ShipDetails {
   mass: number;
   cargo: number;
   engines: string[];
+  engineCount?: number;
+  cargoType?: string;
+  dragOriginal?: {
+    forward: number;
+    reverse: number;
+    horizontal: number;
+    vertical: number;
+    pitch: number;
+    yaw: number;
+    roll: number;
+  };
+  inertiaOriginal?: {
+    pitch: number;
+    yaw: number;
+    roll: number;
+  };
+  jerkOriginal?: {
+    forward: { accel: number; decel: number };
+    boost: { accel: number; decel: number };
+    travel: { accel: number; decel: number };
+  };
+}
+```
+
+---
+
+### Physics Types - Absolute Metrics (physics.d.ts)
+
+```typescript
+/**
+ * Physics configuration with optional shipId (matching PhysicsRequest DTO).
+ */
+export interface PhysicsConfig {
+  baseMass: number;
+  originalCargo: number;
+  adjustedCargo: number;
+  cargoMultiplier: number;
+  useEffectiveRatioCap: boolean;
+  dragReductionFactor: number;
+  inertiaImpactFactor: number;
+  accelerationResponsiveness: number;
+  dragReductionTiers: Tier[];
+  jerkReductionTiers: Tier[];
+  engineId?: string | null;
+  shipId?: string;
+}
+
+/**
+ * Physics response with absolute metrics (matching PhysicsResponse DTO).
+ */
+export interface PhysicsResponse {
+  massRatio: number;
+  effectiveRatio: number;
+  originalFullMass: number;
+  adjustedFullMass: number;
+  massIncrease: number;
+  dragOriginal: DragValues;
+  dragAdjusted: DragValues;
+  dragPercentChange: DragValues;
+  inertiaOriginal: InertiaValues;
+  inertiaAdjusted: InertiaValues;
+  inertiaPercentChange: InertiaValues;
+  jerkOriginal: JerkValues;
+  jerkAdjusted: JerkValues;
+  jerkPercentChange: JerkValues;
+  enginePerformance?: EnginePerformance | null;
+  activeTier: string;
+  topSpeed?: { original: number; adjusted: number } | null;
+  acceleration?: { original: number; adjusted: number } | null;
+}
+
+/**
+ * Engine performance with top speeds (matching EnginePerformance DTO).
+ */
+export interface EnginePerformance {
+  engineId: string;
+  thrustForward: number;
+  originalTWR: number;
+  adjustedTWR: number;
+  twrReductionPercent: number;
+  originalAcceleration: number;
+  adjustedAcceleration: number;
+  engineCount?: number;
+  topSpeed?: number | null;
+  topSpeedAdjusted?: number | null;
+  topSpeedReverse?: number | null;
+  topSpeedBoost?: number | null;
+  topSpeedTravel?: number | null;
+}
+```
+
+---
+
+### Class Range Types (physics.d.ts)
+
+```typescript
+/**
+ * Class-wide range calculation request (matching ClassRangeRequest DTO).
+ */
+export interface ClassRangeRequest {
+  shipType: string;
+  cargoMultiplier: number;
+  dragReductionTiers: Tier[];
+  jerkReductionTiers: Tier[];
+  inertiaImpactFactor: number;
+  useEffectiveRatioCap: boolean;
+  dragReductionFactor: number;
+  accelerationResponsiveness: number;
+  engineId?: string | null;
+}
+
+/**
+ * Min/max/median range for a metric (matching RangeMetric DTO).
+ */
+export interface RangeMetric {
+  min: number;
+  max: number;
+  median: number;
+  unit: string;
+  label: string;
+}
+
+/**
+ * Worst/best case ship summary (matching ShipMetricSummary DTO).
+ */
+export interface ShipMetricSummary {
+  shipId: string;
+  shipName: string;
+  size: string;
+  massRatio: number;
+  topSpeed?: { original: number; adjusted: number } | null;
+  acceleration?: { original: number; adjusted: number } | null;
+  dragChangePercent: number;
+}
+
+/**
+ * Class-wide range response (matching ClassRangeResponse DTO).
+ */
+export interface ClassRangeResponse {
+  shipCount: number;
+  metrics: Record<string, RangeMetric>;
+  worstCase: ShipMetricSummary;
+  bestCase: ShipMetricSummary;
 }
 ```
 
@@ -808,6 +1193,7 @@ export interface ValidationResult {
 |--------|----------|---------|
 | `POST` | `/api/calculate/physics` | `PhysicsEndpoint::calculate()` |
 | `POST` | `/api/calculate/batch` | `PhysicsEndpoint::calculateBatch()` |
+| `POST` | `/api/calculate/class-range` | `ClassRangeEndpoint::calculate()` |
 
 ### Ship Endpoints
 

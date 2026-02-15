@@ -3,8 +3,8 @@
 > **REST API for physics calculations, ship data, and configuration management**
 
 **Base URL**: `http://localhost:8080/api`  
-**Version**: 1.0  
-**Last Updated**: February 12, 2026
+**Version**: 1.1  
+**Last Updated**: February 15, 2026
 
 ---
 
@@ -21,14 +21,15 @@
 5. [Endpoints](#endpoints)
    - [Physics Calculation](#1-physics-calculation)
    - [Batch Physics Calculation](#2-batch-physics-calculation)
-   - [Get Ship Types](#3-get-ship-types)
-   - [Get Ships by Type](#4-get-ships-by-type)
-   - [Get Ship Details](#5-get-ship-details)
-   - [Get Engines for Ship](#6-get-engines-for-ship)
-   - [Get Engine Details](#7-get-engine-details)
-   - [Get All Engines](#8-get-all-engines)
-   - [Get Configuration](#9-get-configuration)
-   - [Update Configuration](#10-update-configuration)
+   - [Class-Wide Range Calculation](#3-class-wide-range-calculation)
+   - [Get Ship Types](#4-get-ship-types)
+   - [Get Ships by Type](#5-get-ships-by-type)
+   - [Get Ship Details](#6-get-ship-details)
+   - [Get Engines for Ship](#7-get-engines-for-ship)
+   - [Get Engine Details](#8-get-engine-details)
+   - [Get All Engines](#9-get-all-engines)
+   - [Get Configuration](#10-get-configuration)
+   - [Update Configuration](#11-update-configuration)
 
 ---
 
@@ -250,7 +251,137 @@ Calculate physics for multiple configurations at once.
 
 ---
 
-### 3. Get Ship Types
+### 3. Class-Wide Range Calculation
+
+Calculate aggregated min/max/median ranges across all ships of a type to identify worst-case and best-case ships.
+
+**Endpoint**: `POST /api/calculate/class-range`
+
+**Request Body**:
+```json
+{
+  "shipType": "transport",
+  "cargoMultiplier": 4.0,
+  "dragReductionTiers": [
+    { "maxMultiplier": 2, "reductionPercent": 5 },
+    { "maxMultiplier": 4, "reductionPercent": 10 },
+    { "maxMultiplier": 6, "reductionPercent": 15 },
+    { "maxMultiplier": 8, "reductionPercent": 20 }
+  ],
+  "jerkReductionTiers": [
+    { "maxMultiplier": 2, "reductionPercent": 5 },
+    { "maxMultiplier": 4, "reductionPercent": 10 },
+    { "maxMultiplier": 6, "reductionPercent": 15 },
+    { "maxMultiplier": 8, "reductionPercent": 20 }
+  ],
+  "inertiaImpactFactor": 0.5,
+  "useEffectiveRatioCap": true,
+  "dragReductionFactor": 1.0,
+  "accelerationResponsiveness": 1.0,
+  "engineId": "engine_arg_m_travel_01_mk1" // optional
+}
+```
+
+**Response**: `200 OK`
+```json
+{
+  "shipCount": 78,
+  "metrics": {
+    "massRatio": {
+      "min": 1.2,
+      "max": 1.8,
+      "median": 1.5,
+      "unit": "ratio",
+      "label": "Mass Ratio"
+    },
+    "dragChange": {
+      "min": -20.5,
+      "max": -10.2,
+      "median": -15.0,
+      "unit": "%",
+      "label": "Drag Change"
+    },
+    "topSpeed": {
+      "min": 380.5,
+      "max": 520.3,
+      "median": 412.0,
+      "unit": "m/s",
+      "label": "Top Speed"
+    },
+    "acceleration": {
+      "min": 28.5,
+      "max": 45.2,
+      "median": 35.0,
+      "unit": "m/s\u00b2",
+      "label": "Acceleration"
+    }
+  },
+  "worstCase": {
+    "shipId": "ship_arg_l_trans_container_01_a",
+    "shipName": "Colossus",
+    "size": "l",
+    "massRatio": 1.8,
+    "topSpeed": {
+      "original": 450.2,
+      "adjusted": 380.5
+    },
+    "acceleration": {
+      "original": 35.0,
+      "adjusted": 28.5
+    },
+    "dragChangePercent": -15.5
+  },
+  "bestCase": {
+    "shipId": "ship_tel_m_trans_container_01_a",
+    "shipName": "Tern",
+    "size": "m",
+    "massRatio": 1.2,
+    "topSpeed": {
+      "original": 480.0,
+      "adjusted": 455.0
+    },
+    "acceleration": {
+      "original": 50.0,
+      "adjusted": 45.2
+    },
+    "dragChangePercent": -5.2
+  }
+}
+```
+
+**Parameters**:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `shipType` | string | Yes | Ship type filter: `transport`, `mining`, `auxiliary`, `carrier` |
+| `cargoMultiplier` | number | Yes | Cargo capacity multiplier (e.g., 2.0, 4.0, 8.0) |
+| `dragReductionTiers` | array | Yes | Drag reduction tier configuration |
+| `jerkReductionTiers` | array | Yes | Jerk reduction tier configuration |
+| `inertiaImpactFactor` | number | Yes | Inertia impact factor (0.0 - 1.0) |
+| `useEffectiveRatioCap` | boolean | Yes | Whether to cap effective mass ratio |
+| `dragReductionFactor` | number | Yes | Global drag reduction factor |
+| `accelerationResponsiveness` | number | Yes | Acceleration responsiveness factor |
+| `engineId` | string | No | Engine ID for top speed/acceleration metrics (omit to skip engine-dependent metrics) |
+
+**Response Fields**:
+
+| Field | Description |
+|-------|-------------|
+| `shipCount` | Number of ships included in calculation (ships with zero cargo excluded) |
+| `metrics` | Map of metric name to `RangeMetric` object with min/max/median/unit/label |
+| `worstCase` | Ship with highest mass ratio (worst performance impact) |
+| `bestCase` | Ship with lowest mass ratio (best performance retention) |
+
+**Notes**:
+- Iterates all ships of requested type (~80 ships for transport)
+- Ships with zero cargo capacity are automatically excluded
+- Engine-dependent metrics (`topSpeed`, `acceleration`) only included when `engineId` provided
+- Typical response time: 50-80ms for 80 ships
+- Frontend should use 500ms debounce (vs 300ms for single-ship)
+
+---
+
+### 4. Get Ship Types
 
 Retrieve all available ship types.
 
@@ -284,7 +415,7 @@ Retrieve all available ship types.
 
 ---
 
-### 4. Get Ships by Type
+### 5. Get Ships by Type
 
 Retrieve all ships of a specific type.
 
@@ -318,7 +449,7 @@ Retrieve all ships of a specific type.
 
 ---
 
-### 5. Get Ship Details
+### 6. Get Ship Details
 
 Retrieve detailed information for a specific ship.
 
@@ -354,7 +485,7 @@ Retrieve detailed information for a specific ship.
 
 ---
 
-### 6. Get Engines for Ship
+### 7. Get Engines for Ship
 
 Retrieve compatible engines for a specific ship.
 
@@ -393,7 +524,7 @@ Retrieve compatible engines for a specific ship.
 
 ---
 
-### 7. Get Engine Details
+### 8. Get Engine Details
 
 Retrieve detailed information for a specific engine.
 
@@ -425,7 +556,10 @@ Retrieve detailed information for a specific engine.
 
 ---
 
-### 8. Get All Engines
+### 9. Get All Engines
+---
+
+### 9. Get All Engines
 
 Retrieve all available engines.
 
@@ -459,7 +593,7 @@ Retrieve all available engines.
 
 ---
 
-### 9. Get Configuration
+### 10. Get Configuration
 
 Retrieve current build configuration.
 
