@@ -23,6 +23,7 @@ class PhysicsRequest
      * @param array<array{maxMultiplier: float, reductionPercent: float}> $dragReductionTiers Drag reduction tiers
      * @param array<array{maxMultiplier: float, reductionPercent: float}> $jerkReductionTiers Jerk reduction tiers
      * @param string|null $engineId Optional engine ID for performance calculations
+     * @param string|null $shipId Optional ship ID to load real physics data from x4-core
      */
     public function __construct(
         public float $baseMass,
@@ -35,7 +36,8 @@ class PhysicsRequest
         public float $accelerationResponsiveness,
         public array $dragReductionTiers,
         public array $jerkReductionTiers,
-        public ?string $engineId = null
+        public ?string $engineId = null,
+        public readonly ?string $shipId = null
     ) {}
 
     /**
@@ -57,7 +59,8 @@ class PhysicsRequest
             (float)($data['accelerationResponsiveness'] ?? 1.0),
             $data['dragReductionTiers'] ?? [],
             $data['jerkReductionTiers'] ?? [],
-            $data['engineId'] ?? null
+            $data['engineId'] ?? null,
+            $data['shipId'] ?? null
         );
     }
 }

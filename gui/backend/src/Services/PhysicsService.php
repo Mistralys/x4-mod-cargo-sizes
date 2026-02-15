@@ -13,6 +13,7 @@ use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedInertia;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Jerk\AdjustedJerk;
 use Mistralys\X4\Mods\CargoSizesMod\Build\ReductionTier;
 use Mistralys\X4\Database\Engines\EngineDefs;
+use Mistralys\X4\Database\Ships\ShipDefs;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Drag;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Inertia;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Jerk;
@@ -51,35 +52,76 @@ class PhysicsService
             $dragTier = $this->findTierForMultiplier($request->dragReductionTiers, $request->cargoMultiplier);
             $jerkTier = $this->findTierForMultiplier($request->jerkReductionTiers, $request->cargoMultiplier);
 
-            // Create sample original drag values (API user will provide real ones later)
-            $originalDrag = new Drag(
-                100.0,  // forward
-                100.0,  // reverse
-                100.0,  // horizontal
-                100.0,  // vertical
-                100.0,  // pitch
-                100.0,  // yaw
-                100.0   // roll
-            );
+            // Load real ship data if shipId provided, otherwise use hardcoded defaults
+            if ($request->shipId !== null) {
+                $shipDef = ShipDefs::getInstance()->getByID($request->shipId);
+                
+                // Create drag from real ship data
+                $originalDrag = new Drag(
+                    $shipDef->getDragForward(),
+                    $shipDef->getDragReverse(),
+                    $shipDef->getDragHorizontal(),
+                    $shipDef->getDragVertical(),
+                    $shipDef->getDragPitch(),
+                    $shipDef->getDragYaw(),
+                    $shipDef->getDragRoll()
+                );
+                
+                // Create inertia from real ship data
+                $originalInertia = new Inertia(
+                    $shipDef->getInertiaPitch(),
+                    $shipDef->getInertiaYaw(),
+                    $shipDef->getInertiaRoll()
+                );
+                
+                // Create jerk from real ship data
+                $originalJerk = new Jerk(
+                    $shipDef->getJerkStrafe(),
+                    $shipDef->getJerkAngular(),
+                    new JerkForward(
+                        $shipDef->getJerkForwardAccel(),
+                        $shipDef->getJerkForwardDecel(),
+                        $shipDef->getJerkForwardRatio()
+                    ),
+                    new JerkBoost(
+                        $shipDef->getJerkBoostAccel(),
+                        $shipDef->getJerkBoostRatio()
+                    ),
+                    new JerkTravel(
+                        $shipDef->getJerkTravelAccel(),
+                        $shipDef->getJerkTravelDecel(),
+                        $shipDef->getJerkTravelRatio()
+                    )
+                );
+            } else {
+                // Backward compatibility: use hardcoded defaults when no shipId provided
+                $originalDrag = new Drag(
+                    100.0,  // forward
+                    100.0,  // reverse
+                    100.0,  // horizontal
+                    100.0,  // vertical
+                    100.0,  // pitch
+                    100.0,  // yaw
+                    100.0   // roll
+                );
+                
+                $originalInertia = new Inertia(10.0, 10.0, 10.0);  // pitch, yaw, roll
+                
+                $originalJerk = new Jerk(
+                    50.0,  // strafe
+                    50.0,  // angular
+                    new JerkForward(50.0, 50.0, 1.0),  // forward (accel, decel, ratio)
+                    new JerkBoost(100.0, 1.0),  // boost (accel, ratio)
+                    new JerkTravel(200.0, 200.0, 1.0)  // travel (accel, decel, ratio)
+                );
+            }
 
             // Apply drag reduction
             $adjustedDrag = new AdjustedDrag($originalDrag, $dragTier->getReductionPercent());
 
-            // Create sample original inertia values
-            $originalInertia = new Inertia(10.0, 10.0, 10.0);  // pitch, yaw, roll
-
             // Apply inertia adjustment (increases with mass)
             $inertiaMultiplier = 1.0 + (($calculator->getMassRatio() - 1.0) * $request->inertiaImpactFactor);
             $adjustedInertia = new AdjustedInertia($originalInertia, $inertiaMultiplier);
-
-            // Create sample original jerk values
-            $originalJerk = new Jerk(
-                50.0,  // strafe
-                50.0,  // angular
-                new JerkForward(50.0, 50.0, 1.0),  // forward (accel, decel, ratio)
-                new JerkBoost(100.0, 1.0),  // boost (accel, ratio)
-                new JerkTravel(200.0, 200.0, 1.0)  // travel (accel, decel, ratio)
-            );
 
             // Apply jerk reduction
             $jerkMultiplier = $calculator->getInverseMassRatio() * (1.0 - $jerkTier->getReductionPercent());
@@ -87,12 +129,32 @@ class PhysicsService
 
             // Calculate engine performance if engine ID provided
             $enginePerformance = null;
+            $topSpeedOriginal = null;
+            $topSpeedAdjusted = null;
+            $accelerationOriginal = null;
+            $accelerationAdjusted = null;
+            
             if ($request->engineId !== null) {
+                // Get engine count (default to 1 for backward compatibility)
+                $engineCount = 1;
+                if ($request->shipId !== null) {
+                    $shipDef = ShipDefs::getInstance()->getByID($request->shipId);
+                    $engineCount = $shipDef->countEngines();
+                }
+                
                 $enginePerformance = $this->calculateEnginePerformance(
                     $request->engineId,
                     $calculator->getOriginalFullMass(),
-                    $calculator->getAdjustedFullMass()
+                    $calculator->getAdjustedFullMass(),
+                    $originalDrag->getForward(),
+                    $engineCount
                 );
+                
+                // Extract absolute metrics from engine performance
+                $topSpeedOriginal = $enginePerformance->topSpeed;
+                $topSpeedAdjusted = $enginePerformance->topSpeedAdjusted;
+                $accelerationOriginal = $enginePerformance->originalAcceleration;
+                $accelerationAdjusted = $enginePerformance->adjustedAcceleration;
             }
 
             // Build response
@@ -174,7 +236,11 @@ class PhysicsService
                     'Drag: %.0f%% reduction | Jerk: %.0f%% reduction',
                     $dragTier->getReductionPercent() * 100,
                     $jerkTier->getReductionPercent() * 100
-                )
+                ),
+                topSpeedOriginal: $topSpeedOriginal,
+                topSpeedAdjusted: $topSpeedAdjusted,
+                accelerationOriginal: $accelerationOriginal,
+                accelerationAdjusted: $accelerationAdjusted
             );
         } catch (\Exception $e) {
             throw new GUIException(
@@ -211,26 +277,41 @@ class PhysicsService
     }
 
     /**
-     * Calculates engine performance metrics.
+     * Calculates engine performance metrics including top speeds.
      *
      * @param string $engineId Engine identifier
      * @param float $originalMass Original ship mass
      * @param float $adjustedMass Adjusted ship mass
+     * @param float $dragForward Forward drag coefficient
+     * @param int $engineCount Number of engines (default: 1)
      * @return EnginePerformance
      * @throws GUIException
      */
     private function calculateEnginePerformance(
         string $engineId,
         float $originalMass,
-        float $adjustedMass
+        float $adjustedMass,
+        float $dragForward,
+        int $engineCount = 1
     ): EnginePerformance
     {
         try {
             $engineDef = EngineDefs::getInstance()->getByID($engineId);
+            
+            // Get real thrust values from EngineDef
             $thrustForward = $engineDef->getThrustForward();
+            $thrustReverse = $engineDef->getThrustReverse();
+            $thrustBoost = $engineDef->getBoostThrust();
+            $thrustTravel = $engineDef->getTravelThrust();
+            
+            // Calculate total thrust (per engine * engine count)
+            $totalThrustForward = $thrustForward * $engineCount;
+            $totalThrustReverse = $thrustReverse * $engineCount;
+            $totalThrustBoost = $thrustBoost * $engineCount;
+            $totalThrustTravel = $thrustTravel * $engineCount;
 
             // Convert thrust from kN to N (1 kN = 1000 N)
-            $thrustNewtons = $thrustForward * 1000.0;
+            $thrustNewtonsForward = $totalThrustForward * 1000.0;
 
             // Calculate TWR (Thrust-to-Weight Ratio)
             // Using Earth gravity (g = 9.81 m/s²) as reference
@@ -238,14 +319,31 @@ class PhysicsService
             $originalWeight = $originalMass * $g;
             $adjustedWeight = $adjustedMass * $g;
 
-            $originalTWR = $thrustNewtons / $originalWeight;
-            $adjustedTWR = $thrustNewtons / $adjustedWeight;
+            $originalTWR = $thrustNewtonsForward / $originalWeight;
+            $adjustedTWR = $thrustNewtonsForward / $adjustedWeight;
 
             $twrReductionPercent = (($originalTWR - $adjustedTWR) / $originalTWR) * 100.0;
 
-            // Estimate acceleration (F = ma, so a = F/m)
-            $originalAcceleration = $thrustNewtons / $originalMass;
-            $adjustedAcceleration = $thrustNewtons / $adjustedMass;
+            // Calculate acceleration (F = ma, so a = F/m)
+            $originalAcceleration = $thrustNewtonsForward / $originalMass;
+            $adjustedAcceleration = $thrustNewtonsForward / $adjustedMass;
+            
+            // Calculate top speeds (topSpeed = totalThrust * 1000 / drag)
+            // Only calculate if drag > 0 to avoid division by zero
+            $topSpeed = null;
+            $topSpeedAdjusted = null;
+            $topSpeedReverse = null;
+            $topSpeedBoost = null;
+            $topSpeedTravel = null;
+            
+            if ($dragForward > 0) {
+                // Top speed formula: v = (thrust_kN * 1000) / drag
+                $topSpeed = ($totalThrustForward * 1000.0) / $dragForward;
+                $topSpeedAdjusted = $topSpeed; // Top speed doesn't change with mass, only acceleration does
+                $topSpeedReverse = ($totalThrustReverse * 1000.0) / $dragForward;
+                $topSpeedBoost = ($totalThrustBoost * 1000.0) / $dragForward;
+                $topSpeedTravel = ($totalThrustTravel * 1000.0) / $dragForward;
+            }
 
             return new EnginePerformance(
                 engineId: $engineId,
@@ -254,7 +352,13 @@ class PhysicsService
                 adjustedTWR: $adjustedTWR,
                 twrReductionPercent: $twrReductionPercent,
                 originalAcceleration: $originalAcceleration,
-                adjustedAcceleration: $adjustedAcceleration
+                adjustedAcceleration: $adjustedAcceleration,
+                engineCount: $engineCount,
+                topSpeed: $topSpeed,
+                topSpeedAdjusted: $topSpeedAdjusted,
+                topSpeedReverse: $topSpeedReverse,
+                topSpeedBoost: $topSpeedBoost,
+                topSpeedTravel: $topSpeedTravel
             );
         } catch (\Exception $e) {
             throw new GUIException(

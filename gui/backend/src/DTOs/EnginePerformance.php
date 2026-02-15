@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs;
 
 /**
- * Engine performance metrics (TWR, acceleration estimates).
+ * Engine performance metrics (TWR, acceleration estimates, top speeds).
  *
  * @package X4 Cargo Sizes Mod
  * @subpackage GUI Backend
@@ -19,6 +19,12 @@ class EnginePerformance
      * @param float $twrReductionPercent Percentage reduction in TWR
      * @param float $originalAcceleration Original estimated acceleration in m/s²
      * @param float $adjustedAcceleration Adjusted estimated acceleration in m/s²
+     * @param int $engineCount Number of engines used for calculations
+     * @param float|null $topSpeed Top speed with forward thrust (original)
+     * @param float|null $topSpeedAdjusted Top speed with forward thrust (adjusted)
+     * @param float|null $topSpeedReverse Top speed in reverse (original)
+     * @param float|null $topSpeedBoost Top speed with boost (original)
+     * @param float|null $topSpeedTravel Top speed in travel mode (original)
      */
     public function __construct(
         public string $engineId,
@@ -27,7 +33,13 @@ class EnginePerformance
         public float $adjustedTWR,
         public float $twrReductionPercent,
         public float $originalAcceleration,
-        public float $adjustedAcceleration
+        public float $adjustedAcceleration,
+        public readonly int $engineCount = 1,
+        public readonly ?float $topSpeed = null,
+        public readonly ?float $topSpeedAdjusted = null,
+        public readonly ?float $topSpeedReverse = null,
+        public readonly ?float $topSpeedBoost = null,
+        public readonly ?float $topSpeedTravel = null
     ) {}
 
     /**
@@ -42,7 +54,13 @@ class EnginePerformance
             'adjustedTWR' => $this->adjustedTWR,
             'twrReductionPercent' => $this->twrReductionPercent,
             'originalAcceleration' => $this->originalAcceleration,
-            'adjustedAcceleration' => $this->adjustedAcceleration
+            'adjustedAcceleration' => $this->adjustedAcceleration,
+            'engineCount' => $this->engineCount,
+            'topSpeed' => $this->topSpeed,
+            'topSpeedAdjusted' => $this->topSpeedAdjusted,
+            'topSpeedReverse' => $this->topSpeedReverse,
+            'topSpeedBoost' => $this->topSpeedBoost,
+            'topSpeedTravel' => $this->topSpeedTravel
         ];
     }
 }

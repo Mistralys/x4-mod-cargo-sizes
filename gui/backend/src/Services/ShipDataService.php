@@ -123,9 +123,45 @@ class ShipDataService
             
             // Get cargo capacity with fallback
             $cargo = $this->getShipCargoCapacity($shipDef, $size);
+            $cargoType = $shipDef->getCargoType();
             
             // Get compatible engines
             $engines = $this->getEnginesForShip($shipId);
+            
+            // Get engine count
+            $engineCount = $shipDef->countEngines();
+            
+            // Get real drag values
+            $dragOriginal = [
+                'forward' => $shipDef->getDragForward(),
+                'reverse' => $shipDef->getDragReverse(),
+                'horizontal' => $shipDef->getDragHorizontal(),
+                'vertical' => $shipDef->getDragVertical(),
+                'pitch' => $shipDef->getDragPitch(),
+                'yaw' => $shipDef->getDragYaw(),
+                'roll' => $shipDef->getDragRoll()
+            ];
+            
+            // Get real inertia values
+            $inertiaOriginal = [
+                'pitch' => $shipDef->getInertiaPitch(),
+                'yaw' => $shipDef->getInertiaYaw(),
+                'roll' => $shipDef->getInertiaRoll()
+            ];
+            
+            // Get real jerk values
+            $jerkOriginal = [
+                'strafe' => $shipDef->getJerkStrafe(),
+                'angular' => $shipDef->getJerkAngular(),
+                'forwardAccel' => $shipDef->getJerkForwardAccel(),
+                'forwardDecel' => $shipDef->getJerkForwardDecel(),
+                'forwardRatio' => $shipDef->getJerkForwardRatio(),
+                'boostAccel' => $shipDef->getJerkBoostAccel(),
+                'boostRatio' => $shipDef->getJerkBoostRatio(),
+                'travelAccel' => $shipDef->getJerkTravelAccel(),
+                'travelDecel' => $shipDef->getJerkTravelDecel(),
+                'travelRatio' => $shipDef->getJerkTravelRatio()
+            ];
 
             return new ShipDetails(
                 id: $shipId,
@@ -134,7 +170,12 @@ class ShipDataService
                 size: $size,
                 mass: $mass,
                 cargo: $cargo,
-                engines: array_column($engines, 'id')
+                engines: array_column($engines, 'id'),
+                engineCount: $engineCount,
+                cargoType: $cargoType,
+                dragOriginal: $dragOriginal,
+                inertiaOriginal: $inertiaOriginal,
+                jerkOriginal: $jerkOriginal
             );
         } catch (\Exception $e) {
             throw new GUIException(
@@ -291,8 +332,8 @@ class ShipDataService
     /**
      * Gets ship cargo capacity.
      * 
-     * NOTE: X4 Core's ShipDef doesn't directly expose cargo capacity 
-     * (it's in storage modules). We use size-based estimates as fallback.
+     * Uses ShipDef.getCargoCapacity() from x4-core when available (>0).
+     * Falls back to size-based estimates only when cargo capacity is 0.
      *
      * @param \Mistralys\X4\Database\Ships\ShipDef $shipDef
      * @param string $size Ship size
@@ -300,8 +341,15 @@ class ShipDataService
      */
     private function getShipCargoCapacity($shipDef, string $size): float
     {
-        // TODO: If X4 Core adds cargo capacity API, use it here
-        // For now, use reasonable estimates based on ship size and type
+        // Try to get real cargo capacity from x4-core
+        $realCapacity = $shipDef->getCargoCapacity();
+        
+        // Use real capacity if available (>0)
+        if ($realCapacity > 0) {
+            return (float)$realCapacity;
+        }
+        
+        // Fallback: Use size-based estimates when cargo capacity is 0
         return match($size) {
             'xs' => 2000.0,
             's' => 5000.0,
@@ -314,7 +362,7 @@ class ShipDataService
 
     /**
      * Loads all engines from X4 Core EngineDefs and populates the cache.
-     * Includes full thrust data (forward, reverse, boost, travel).
+     * Includes real thrust data (forward, reverse, boost, travel) from x4-core.
      *
      * @return void
      */
@@ -325,14 +373,17 @@ class ShipDataService
 
         foreach ($engineDefs->getAll() as $engineDef) {
             $thrustForward = $engineDef->getThrustForward();
+            $thrustReverse = $engineDef->getThrustReverse();
+            $thrustBoost = $engineDef->getBoostThrust();
+            $thrustTravel = $engineDef->getTravelThrust();
             
             self::$engineCache[] = [
                 'id' => $engineDef->getID(),
                 'name' => $engineDef->getLabel(),
                 'thrustForward' => $thrustForward,
-                'thrustReverse' => $this->estimateThrustReverse($thrustForward),
-                'thrustBoost' => $this->estimateThrustBoost($thrustForward),
-                'thrustTravel' => $this->estimateThrustTravel($thrustForward)
+                'thrustReverse' => $thrustReverse,
+                'thrustBoost' => $thrustBoost,
+                'thrustTravel' => $thrustTravel
             ];
         }
     }
@@ -353,41 +404,5 @@ class ShipDataService
             }
         }
         return 'm'; // Default to medium
-    }
-
-    /**
-     * Estimates reverse thrust based on forward thrust.
-     * Typically 40-60% of forward thrust in X4.
-     *
-     * @param float $thrustForward Forward thrust in kN
-     * @return float Estimated reverse thrust
-     */
-    private function estimateThrustReverse(float $thrustForward): float
-    {
-        return $thrustForward * 0.5;
-    }
-
-    /**
-     * Estimates boost thrust based on forward thrust.
-     * Typically 180-220% of forward thrust in X4.
-     *
-     * @param float $thrustForward Forward thrust in kN
-     * @return float Estimated boost thrust
-     */
-    private function estimateThrustBoost(float $thrustForward): float
-    {
-        return $thrustForward * 2.0;
-    }
-
-    /**
-     * Estimates travel thrust based on forward thrust.
-     * Typically 350-450% of forward thrust in X4.
-     *
-     * @param float $thrustForward Forward thrust in kN
-     * @return float Estimated travel thrust
-     */
-    private function estimateThrustTravel(float $thrustForward): float
-    {
-        return $thrustForward * 4.0;
     }
 }

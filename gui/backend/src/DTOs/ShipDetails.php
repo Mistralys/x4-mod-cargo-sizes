@@ -19,6 +19,11 @@ class ShipDetails
      * @param float $mass Ship base mass
      * @param float $cargo Ship cargo capacity
      * @param array<string> $engines List of compatible engine IDs
+     * @param int $engineCount Number of engine slots
+     * @param string $cargoType Cargo type (container, liquid, solid, none)
+     * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float} $dragOriginal Real drag values from ship
+     * @param array{pitch: float, yaw: float, roll: float} $inertiaOriginal Real inertia values from ship
+     * @param array{strafe: float, angular: float, forwardAccel: float, forwardDecel: float, forwardRatio: float, boostAccel: float, boostRatio: float, travelAccel: float, travelDecel: float, travelRatio: float} $jerkOriginal Real jerk values from ship
      */
     public function __construct(
         public string $id,
@@ -27,7 +32,12 @@ class ShipDetails
         public string $size,
         public float $mass,
         public float $cargo,
-        public array $engines = []
+        public array $engines = [],
+        public readonly int $engineCount = 0,
+        public readonly string $cargoType = 'none',
+        public readonly array $dragOriginal = [],
+        public readonly array $inertiaOriginal = [],
+        public readonly array $jerkOriginal = []
     ) {}
 
     /**
@@ -42,7 +52,12 @@ class ShipDetails
             'size' => $this->size,
             'mass' => $this->mass,
             'cargo' => $this->cargo,
-            'engines' => $this->engines
+            'engines' => $this->engines,
+            'engineCount' => $this->engineCount,
+            'cargoType' => $this->cargoType,
+            'dragOriginal' => $this->dragOriginal,
+            'inertiaOriginal' => $this->inertiaOriginal,
+            'jerkOriginal' => $this->jerkOriginal
         ];
     }
 }

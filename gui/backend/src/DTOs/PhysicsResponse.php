@@ -30,6 +30,10 @@ class PhysicsResponse
      * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float, decel: float}, travel: array{accel: float, decel: float}} $jerkPercentChange Jerk percentage changes
      * @param EnginePerformance|null $enginePerformance Optional engine performance metrics
      * @param string $activeTier Active tier description
+     * @param float|null $topSpeedOriginal Original top speed in m/s (null if no engine)
+     * @param float|null $topSpeedAdjusted Adjusted top speed in m/s (null if no engine)
+     * @param float|null $accelerationOriginal Original acceleration in m/s² (null if no engine)
+     * @param float|null $accelerationAdjusted Adjusted acceleration in m/s² (null if no engine)
      */
     public function __construct(
         public float $massRatio,
@@ -49,7 +53,11 @@ class PhysicsResponse
         public array $jerkAdjusted,
         public array $jerkPercentChange,
         public ?EnginePerformance $enginePerformance = null,
-        public string $activeTier = ''
+        public string $activeTier = '',
+        public readonly ?float $topSpeedOriginal = null,
+        public readonly ?float $topSpeedAdjusted = null,
+        public readonly ?float $accelerationOriginal = null,
+        public readonly ?float $accelerationAdjusted = null
     ) {}
 
     /**
@@ -85,6 +93,21 @@ class PhysicsResponse
 
         if ($this->enginePerformance !== null) {
             $data['enginePerformance'] = $this->enginePerformance->toArray();
+        }
+
+        // Add absolute metrics (null when no engine selected)
+        if ($this->topSpeedOriginal !== null) {
+            $data['topSpeed'] = [
+                'original' => $this->topSpeedOriginal,
+                'adjusted' => $this->topSpeedAdjusted
+            ];
+        }
+
+        if ($this->accelerationOriginal !== null) {
+            $data['acceleration'] = [
+                'original' => $this->accelerationOriginal,
+                'adjusted' => $this->accelerationAdjusted
+            ];
         }
 
         return $data;
