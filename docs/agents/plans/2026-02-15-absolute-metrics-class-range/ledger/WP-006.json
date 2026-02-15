@@ -1,0 +1,47 @@
+{
+   "work_package_id": "WP-006",
+   "work_package_file": "work/WP-006.md",
+   "status": "READY",
+   "assigned_to": "Lead Implementation Engineer",
+   "dependencies": ["WP-004", "WP-005"],
+   "acceptance_criteria": [
+      {
+         "criterion": "App.tsx uses the useClassRange hook and passes results to ResultsPanel",
+         "met": false
+      },
+      {
+         "criterion": "Class-range calculation fires when sliders change, using the currently selected ship type",
+         "met": false
+      },
+      {
+         "criterion": "shipId is included in the physics calculation request to enable real per-ship data lookup",
+         "met": false
+      },
+      {
+         "criterion": "Both single-ship and class-range calculations run independently without race conditions",
+         "met": false
+      },
+      {
+         "criterion": "Class-range uses 500ms debounce; single-ship remains at 300ms",
+         "met": false
+      },
+      {
+         "criterion": "ClassRangePanel appears in the right panel below existing single-ship results and updates reactively",
+         "met": false
+      },
+      {
+         "criterion": "Total user feedback (debounce + API + render) is <600ms",
+         "met": false
+      },
+      {
+         "criterion": "All modified files compile under TypeScript strict mode",
+         "met": false
+      },
+      {
+         "criterion": "No new npm dependencies added",
+         "met": false
+      }
+   ],
+   "revision": 1,
+   "pipelines": []
+}

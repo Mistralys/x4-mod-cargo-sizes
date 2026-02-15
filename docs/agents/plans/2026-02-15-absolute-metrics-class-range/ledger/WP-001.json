@@ -1,0 +1,51 @@
+{
+   "work_package_id": "WP-001",
+   "work_package_file": "work/WP-001.md",
+   "status": "READY",
+   "assigned_to": "Lead Implementation Engineer",
+   "dependencies": [],
+   "acceptance_criteria": [
+      {
+         "criterion": "PhysicsService uses real per-ship drag, inertia, and jerk values from ShipDef when a shipId is provided — no more hardcoded Drag(100,...), Inertia(10,...), Jerk(50,...)",
+         "met": false
+      },
+      {
+         "criterion": "ShipDataService.loadAllEngines() returns real reverse/boost/travel thrust values from EngineDef, not estimated multipliers",
+         "met": false
+      },
+      {
+         "criterion": "ShipDataService.getShipCargoCapacity() returns ShipDef.getCargoCapacity() for ships where it is available (>0)",
+         "met": false
+      },
+      {
+         "criterion": "PhysicsResponse includes topSpeed and acceleration fields (original and adjusted, null when no engine selected)",
+         "met": false
+      },
+      {
+         "criterion": "EnginePerformance DTO includes topSpeed, topSpeedReverse, topSpeedBoost, topSpeedTravel, and engine count",
+         "met": false
+      },
+      {
+         "criterion": "ShipDetails DTO includes engineCount, real drag/inertia/jerk values, and cargoType",
+         "met": false
+      },
+      {
+         "criterion": "PhysicsRequest accepts an optional shipId parameter",
+         "met": false
+      },
+      {
+         "criterion": "All existing API behavior continues to work when shipId is not provided (backward compatibility)",
+         "met": false
+      },
+      {
+         "criterion": "No new Composer dependencies added",
+         "met": false
+      },
+      {
+         "criterion": "All new DTO properties are readonly",
+         "met": false
+      }
+   ],
+   "revision": 1,
+   "pipelines": []
+}

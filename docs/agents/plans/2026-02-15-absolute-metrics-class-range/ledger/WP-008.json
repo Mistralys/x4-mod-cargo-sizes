@@ -1,0 +1,39 @@
+{
+   "work_package_id": "WP-008",
+   "work_package_file": "work/WP-008.md",
+   "status": "READY",
+   "assigned_to": "Documentation Agent",
+   "dependencies": ["WP-001", "WP-002", "WP-003", "WP-004", "WP-005", "WP-006", "WP-007"],
+   "acceptance_criteria": [
+      {
+         "criterion": "public-api.md documents all new and modified classes, methods, DTOs, hooks, and components",
+         "met": false
+      },
+      {
+         "criterion": "file-tree.md includes all new files in their correct directory locations",
+         "met": false
+      },
+      {
+         "criterion": "data-flows.md includes a class-range calculation flow diagram",
+         "met": false
+      },
+      {
+         "criterion": "tech-stack.md documents the class-wide aggregation pattern",
+         "met": false
+      },
+      {
+         "criterion": "API.md documents the new POST /api/calculate/class-range endpoint with request/response examples",
+         "met": false
+      },
+      {
+         "criterion": "No contradictions between manifest and code",
+         "met": false
+      },
+      {
+         "criterion": "All Last Updated dates are refreshed in affected documents",
+         "met": false
+      }
+   ],
+   "revision": 1,
+   "pipelines": []
+}

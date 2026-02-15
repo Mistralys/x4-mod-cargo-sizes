@@ -1,0 +1,47 @@
+{
+   "work_package_id": "WP-002",
+   "work_package_file": "work/WP-002.md",
+   "status": "READY",
+   "assigned_to": "Lead Implementation Engineer",
+   "dependencies": ["WP-001"],
+   "acceptance_criteria": [
+      {
+         "criterion": "POST /api/calculate/class-range accepts a ClassRangeRequest JSON body and returns a valid ClassRangeResponse",
+         "met": false
+      },
+      {
+         "criterion": "Response includes min/max/median RangeMetric objects for: massRatio, dragChange, inertiaChange, jerkChange, and (when engine selected) topSpeed and acceleration",
+         "met": false
+      },
+      {
+         "criterion": "Response identifies worst-case ship (highest mass ratio) and best-case ship (lowest mass ratio) with their metrics",
+         "met": false
+      },
+      {
+         "criterion": "Ships with getCargoCapacity() == 0 are handled without division-by-zero errors",
+         "met": false
+      },
+      {
+         "criterion": "Engine-dependent metrics (topSpeed, acceleration) are null/omitted when no engineId is provided",
+         "met": false
+      },
+      {
+         "criterion": "Backend endpoint responds in <100ms for the full ship class iteration",
+         "met": false
+      },
+      {
+         "criterion": "All new DTOs have readonly properties and declare(strict_types=1)",
+         "met": false
+      },
+      {
+         "criterion": "Route is registered in Router.php",
+         "met": false
+      },
+      {
+         "criterion": "No new Composer dependencies added",
+         "met": false
+      }
+   ],
+   "revision": 1,
+   "pipelines": []
+}

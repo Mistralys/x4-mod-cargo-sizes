@@ -1,0 +1,47 @@
+{
+   "work_package_id": "WP-004",
+   "work_package_file": "work/WP-004.md",
+   "status": "READY",
+   "assigned_to": "Lead Implementation Engineer",
+   "dependencies": ["WP-003"],
+   "acceptance_criteria": [
+      {
+         "criterion": "RangeBar renders a horizontal bar with correct min/median/max marker positioning for various value distributions",
+         "met": false
+      },
+      {
+         "criterion": "AbsoluteMetricCard displays original to adjusted values with delta percentage and optional context phrase",
+         "met": false
+      },
+      {
+         "criterion": "WorstCaseCard shows worst-case (warning color) and best-case (success color) ships with name, size, mass ratio, and top speed when engine is selected",
+         "met": false
+      },
+      {
+         "criterion": "ClassRangePanel correctly handles loading, empty, and data states",
+         "met": false
+      },
+      {
+         "criterion": "ClassRangePanel renders range bars for all metrics (mass ratio, drag, inertia, jerk always; top speed and acceleration only when engine selected)",
+         "met": false
+      },
+      {
+         "criterion": "ResultsPanel renders ClassRangePanel below existing results",
+         "met": false
+      },
+      {
+         "criterion": "Engine-dependent range bars only appear when engine is selected; clear message shown when no engine selected",
+         "met": false
+      },
+      {
+         "criterion": "All components compile under TypeScript strict mode",
+         "met": false
+      },
+      {
+         "criterion": "No new npm dependencies added",
+         "met": false
+      }
+   ],
+   "revision": 1,
+   "pipelines": []
+}

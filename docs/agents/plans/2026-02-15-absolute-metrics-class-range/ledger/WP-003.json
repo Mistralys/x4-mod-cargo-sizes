@@ -1,0 +1,47 @@
+{
+   "work_package_id": "WP-003",
+   "work_package_file": "work/WP-003.md",
+   "status": "READY",
+   "assigned_to": "Lead Implementation Engineer",
+   "dependencies": ["WP-002"],
+   "acceptance_criteria": [
+      {
+         "criterion": "All new TypeScript interfaces compile without errors under strict: true",
+         "met": false
+      },
+      {
+         "criterion": "ClassRangeRequest, RangeMetric, ShipMetricSummary, and ClassRangeResponse interfaces match their backend DTO counterparts",
+         "met": false
+      },
+      {
+         "criterion": "ShipDetails interface includes engineCount and cargoType",
+         "met": false
+      },
+      {
+         "criterion": "EnginePerformance interface includes top speed fields and engine count",
+         "met": false
+      },
+      {
+         "criterion": "PhysicsResponse interface includes absolute metric fields",
+         "met": false
+      },
+      {
+         "criterion": "classRangeApi.calculate() correctly calls POST /calculate/class-range and returns typed response",
+         "met": false
+      },
+      {
+         "criterion": "useClassRange hook provides result, loading, error state and calculate/reset methods",
+         "met": false
+      },
+      {
+         "criterion": "Class-range API calls are debounced at 500ms",
+         "met": false
+      },
+      {
+         "criterion": "No new npm dependencies added",
+         "met": false
+      }
+   ],
+   "revision": 1,
+   "pipelines": []
+}

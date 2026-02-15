@@ -1,0 +1,35 @@
+{
+   "work_package_id": "WP-007",
+   "work_package_file": "work/WP-007.md",
+   "status": "READY",
+   "assigned_to": "Lead Implementation Engineer",
+   "dependencies": ["WP-004"],
+   "acceptance_criteria": [
+      {
+         "criterion": "When an engine is selected, PhysicsOverview displays top speed (m/s) and acceleration (m/s²) as AbsoluteMetricCard components",
+         "met": false
+      },
+      {
+         "criterion": "When no engine is selected, absolute metric cards are hidden — no null or N/A clutter",
+         "met": false
+      },
+      {
+         "criterion": "ComparisonView includes absolute metric data from PhysicsResponse",
+         "met": false
+      },
+      {
+         "criterion": "EnginePerformanceDisplay shows top speed for normal/boost/travel modes alongside existing TWR",
+         "met": false
+      },
+      {
+         "criterion": "Existing percentage-based display remains intact — absolute metrics are additive",
+         "met": false
+      },
+      {
+         "criterion": "All modified files compile under TypeScript strict mode",
+         "met": false
+      }
+   ],
+   "revision": 1,
+   "pipelines": []
+}

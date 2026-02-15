@@ -1,0 +1,35 @@
+{
+   "work_package_id": "WP-005",
+   "work_package_file": "work/WP-005.md",
+   "status": "READY",
+   "assigned_to": "Lead Implementation Engineer",
+   "dependencies": ["WP-003"],
+   "acceptance_criteria": [
+      {
+         "criterion": "getSpeedContext() returns appropriate phrases for all threshold boundaries and values between them",
+         "met": false
+      },
+      {
+         "criterion": "getAccelerationContext() returns appropriate phrases for all threshold boundaries",
+         "met": false
+      },
+      {
+         "criterion": "getMassRatioContext() returns appropriate phrases for all threshold boundaries",
+         "met": false
+      },
+      {
+         "criterion": "All threshold values are defined as named constants for easy future tuning",
+         "met": false
+      },
+      {
+         "criterion": "File compiles under TypeScript strict mode",
+         "met": false
+      },
+      {
+         "criterion": "No new npm dependencies added",
+         "met": false
+      }
+   ],
+   "revision": 1,
+   "pipelines": []
+}
