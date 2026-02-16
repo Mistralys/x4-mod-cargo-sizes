@@ -11,6 +11,22 @@ import type { ShipTypeInfo, ShipInfo, ShipDetails } from '../types/ships';
 import type { BuildConfig, ValidationResult } from '../types/config';
 
 /**
+ * API timeout configuration per endpoint type.
+ *
+ * Rationale:
+ * - physics: Single-ship calculations are fast (~50ms backend time)
+ * - classRange: Iterates 80+ ships (~80ms backend), needs buffer for network latency
+ * - shipData: Simple data fetch, typically fast
+ * - default: Conservative timeout for unknown endpoints
+ */
+const API_TIMEOUTS = {
+  physics: 10000,      // 10s - Single-ship physics calculation
+  classRange: 15000,   // 15s - Class-wide calculations (80+ ships)
+  shipData: 10000,     // 10s - Ship data fetching
+  default: 10000       // 10s - Fallback for other endpoints
+} as const;
+
+/**
  * Base API client configuration.
  */
 const apiClient: AxiosInstance = axios.create({
@@ -18,7 +34,7 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: API_TIMEOUTS.default,
 });
 
 /**
@@ -29,7 +45,11 @@ export const physicsApi = {
    * Calculate physics for a single configuration.
    */
   async calculate(request: PhysicsConfig): Promise<PhysicsResponse> {
-    const response = await apiClient.post<PhysicsResponse>('/calculate/physics', request);
+    const response = await apiClient.post<PhysicsResponse>(
+      '/calculate/physics',
+      request,
+      { timeout: API_TIMEOUTS.physics }
+    );
     return response.data;
   },
 
@@ -37,9 +57,11 @@ export const physicsApi = {
    * Calculate physics for multiple configurations in one request.
    */
   async calculateBatch(requests: PhysicsConfig[]): Promise<PhysicsResponse[]> {
-    const response = await apiClient.post<{ results: PhysicsResponse[] }>('/calculate/batch', {
-      requests,
-    });
+    const response = await apiClient.post<{ results: PhysicsResponse[] }>(
+      '/calculate/batch',
+      { requests },
+      { timeout: API_TIMEOUTS.physics }
+    );
     return response.data.results;
   },
 };
@@ -52,7 +74,11 @@ export const classRangeApi = {
    * Calculate min/max/median ranges for all ships of a given type.
    */
   async calculate(request: ClassRangeRequest): Promise<ClassRangeResponse> {
-    const response = await apiClient.post<ClassRangeResponse>('/calculate/class-range', request);
+    const response = await apiClient.post<ClassRangeResponse>(
+      '/calculate/class-range',
+      request,
+      { timeout: API_TIMEOUTS.classRange }
+    );
     return response.data;
   },
 };
@@ -65,7 +91,10 @@ export const shipsApi = {
    * Get all supported ship types.
    */
   async getTypes(): Promise<ShipTypeInfo[]> {
-    const response = await apiClient.get<{ types: ShipTypeInfo[] }>('/ships/types');
+    const response = await apiClient.get<{ types: ShipTypeInfo[] }>(
+      '/ships/types',
+      { timeout: API_TIMEOUTS.shipData }
+    );
     return response.data.types;
   },
 
@@ -73,7 +102,10 @@ export const shipsApi = {
    * Get ships filtered by type.
    */
   async getShipsByType(type: string): Promise<ShipInfo[]> {
-    const response = await apiClient.get<{ ships: ShipInfo[] }>(`/ships/${type}`);
+    const response = await apiClient.get<{ ships: ShipInfo[] }>(
+      `/ships/${type}`,
+      { timeout: API_TIMEOUTS.shipData }
+    );
     return response.data.ships;
   },
 
@@ -81,7 +113,10 @@ export const shipsApi = {
    * Get detailed information for a specific ship.
    */
   async getDetails(shipId: string): Promise<ShipDetails> {
-    const response = await apiClient.get<ShipDetails>(`/ships/details/${shipId}`);
+    const response = await apiClient.get<ShipDetails>(
+      `/ships/details/${shipId}`,
+      { timeout: API_TIMEOUTS.shipData }
+    );
     return response.data;
   },
 
@@ -89,7 +124,10 @@ export const shipsApi = {
    * Get compatible engines for a specific ship.
    */
   async getEnginesForShip(shipId: string): Promise<EngineDef[]> {
-    const response = await apiClient.get<{ engines: EngineDef[] }>(`/ships/${shipId}/engines`);
+    const response = await apiClient.get<{ engines: EngineDef[] }>(
+      `/ships/${shipId}/engines`,
+      { timeout: API_TIMEOUTS.shipData }
+    );
     return response.data.engines;
   },
 
@@ -97,7 +135,10 @@ export const shipsApi = {
    * Get all available engines.
    */
   async getAllEngines(): Promise<EngineDef[]> {
-    const response = await apiClient.get<{ engines: EngineDef[] }>('/engines');
+    const response = await apiClient.get<{ engines: EngineDef[] }>(
+      '/engines',
+      { timeout: API_TIMEOUTS.shipData }
+    );
     return response.data.engines;
   },
 };

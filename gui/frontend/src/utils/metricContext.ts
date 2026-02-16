@@ -37,10 +37,45 @@ const MASS_RATIO_SIGNIFICANT = 10.0;
  * Returns contextual phrase for top speed value.
  *
  * @param speedMs - Top speed in m/s
- * @param _shipSize - Ship size class (S/M/L/XL) - currently unused but available for future refinement
+ * @param shipSize - Ship size class (XS/S/M/L/XL) - reserved for future ship-size-specific thresholds
  * @returns Brief descriptive phrase
+ * 
+ * TODO: Implement ship-size-specific thresholds when product requirements are clarified.
+ * Example: "fast for L-class" (>150 m/s) vs "fast for S-class" (>400 m/s)
+ * Large ships should feel "fast" at lower absolute speeds than small ships.
  */
-export function getSpeedContext(speedMs: number, _shipSize: string): string {
+export function getSpeedContext(speedMs: number, shipSize: string): string {
+  // Reserved for future ship-size-specific thresholds
+  void shipSize;
+  
+  // TODO: Use shipSize parameter for size-specific context phrases
+  /*
+  switch (shipSize.toUpperCase()) {
+    case 'XS':
+    case 'S':
+      // Small ships: Higher speed thresholds (fighters, scouts)
+      // if (speedMs < 200) return 'very slow — heavy hauler';
+      // if (speedMs < 400) return 'typical freighter speed';
+      // if (speedMs < 600) return 'corvette range';
+      // if (speedMs < 800) return 'fast fighter territory';
+      // return 'extremely fast — possibly unbalanced';
+      break;
+    case 'M':
+      // Medium ships: Moderate thresholds (frigates, corvettes)
+      break;
+    case 'L':
+    case 'XL':
+      // Large ships: Lower speed thresholds (carriers, stations)
+      // if (speedMs < 50) return 'very slow — heavy hauler';
+      // if (speedMs < 100) return 'typical freighter speed';
+      // if (speedMs < 200) return 'corvette range';
+      // if (speedMs < 300) return 'fast fighter territory';
+      // return 'extremely fast — possibly unbalanced';
+      break;
+  }
+  */
+  
+  // Current: Generic size-agnostic thresholds
   if (speedMs < SPEED_VERY_SLOW) {
     return 'very slow — heavy hauler';
   }
@@ -60,10 +95,43 @@ export function getSpeedContext(speedMs: number, _shipSize: string): string {
  * Returns contextual phrase for acceleration value.
  *
  * @param accelMs2 - Acceleration in m/s²
- * @param _shipSize - Ship size class (S/M/L/XL) - currently unused but available for future refinement
+ * @param shipSize - Ship size class (XS/S/M/L/XL) - reserved for future ship-size-specific thresholds
  * @returns Brief descriptive phrase
+ * 
+ * TODO: Implement ship-size-specific thresholds when product requirements are clarified.
+ * Example: "responsive for XL-class" (>15 m/s²) vs "responsive for S-class" (>60 m/s²)
+ * Large ships should feel "responsive" at lower absolute acceleration than small ships.
  */
-export function getAccelerationContext(accelMs2: number, _shipSize: string): string {
+export function getAccelerationContext(accelMs2: number, shipSize: string): string {
+  // Reserved for future ship-size-specific thresholds
+  void shipSize;
+  
+  // TODO: Use shipSize parameter for size-specific context phrases
+  /*
+  switch (shipSize.toUpperCase()) {
+    case 'XS':
+    case 'S':
+      // Small ships: Higher acceleration thresholds (fighters, scouts)
+      // if (accelMs2 < 20) return 'sluggish response';
+      // if (accelMs2 < 60) return 'standard acceleration';
+      // if (accelMs2 < 100) return 'nimble';
+      // return 'fighter-like responsiveness';
+      break;
+    case 'M':
+      // Medium ships: Moderate thresholds (frigates, corvettes)
+      break;
+    case 'L':
+    case 'XL':
+      // Large ships: Lower acceleration thresholds (carriers, stations)
+      // if (accelMs2 < 2) return 'sluggish response';
+      // if (accelMs2 < 10) return 'standard acceleration';
+      // if (accelMs2 < 25) return 'nimble';
+      // return 'fighter-like responsiveness';
+      break;
+  }
+  */
+  
+  // Current: Generic size-agnostic thresholds
   if (accelMs2 < ACCEL_SLUGGISH) {
     return 'sluggish response';
   }

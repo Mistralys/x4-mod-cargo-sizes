@@ -19,13 +19,19 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class ClassRangeEndpoint
 {
-    private ClassRangeService $classRangeService;
-
-    public function __construct()
-    {
-        $shipDataService = new ShipDataService();
-        $this->classRangeService = new ClassRangeService($shipDataService);
-    }
+    /**
+     * Constructor with dependency injection.
+     * 
+     * Dependencies are injected to enable unit testing and follow SOLID principles.
+     * 
+     * @param ShipDataService $shipDataService Ship data provider
+     * @param ClassRangeService $classRangeService Physics calculation service
+     * @since 3.0.0 (changed from no-args constructor to DI)
+     */
+    public function __construct(
+        private readonly ShipDataService $shipDataService,
+        private readonly ClassRangeService $classRangeService
+    ) {}
 
     /**
      * POST /api/calculate/class-range

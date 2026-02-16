@@ -6,6 +6,8 @@ namespace Mistralys\X4\Mods\CargoSizesMod\GUI\Services;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\PhysicsRequest;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\PhysicsResponse;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\EnginePerformance;
+use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\PhysicsData;
+use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ReductionTiers;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Exceptions\GUIException;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\PhysicsCalculator;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedDrag;
@@ -20,6 +22,7 @@ use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Jerk;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkForward;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkBoost;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkTravel;
+use Mistralys\X4\Mods\CargoSizesMod\GUI\Utils\PhysicsCalculationHelper;
 
 /**
  * Physics calculation service wrapping PhysicsCalculator.
@@ -29,6 +32,7 @@ use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\JerkTravel;
  */
 class PhysicsService
 {
+    use PhysicsCalculationHelper;
     /**
      * Calculates adjusted physics values for a ship.
      *
@@ -52,69 +56,12 @@ class PhysicsService
             $dragTier = $this->findTierForMultiplier($request->dragReductionTiers, $request->cargoMultiplier);
             $jerkTier = $this->findTierForMultiplier($request->jerkReductionTiers, $request->cargoMultiplier);
 
-            // Load real ship data if shipId provided, otherwise use hardcoded defaults
-            if ($request->shipId !== null) {
-                $shipDef = ShipDefs::getInstance()->getByID($request->shipId);
-                
-                // Create drag from real ship data
-                $originalDrag = new Drag(
-                    $shipDef->getDragForward(),
-                    $shipDef->getDragReverse(),
-                    $shipDef->getDragHorizontal(),
-                    $shipDef->getDragVertical(),
-                    $shipDef->getDragPitch(),
-                    $shipDef->getDragYaw(),
-                    $shipDef->getDragRoll()
-                );
-                
-                // Create inertia from real ship data
-                $originalInertia = new Inertia(
-                    $shipDef->getInertiaPitch(),
-                    $shipDef->getInertiaYaw(),
-                    $shipDef->getInertiaRoll()
-                );
-                
-                // Create jerk from real ship data
-                $originalJerk = new Jerk(
-                    $shipDef->getJerkStrafe(),
-                    $shipDef->getJerkAngular(),
-                    new JerkForward(
-                        $shipDef->getJerkForwardAccel(),
-                        $shipDef->getJerkForwardDecel(),
-                        $shipDef->getJerkForwardRatio()
-                    ),
-                    new JerkBoost(
-                        $shipDef->getJerkBoostAccel(),
-                        $shipDef->getJerkBoostRatio()
-                    ),
-                    new JerkTravel(
-                        $shipDef->getJerkTravelAccel(),
-                        $shipDef->getJerkTravelDecel(),
-                        $shipDef->getJerkTravelRatio()
-                    )
-                );
-            } else {
-                // Backward compatibility: use hardcoded defaults when no shipId provided
-                $originalDrag = new Drag(
-                    100.0,  // forward
-                    100.0,  // reverse
-                    100.0,  // horizontal
-                    100.0,  // vertical
-                    100.0,  // pitch
-                    100.0,  // yaw
-                    100.0   // roll
-                );
-                
-                $originalInertia = new Inertia(10.0, 10.0, 10.0);  // pitch, yaw, roll
-                
-                $originalJerk = new Jerk(
-                    50.0,  // strafe
-                    50.0,  // angular
-                    new JerkForward(50.0, 50.0, 1.0),  // forward (accel, decel, ratio)
-                    new JerkBoost(100.0, 1.0),  // boost (accel, ratio)
-                    new JerkTravel(200.0, 200.0, 1.0)  // travel (accel, decel, ratio)
-                );
-            }
+            // Load ship physics data (drag, inertia, jerk)
+            $shipData = $this->loadShipPhysicsData($request->shipId);
+            $originalDrag = $shipData['originalDrag'];
+            $originalInertia = $shipData['originalInertia'];
+            $originalJerk = $shipData['originalJerk'];
+            $shipDef = $shipData['shipDef'];
 
             // Apply drag reduction
             $adjustedDrag = new AdjustedDrag($originalDrag, $dragTier->getReductionPercent());
@@ -129,16 +76,10 @@ class PhysicsService
 
             // Calculate engine performance if engine ID provided
             $enginePerformance = null;
-            $topSpeedOriginal = null;
-            $topSpeedAdjusted = null;
-            $accelerationOriginal = null;
-            $accelerationAdjusted = null;
-            
             if ($request->engineId !== null) {
                 // Get engine count (default to 1 for backward compatibility)
                 $engineCount = 1;
-                if ($request->shipId !== null) {
-                    $shipDef = ShipDefs::getInstance()->getByID($request->shipId);
+                if ($shipDef !== null) {
                     $engineCount = $shipDef->countEngines();
                 }
                 
@@ -149,98 +90,25 @@ class PhysicsService
                     $originalDrag->getForward(),
                     $engineCount
                 );
-                
-                // Extract absolute metrics from engine performance
-                $topSpeedOriginal = $enginePerformance->topSpeed;
-                $topSpeedAdjusted = $enginePerformance->topSpeedAdjusted;
-                $accelerationOriginal = $enginePerformance->originalAcceleration;
-                $accelerationAdjusted = $enginePerformance->adjustedAcceleration;
             }
 
-            // Build response
-            return new PhysicsResponse(
-                massRatio: $calculator->getMassRatio(),
-                effectiveRatio: $calculator->getEffectiveRatio(),
-                originalFullMass: $calculator->getOriginalFullMass(),
-                adjustedFullMass: $calculator->getAdjustedFullMass(),
-                massIncrease: $calculator->getMassIncrease(),
-                originalCargo: $request->originalCargo,
-                adjustedCargo: $request->adjustedCargo,
-                dragOriginal: [
-                    'forward' => $originalDrag->getForward(),
-                    'reverse' => $originalDrag->getReverse(),
-                    'horizontal' => $originalDrag->getHorizontal(),
-                    'vertical' => $originalDrag->getVertical(),
-                    'pitch' => $originalDrag->getPitch(),
-                    'yaw' => $originalDrag->getYaw(),
-                    'roll' => $originalDrag->getRoll()
-                ],
-                dragAdjusted: [
-                    'forward' => $adjustedDrag->getForward(),
-                    'reverse' => $adjustedDrag->getReverse(),
-                    'horizontal' => $adjustedDrag->getHorizontal(),
-                    'vertical' => $adjustedDrag->getVertical(),
-                    'pitch' => $adjustedDrag->getPitch(),
-                    'yaw' => $adjustedDrag->getYaw(),
-                    'roll' => $adjustedDrag->getRoll()
-                ],
-                dragPercentChange: [
-                    'forward' => $this->calculatePercentChange($originalDrag->getForward(), $adjustedDrag->getForward()),
-                    'reverse' => $this->calculatePercentChange($originalDrag->getReverse(), $adjustedDrag->getReverse()),
-                    'horizontal' => $this->calculatePercentChange($originalDrag->getHorizontal(), $adjustedDrag->getHorizontal()),
-                    'vertical' => $this->calculatePercentChange($originalDrag->getVertical(), $adjustedDrag->getVertical()),
-                    'pitch' => $this->calculatePercentChange($originalDrag->getPitch(), $adjustedDrag->getPitch()),
-                    'yaw' => $this->calculatePercentChange($originalDrag->getYaw(), $adjustedDrag->getYaw()),
-                    'roll' => $this->calculatePercentChange($originalDrag->getRoll(), $adjustedDrag->getRoll())
-                ],
-                inertiaOriginal: [
-                    'pitch' => $originalInertia->getPitch(),
-                    'yaw' => $originalInertia->getYaw(),
-                    'roll' => $originalInertia->getRoll()
-                ],
-                inertiaAdjusted: [
-                    'pitch' => $adjustedInertia->getPitch(),
-                    'yaw' => $adjustedInertia->getYaw(),
-                    'roll' => $adjustedInertia->getRoll()
-                ],
-                inertiaPercentChange: [
-                    'pitch' => $this->calculatePercentChange($originalInertia->getPitch(), $adjustedInertia->getPitch()),
-                    'yaw' => $this->calculatePercentChange($originalInertia->getYaw(), $adjustedInertia->getYaw()),
-                    'roll' => $this->calculatePercentChange($originalInertia->getRoll(), $adjustedInertia->getRoll())
-                ],
-                jerkOriginal: [
-                    'forward' => ['accel' => $originalJerk->getForward()->getAcceleration(), 'decel' => $originalJerk->getForward()->getDeceleration()],
-                    'boost' => ['accel' => $originalJerk->getBoost()->getAcceleration()],  // Note: boost has no deceleration
-                    'travel' => ['accel' => $originalJerk->getTravel()->getAcceleration(), 'decel' => $originalJerk->getTravel()->getDeceleration()]
-                ],
-                jerkAdjusted: [
-                    'forward' => ['accel' => $adjustedJerk->getForward()->getAcceleration(), 'decel' => $adjustedJerk->getForward()->getDeceleration()],
-                    'boost' => ['accel' => $adjustedJerk->getBoost()->getAcceleration()],  // Note: boost has no deceleration
-                    'travel' => ['accel' => $adjustedJerk->getTravel()->getAcceleration(), 'decel' => $adjustedJerk->getTravel()->getDeceleration()]
-                ],
-                jerkPercentChange: [
-                    'forward' => [
-                        'accel' => $this->calculatePercentChange($originalJerk->getForward()->getAcceleration(), $adjustedJerk->getForward()->getAcceleration()),
-                        'decel' => $this->calculatePercentChange($originalJerk->getForward()->getDeceleration(), $adjustedJerk->getForward()->getDeceleration())
-                    ],
-                    'boost' => [
-                        'accel' => $this->calculatePercentChange($originalJerk->getBoost()->getAcceleration(), $adjustedJerk->getBoost()->getAcceleration())
-                    ],
-                    'travel' => [
-                        'accel' => $this->calculatePercentChange($originalJerk->getTravel()->getAcceleration(), $adjustedJerk->getTravel()->getAcceleration()),
-                        'decel' => $this->calculatePercentChange($originalJerk->getTravel()->getDeceleration(), $adjustedJerk->getTravel()->getDeceleration())
-                    ]
-                ],
-                enginePerformance: $enginePerformance,
-                activeTier: sprintf(
-                    'Drag: %.0f%% reduction | Jerk: %.0f%% reduction',
-                    $dragTier->getReductionPercent() * 100,
-                    $jerkTier->getReductionPercent() * 100
-                ),
-                topSpeedOriginal: $topSpeedOriginal,
-                topSpeedAdjusted: $topSpeedAdjusted,
-                accelerationOriginal: $accelerationOriginal,
-                accelerationAdjusted: $accelerationAdjusted
+            // Build and return response
+            $physicsData = new PhysicsData(
+                $originalDrag,
+                $adjustedDrag,
+                $originalInertia,
+                $adjustedInertia,
+                $originalJerk,
+                $adjustedJerk
+            );
+            $tiers = new ReductionTiers($dragTier, $jerkTier);
+
+            return $this->buildPhysicsResponse(
+                $calculator,
+                $physicsData,
+                $tiers,
+                $request,
+                $enginePerformance
             );
         } catch (\Exception $e) {
             throw new GUIException(
@@ -371,17 +239,215 @@ class PhysicsService
     }
 
     /**
-     * Calculates percentage change between two values.
+     * Build physics response DTO from calculated values.
      *
-     * @param float $original
-     * @param float $adjusted
-     * @return float Percentage change (negative for decrease, positive for increase)
+     * Constructs a complete PhysicsResponse DTO from all calculated physics
+     * values, including drag, inertia, jerk, and optional engine performance.
+     *
+     * Uses parameter objects to reduce parameter count from 11 to 5, improving
+     * maintainability and readability.
+     *
+     * @param PhysicsCalculator $calculator Physics calculator with mass calculations
+     * @param PhysicsData $physicsData Original and adjusted physics values (drag, inertia, jerk)
+     * @param ReductionTiers $tiers Active reduction tiers for drag and jerk
+     * @param PhysicsRequest $request Original request data
+     * @param EnginePerformance|null $enginePerformance Engine performance metrics (optional)
+     * @return PhysicsResponse Complete physics response DTO
+     * @since 1.2.0 Method introduced
+     * @since 1.3.0 Refactored to use parameter objects (PhysicsData, ReductionTiers)
      */
-    private function calculatePercentChange(float $original, float $adjusted): float
+    private function buildPhysicsResponse(
+        PhysicsCalculator $calculator,
+        PhysicsData $physicsData,
+        ReductionTiers $tiers,
+        PhysicsRequest $request,
+        ?EnginePerformance $enginePerformance
+    ): PhysicsResponse
     {
-        if ($original == 0) {
-            return 0.0;
+        // Extract engine performance metrics if available
+        $topSpeedOriginal = null;
+        $topSpeedAdjusted = null;
+        $accelerationOriginal = null;
+        $accelerationAdjusted = null;
+        
+        if ($enginePerformance !== null) {
+            $topSpeedOriginal = $enginePerformance->topSpeed;
+            $topSpeedAdjusted = $enginePerformance->topSpeedAdjusted;
+            $accelerationOriginal = $enginePerformance->originalAcceleration;
+            $accelerationAdjusted = $enginePerformance->adjustedAcceleration;
         }
-        return (($adjusted - $original) / $original) * 100.0;
+
+        return new PhysicsResponse(
+            massRatio: $calculator->getMassRatio(),
+            effectiveRatio: $calculator->getEffectiveRatio(),
+            originalFullMass: $calculator->getOriginalFullMass(),
+            adjustedFullMass: $calculator->getAdjustedFullMass(),
+            massIncrease: $calculator->getMassIncrease(),
+            originalCargo: $request->originalCargo,
+            adjustedCargo: $request->adjustedCargo,
+            dragOriginal: [
+                'forward' => $physicsData->originalDrag->getForward(),
+                'reverse' => $physicsData->originalDrag->getReverse(),
+                'horizontal' => $physicsData->originalDrag->getHorizontal(),
+                'vertical' => $physicsData->originalDrag->getVertical(),
+                'pitch' => $physicsData->originalDrag->getPitch(),
+                'yaw' => $physicsData->originalDrag->getYaw(),
+                'roll' => $physicsData->originalDrag->getRoll()
+            ],
+            dragAdjusted: [
+                'forward' => $physicsData->adjustedDrag->getForward(),
+                'reverse' => $physicsData->adjustedDrag->getReverse(),
+                'horizontal' => $physicsData->adjustedDrag->getHorizontal(),
+                'vertical' => $physicsData->adjustedDrag->getVertical(),
+                'pitch' => $physicsData->adjustedDrag->getPitch(),
+                'yaw' => $physicsData->adjustedDrag->getYaw(),
+                'roll' => $physicsData->adjustedDrag->getRoll()
+            ],
+            dragPercentChange: [
+                'forward' => $this->calculatePercentChange($physicsData->originalDrag->getForward(), $physicsData->adjustedDrag->getForward()),
+                'reverse' => $this->calculatePercentChange($physicsData->originalDrag->getReverse(), $physicsData->adjustedDrag->getReverse()),
+                'horizontal' => $this->calculatePercentChange($physicsData->originalDrag->getHorizontal(), $physicsData->adjustedDrag->getHorizontal()),
+                'vertical' => $this->calculatePercentChange($physicsData->originalDrag->getVertical(), $physicsData->adjustedDrag->getVertical()),
+                'pitch' => $this->calculatePercentChange($physicsData->originalDrag->getPitch(), $physicsData->adjustedDrag->getPitch()),
+                'yaw' => $this->calculatePercentChange($physicsData->originalDrag->getYaw(), $physicsData->adjustedDrag->getYaw()),
+                'roll' => $this->calculatePercentChange($physicsData->originalDrag->getRoll(), $physicsData->adjustedDrag->getRoll())
+            ],
+            inertiaOriginal: [
+                'pitch' => $physicsData->originalInertia->getPitch(),
+                'yaw' => $physicsData->originalInertia->getYaw(),
+                'roll' => $physicsData->originalInertia->getRoll()
+            ],
+            inertiaAdjusted: [
+                'pitch' => $physicsData->adjustedInertia->getPitch(),
+                'yaw' => $physicsData->adjustedInertia->getYaw(),
+                'roll' => $physicsData->adjustedInertia->getRoll()
+            ],
+            inertiaPercentChange: [
+                'pitch' => $this->calculatePercentChange($physicsData->originalInertia->getPitch(), $physicsData->adjustedInertia->getPitch()),
+                'yaw' => $this->calculatePercentChange($physicsData->originalInertia->getYaw(), $physicsData->adjustedInertia->getYaw()),
+                'roll' => $this->calculatePercentChange($physicsData->originalInertia->getRoll(), $physicsData->adjustedInertia->getRoll())
+            ],
+            jerkOriginal: [
+                'forward' => ['accel' => $physicsData->originalJerk->getForward()->getAcceleration(), 'decel' => $physicsData->originalJerk->getForward()->getDeceleration()],
+                'boost' => ['accel' => $physicsData->originalJerk->getBoost()->getAcceleration()],
+                'travel' => ['accel' => $physicsData->originalJerk->getTravel()->getAcceleration(), 'decel' => $physicsData->originalJerk->getTravel()->getDeceleration()]
+            ],
+            jerkAdjusted: [
+                'forward' => ['accel' => $physicsData->adjustedJerk->getForward()->getAcceleration(), 'decel' => $physicsData->adjustedJerk->getForward()->getDeceleration()],
+                'boost' => ['accel' => $physicsData->adjustedJerk->getBoost()->getAcceleration()],
+                'travel' => ['accel' => $physicsData->adjustedJerk->getTravel()->getAcceleration(), 'decel' => $physicsData->adjustedJerk->getTravel()->getDeceleration()]
+            ],
+            jerkPercentChange: [
+                'forward' => [
+                    'accel' => $this->calculatePercentChange($physicsData->originalJerk->getForward()->getAcceleration(), $physicsData->adjustedJerk->getForward()->getAcceleration()),
+                    'decel' => $this->calculatePercentChange($physicsData->originalJerk->getForward()->getDeceleration(), $physicsData->adjustedJerk->getForward()->getDeceleration())
+                ],
+                'boost' => [
+                    'accel' => $this->calculatePercentChange($physicsData->originalJerk->getBoost()->getAcceleration(), $physicsData->adjustedJerk->getBoost()->getAcceleration())
+                ],
+                'travel' => [
+                    'accel' => $this->calculatePercentChange($physicsData->originalJerk->getTravel()->getAcceleration(), $physicsData->adjustedJerk->getTravel()->getAcceleration()),
+                    'decel' => $this->calculatePercentChange($physicsData->originalJerk->getTravel()->getDeceleration(), $physicsData->adjustedJerk->getTravel()->getDeceleration())
+                ]
+            ],
+            enginePerformance: $enginePerformance,
+            activeTier: $tiers->getActiveTierLabel(),
+            topSpeedOriginal: $topSpeedOriginal,
+            topSpeedAdjusted: $topSpeedAdjusted,
+            accelerationOriginal: $accelerationOriginal,
+            accelerationAdjusted: $accelerationAdjusted
+        );
+    }
+
+    /**
+     * Load ship physics data from X4 Core database.
+     *
+     * Creates original Drag, Inertia, and Jerk objects either from real ship data
+     * (if shipId provided) or from hardcoded defaults (for backward compatibility).
+     *
+     * @param string|null $shipId Ship identifier (e.g., 'ship_arg_s_fighter_01_a_macro')
+     * @return array{
+     *     shipDef: \Mistralys\X4\Database\Ships\ShipDef|null,
+     *     originalDrag: Drag,
+     *     originalInertia: Inertia,
+     *     originalJerk: Jerk
+     * }
+     * @throws GUIException If ship not found or data invalid
+     * @since 1.2.0
+     */
+    private function loadShipPhysicsData(?string $shipId): array
+    {
+        $shipDef = null;
+
+        // Load real ship data if shipId provided, otherwise use hardcoded defaults
+        if ($shipId !== null) {
+            $shipDef = ShipDefs::getInstance()->getByID($shipId);
+            
+            // Create drag from real ship data
+            $originalDrag = new Drag(
+                $shipDef->getDragForward(),
+                $shipDef->getDragReverse(),
+                $shipDef->getDragHorizontal(),
+                $shipDef->getDragVertical(),
+                $shipDef->getDragPitch(),
+                $shipDef->getDragYaw(),
+                $shipDef->getDragRoll()
+            );
+            
+            // Create inertia from real ship data
+            $originalInertia = new Inertia(
+                $shipDef->getInertiaPitch(),
+                $shipDef->getInertiaYaw(),
+                $shipDef->getInertiaRoll()
+            );
+            
+            // Create jerk from real ship data
+            $originalJerk = new Jerk(
+                $shipDef->getJerkStrafe(),
+                $shipDef->getJerkAngular(),
+                new JerkForward(
+                    $shipDef->getJerkForwardAccel(),
+                    $shipDef->getJerkForwardDecel(),
+                    $shipDef->getJerkForwardRatio()
+                ),
+                new JerkBoost(
+                    $shipDef->getJerkBoostAccel(),
+                    $shipDef->getJerkBoostRatio()
+                ),
+                new JerkTravel(
+                    $shipDef->getJerkTravelAccel(),
+                    $shipDef->getJerkTravelDecel(),
+                    $shipDef->getJerkTravelRatio()
+                )
+            );
+        } else {
+            // Backward compatibility: use hardcoded defaults when no shipId provided
+            $originalDrag = new Drag(
+                100.0,  // forward
+                100.0,  // reverse
+                100.0,  // horizontal
+                100.0,  // vertical
+                100.0,  // pitch
+                100.0,  // yaw
+                100.0   // roll
+            );
+            
+            $originalInertia = new Inertia(10.0, 10.0, 10.0);  // pitch, yaw, roll
+            
+            $originalJerk = new Jerk(
+                50.0,  // strafe
+                50.0,  // angular
+                new JerkForward(50.0, 50.0, 1.0),  // forward (accel, decel, ratio)
+                new JerkBoost(100.0, 1.0),  // boost (accel, ratio)
+                new JerkTravel(200.0, 200.0, 1.0)  // travel (accel, decel, ratio)
+            );
+        }
+
+        return [
+            'shipDef' => $shipDef,
+            'originalDrag' => $originalDrag,
+            'originalInertia' => $originalInertia,
+            'originalJerk' => $originalJerk
+        ];
     }
 }

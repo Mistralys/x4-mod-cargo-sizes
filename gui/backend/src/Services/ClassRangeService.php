@@ -17,6 +17,7 @@ use Mistralys\X4\Database\Ships\ShipDefs;
 use Mistralys\X4\Database\Engines\EngineDefs;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Drag;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Inertia;
+use Mistralys\X4\Mods\CargoSizesMod\GUI\Utils\PhysicsCalculationHelper;
 
 /**
  * Class-range calculation service.
@@ -27,6 +28,7 @@ use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Inertia;
  */
 class ClassRangeService
 {
+    use PhysicsCalculationHelper;
     public function __construct(
         private readonly ShipDataService $shipDataService
     ) {}
@@ -381,6 +383,11 @@ class ClassRangeService
             return 0.0;
         }
 
+        // Median calculation using sort() - O(n log n) complexity
+        // Current dataset: ~80 ships per type (~0.5ms overhead)
+        // Acceptable for datasets <1000 items per constraints.md
+        // For datasets >1000 items, implement quickselect algorithm (O(n) average case)
+        // Reference: https://en.wikipedia.org/wiki/Quickselect
         sort($values);
         $count = count($values);
         $middle = (int)floor($count / 2);
@@ -416,60 +423,5 @@ class ClassRangeService
             '',
             GUIException::ERROR_UNHANDLED_SHIP_TYPE
         );
-    }
-
-    /**
-     * Calculates average drag change percentage across all axes.
-     *
-     * @param Drag $original
-     * @param AdjustedDrag $adjusted
-     * @return float
-     */
-    private function calculateAverageDragChange(Drag $original, AdjustedDrag $adjusted): float
-    {
-        $changes = [
-            $this->calculatePercentChange($original->getForward(), $adjusted->getForward()),
-            $this->calculatePercentChange($original->getReverse(), $adjusted->getReverse()),
-            $this->calculatePercentChange($original->getHorizontal(), $adjusted->getHorizontal()),
-            $this->calculatePercentChange($original->getVertical(), $adjusted->getVertical()),
-            $this->calculatePercentChange($original->getPitch(), $adjusted->getPitch()),
-            $this->calculatePercentChange($original->getYaw(), $adjusted->getYaw()),
-            $this->calculatePercentChange($original->getRoll(), $adjusted->getRoll())
-        ];
-
-        return array_sum($changes) / count($changes);
-    }
-
-    /**
-     * Calculates average inertia change percentage across all axes.
-     *
-     * @param Inertia $original
-     * @param AdjustedInertia $adjusted
-     * @return float
-     */
-    private function calculateAverageInertiaChange(Inertia $original, AdjustedInertia $adjusted): float
-    {
-        $changes = [
-            $this->calculatePercentChange($original->getPitch(), $adjusted->getPitch()),
-            $this->calculatePercentChange($original->getYaw(), $adjusted->getYaw()),
-            $this->calculatePercentChange($original->getRoll(), $adjusted->getRoll())
-        ];
-
-        return array_sum($changes) / count($changes);
-    }
-
-    /**
-     * Calculates percentage change between two values.
-     *
-     * @param float $original
-     * @param float $adjusted
-     * @return float Percentage change (negative for decrease, positive for increase)
-     */
-    private function calculatePercentChange(float $original, float $adjusted): float
-    {
-        if ($original == 0) {
-            return 0.0;
-        }
-        return (($adjusted - $original) / $original) * 100.0;
     }
 }
