@@ -1,7 +1,7 @@
 # Tech Stack & Architectural Patterns
 
-> **Version:** 1.1  
-> **Last Updated:** February 15, 2026  
+> **Version:** 1.3  
+> **Last Updated:** February 16, 2026  
 > **Purpose:** Runtime, dependencies, and architectural patterns reference
 
 ---
@@ -442,6 +442,363 @@ function useClassRange() {
 - Shared `PhysicsCalculator` instance reused across iterations
 - Engine-dependent metrics (top speed, acceleration) only calculated when engineId provided
 - Efficient median calculation: sort once, index middle value (O(n log n))
+
+---
+
+### 10. **Shared Calculation Utilities via Trait**
+
+Eliminate code duplication by extracting shared physics calculations into a reusable trait.
+
+**Pattern:** `PhysicsCalculationHelper` trait provides common calculation methods used across multiple services.
+
+**Location:** `gui/backend/src/Utils/PhysicsCalculationHelper.php`  
+**Since:** 1.2.0
+
+**Problem Solved:**  
+Both `PhysicsService` and `ClassRangeService` needed identical methods for:
+- Calculating percentage changes
+- Computing average drag changes across 7 axes
+- Computing average inertia changes across 3 axes
+
+**Solution:** Extract into a trait that both services can mix in.
+
+**Implementation:**
+```php
+/**
+ * Shared physics calculation utilities.
+ */
+trait PhysicsCalculationHelper
+{
+    /**
+     * Calculate percentage change between original and modified values.
+     */
+    private function calculatePercentChange(float $original, float $modified): float
+    {
+        if ($original == 0) {
+            return 0.0;
+        }
+        return (($modified - $original) / $original) * 100.0;
+    }
+    
+    /**
+     * Calculate average drag change across all axes.
+     */
+    private function calculateAverageDragChange(
+        Drag $original,
+        AdjustedDrag $adjusted
+    ): float {
+        $changes = [
+            $this->calculatePercentChange($original->getForward(), $adjusted->getForward()),
+            $this->calculatePercentChange($original->getReverse(), $adjusted->getReverse()),
+            // ... all 7 axes
+        ];
+        return array_sum($changes) / count($changes);
+    }
+    
+    /**
+     * Calculate average inertia change across all axes.
+     */
+    private function calculateAverageInertiaChange(
+        Inertia $original,
+        AdjustedInertia $adjusted
+    ): float {
+        $changes = [
+            $this->calculatePercentChange($original->getPitch(), $adjusted->getPitch()),
+            $this->calculatePercentChange($original->getYaw(), $adjusted->getYaw()),
+            $this->calculatePercentChange($original->getRoll(), $adjusted->getRoll())
+        ];
+        return array_sum($changes) / count($changes);
+    }
+}
+```
+
+**Usage:**
+```php
+class PhysicsService
+{
+    use PhysicsCalculationHelper;
+    
+    public function calculatePhysics(PhysicsRequest $request): PhysicsResponse
+    {
+        // Can now call trait methods directly
+        $dragChange = $this->calculateAverageDragChange($original, $adjusted);
+        $inertiaChange = $this->calculateAverageInertiaChange($original, $adjusted);
+        // ...
+    }
+}
+
+class ClassRangeService
+{
+    use PhysicsCalculationHelper;
+    
+    public function calculateClassRange(ClassRangeRequest $request): ClassRangeResponse
+    {
+        // Same methods available here too
+        $percentChange = $this->calculatePercentChange($original, $modified);
+        // ...
+    }
+}
+```
+
+**Benefits:**
+- **DRY Principle:** Single source of truth for calculation logic
+- **Maintainability:** Update calculation in one place, both services benefit
+- **Testability:** Trait can have dedicated unit tests
+- **Private Methods:** Calculation helpers remain implementation details (not part of public API)
+- **Zero Overhead:** Traits copy code at compile time (no runtime cost)
+
+**Why Trait vs Base Class?**
+- Services have different responsibilities (don't share true inheritance relationship)
+- Traits allow mixing utilities without coupling service hierarchies
+- Services can use multiple traits if needed (PHP doesn't support multiple inheritance)
+
+**See Also:**
+- `public-api.md` → Backend Utilities → PhysicsCalculationHelper
+- `file-tree.md` → `gui/backend/src/Utils/PhysicsCalculationHelper.php`
+
+---
+
+### 11. **Dependency Injection for Endpoints**
+
+Endpoints accept service dependencies via constructor injection instead of instantiating them internally.
+
+**Pattern:** Constructor injection for testability and explicit dependencies.
+
+**Since:** 1.2.0 (applied to ClassRangeEndpoint)
+
+**Problem:**
+```php
+// Old pattern - services instantiated inside endpoint
+class ClassRangeEndpoint
+{
+    public function __construct()
+    {
+        $this->shipDataService = new ShipDataService();
+        $this->classRangeService = new ClassRangeService($this->shipDataService);
+    }
+}
+```
+
+**Issues:**
+- Hard to unit test (can't mock services)
+- Dependencies hidden until reading constructor body
+- Violates Dependency Inversion Principle (SOLID)
+
+**Solution:**
+```php
+// New pattern - dependencies injected via constructor
+class ClassRangeEndpoint
+{
+    public function __construct(
+        private readonly ShipDataService $shipDataService,
+        private readonly ClassRangeService $classRangeService
+    ) {}
+    
+    public function calculate(Request $request, Response $response): Response
+    {
+        // Use $this->classRangeService directly
+        $result = $this->classRangeService->calculateClassRange($dto);
+        // ...
+    }
+}
+```
+
+**Router Instantiation:**
+```php
+// Router.php - manual dependency injection
+public static function register(App $app): void
+{
+    // Instantiate services
+    $shipDataService = new ShipDataService();
+    $classRangeService = new ClassRangeService($shipDataService);
+    
+    // Inject into endpoint
+    $classRangeEndpoint = new ClassRangeEndpoint($shipDataService, $classRangeService);
+    $app->post('/api/calculate/class-range', [$classRangeEndpoint, 'calculate']);
+}
+```
+
+**Benefits:**
+- **Testability:** Can inject mock services for unit tests
+- **Explicit Dependencies:** Constructor signature shows what's needed
+- **SOLID Compliance:** Depends on abstractions, not concrete implementations
+- **Lifecycle Control:** Services instantiated once per request in Router
+
+**Why Not DI Container?**
+- Small project (only 4 endpoints) doesn't justify framework overhead
+- Manual instantiation in Router is simple and clear
+- No complex dependency graphs to resolve
+
+**Future:** If project grows to 20+ endpoints with complex dependencies, consider PHP-DI or Symfony DI container.
+
+**See Also:**
+- `constraints.md` → Dependency Injection Best Practices
+- `public-api.md` → ClassRangeService constructor signature
+
+---
+
+### 12. **Parameter Object Pattern**
+
+Methods with excessive parameters (>5) use parameter objects to group related values and improve maintainability.
+
+**Pattern:** Encapsulate related parameters in DTOs with readonly properties.
+
+**Since:** 1.3.0 (applied to PhysicsService::buildPhysicsResponse)
+
+**Problem:**
+```php
+// Old pattern - 11 parameters
+private function buildPhysicsResponse(
+    PhysicsCalculator $calculator,
+    Drag $originalDrag,
+    AdjustedDrag $adjustedDrag,
+    Inertia $originalInertia,
+    AdjustedInertia $adjustedInertia,
+    Jerk $originalJerk,
+    AdjustedJerk $adjustedJerk,
+    ReductionTier $dragTier,
+    ReductionTier $jerkTier,
+    PhysicsRequest $request,
+    ?EnginePerformance $enginePerformance
+): PhysicsResponse
+```
+
+**Issues:**
+- Hard to remember parameter order
+- IDE autocomplete becomes unwieldy
+- Adding new physics types requires signature changes
+- Poor cohesion - related parameters scattered across signature
+
+**Solution:**
+```php
+// New pattern - 5 parameters using DTOs
+private function buildPhysicsResponse(
+    PhysicsCalculator $calculator,
+    PhysicsData $physicsData,           // Groups 6 physics parameters
+    ReductionTiers $tiers,              // Groups 2 tier parameters
+    PhysicsRequest $request,
+    ?EnginePerformance $enginePerformance
+): PhysicsResponse
+```
+
+**Parameter Objects:**
+```php
+// Groups original and adjusted physics values
+final readonly class PhysicsData
+{
+    public function __construct(
+        public Drag $originalDrag,
+        public AdjustedDrag $adjustedDrag,
+        public Inertia $originalInertia,
+        public AdjustedInertia $adjustedInertia,
+        public Jerk $originalJerk,
+        public AdjustedJerk $adjustedJerk
+    ) {}
+}
+
+// Groups reduction tier configuration
+final readonly class ReductionTiers
+{
+    public function __construct(
+        public ReductionTier $drag,
+        public ReductionTier $jerk
+    ) {}
+    
+    public function getActiveTierLabel(): string
+    {
+        return sprintf(
+            'Drag: %.0f%% reduction | Jerk: %.0f%% reduction',
+            $this->drag->getReductionPercent() * 100,
+            $this->jerk->getReductionPercent() * 100
+        );
+    }
+}
+```
+
+**Usage at Call Site:**
+```php
+// Clear intent - creating physics data package
+$physicsData = new PhysicsData(
+    $originalDrag, $adjustedDrag,
+    $originalInertia, $adjustedInertia,
+    $originalJerk, $adjustedJerk
+);
+$tiers = new ReductionTiers($dragTier, $jerkTier);
+
+return $this->buildPhysicsResponse(
+    $calculator,
+    $physicsData,
+    $tiers,
+    $request,
+    $enginePerformance
+);
+```
+
+**Benefits:**
+- **Reduced Parameter Count:** 11 → 5 (55% reduction)
+- **Improved Cohesion:** Related data grouped together
+- **Better Readability:** Intent clear at call site
+- **Easier to Extend:** Add physics types without changing signature
+- **Encapsulation:** `getActiveTierLabel()` moves logic into DTO
+- **Type Safety:** PHP 8.4 readonly properties prevent mutation
+
+**When to Use:**
+- Method has >5 parameters
+- Parameters fall into cohesive groups (e.g., original/adjusted pairs)
+- Multiple methods share same parameter groups
+- Adding new parameters would make method unreadable
+
+**When NOT to Use:**
+- Parameters are unrelated (no cohesion)
+- Only 2-4 parameters total
+- One-off method with no shared parameter patterns
+
+**See Also:**
+- `public-api.md` → DTOs → PhysicsData, ReductionTiers
+- `file-tree.md` → `gui/backend/src/DTOs/`
+- Martin Fowler's "Introduce Parameter Object" refactoring
+
+---
+
+## Performance Considerations
+
+### Median Calculation Strategy
+
+**Current Implementation:** Array sort() with O(n log n) complexity
+
+**Performance Profile:**
+- Dataset size: ~80 ships per ship type
+- Overhead: ~0.5ms per calculation
+- Acceptable: For datasets <1000 items
+
+**Optimization Threshold:** If ship counts exceed 1000 per type
+
+**Recommended Algorithm:** Quickselect
+- Complexity: O(n) average case, O(n²) worst case
+- Implementation: Randomized pivot selection for worst-case protection
+- Reference: [Quickselect - Wikipedia](https://en.wikipedia.org/wiki/Quickselect)
+
+**Trade-offs:**
+
+| Aspect | sort() (Current) | quickselect (Future) |
+|--------|------------------|----------------------|
+| Complexity | O(n log n) always | O(n) average case |
+| Implementation | 3 lines (built-in) | ~30 lines (custom) |
+| Stability | Stable sort | Not required for median |
+| Worst Case | Predictable | O(n²) if poor pivot |
+| Maintenance | Zero (language built-in) | Low (well-known algorithm) |
+
+**Decision Rationale:**
+
+Current dataset size (80 items) has negligible performance impact. Implementing quickselect now would violate the "No Premature Optimization" principle from `constraints.md`. When ship counts exceed 1000 items (13x current size), the optimization effort becomes justified.
+
+**Action Trigger:**
+
+If profiling shows median calculation >5ms consistently, or dataset size grows beyond 1000 items per type, implement quickselect with randomized pivot selection.
+
+**Implementation Location:**
+- `gui/backend/src/Services/ClassRangeService.php` → `computeMedian()` method
+- See inline comments for detailed optimization guidance
 
 ---
 

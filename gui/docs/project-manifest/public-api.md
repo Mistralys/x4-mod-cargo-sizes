@@ -1,7 +1,7 @@
 # Public API - Signatures Only
 
-> **Version:** 1.1  
-> **Last Updated:** February 15, 2026  
+> **Version:** 1.3  
+> **Last Updated:** February 16, 2026  
 > **Purpose:** Public method signatures and contracts (NO implementations)
 
 ---
@@ -16,12 +16,82 @@ Use this as a quick reference to understand what methods exist without reading s
 
 ## Table of Contents
 
-1. [Backend Services](#backend-services)
-2. [Backend DTOs](#backend-dtos)
-3. [Backend Exceptions](#backend-exceptions)
-4. [Frontend Services (API Client)](#frontend-services-api-client)
-5. [Frontend Hooks](#frontend-hooks)
-6. [Frontend TypeScript Types](#frontend-typescript-types)
+1. [Backend Utilities](#backend-utilities)
+2. [Backend Services](#backend-services)
+3. [Backend DTOs](#backend-dtos)
+4. [Backend Exceptions](#backend-exceptions)
+5. [Frontend Services (API Client)](#frontend-services-api-client)
+6. [Frontend Hooks](#frontend-hooks)
+7. [Frontend TypeScript Types](#frontend-typescript-types)
+
+---
+
+## Backend Utilities
+
+### PhysicsCalculationHelper (Trait)
+
+**Location:** `gui/backend/src/Utils/PhysicsCalculationHelper.php`  
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\Utils`  
+**Since:** 1.2.0  
+**Usage:** Mixed into `PhysicsService` and `ClassRangeService`
+
+**Purpose:** Shared physics calculation utilities to eliminate code duplication.
+
+#### Methods
+
+##### calculatePercentChange()
+
+```php
+private function calculatePercentChange(float $original, float $modified): float
+```
+
+Calculate percentage change between original and modified values.
+
+**Parameters:**
+- `$original` — Original value
+- `$modified` — Modified value
+
+**Returns:** Percentage change (positive = increase, negative = decrease). Returns 0.0 if original is zero.
+
+**Formula:** `((modified - original) / original) * 100`
+
+---
+
+##### calculateAverageDragChange()
+
+```php
+private function calculateAverageDragChange(
+    \Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Drag $original,
+    \Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedDrag $adjusted
+): float
+```
+
+Calculate average drag change percentage across all drag axes.
+
+**Parameters:**
+- `$original` — Original drag values (forward, reverse, horizontal, vertical, pitch, yaw, roll)
+- `$adjusted` — Adjusted drag values after modifications
+
+**Returns:** Average percentage change across all 7 drag axes.
+
+---
+
+##### calculateAverageInertiaChange()
+
+```php
+private function calculateAverageInertiaChange(
+    \Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Inertia $original,
+    \Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedInertia $adjusted
+): float
+```
+
+Calculate average inertia change percentage across all inertia axes.
+
+**Parameters:**
+- `$original` — Original inertia values (pitch, yaw, roll)
+- `$adjusted` — Adjusted inertia values after modifications
+
+**Returns:** Average percentage change across all 3 inertia axes.
 
 ---
 
@@ -32,6 +102,8 @@ Use this as a quick reference to understand what methods exist without reading s
 **Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\Services`
 
 **Purpose:** Physics calculation service wrapping PhysicsCalculator.
+
+**Uses:** `PhysicsCalculationHelper` trait (since 1.2.0) for shared calculation methods.
 
 ```php
 class PhysicsService
@@ -119,9 +191,19 @@ class ShipDataService
 
 **Purpose:** Class-wide aggregation service for calculating min/max/median ranges across all ships of a type.
 
+**Uses:** `PhysicsCalculationHelper` trait (since 1.2.0) for shared calculation methods.
+
 ```php
 class ClassRangeService
 {
+    /**
+     * Constructor with dependency injection.
+     * 
+     * @param ShipDataService $shipDataService Ship data provider
+     * @since 1.2.0
+     */
+    public function __construct(ShipDataService $shipDataService);
+    
     /**
      * Calculates class-wide metric ranges for all ships of a given type.
      *
@@ -338,6 +420,76 @@ class EnginePerformance
      * @return array<string, mixed>
      */
     public function toArray(): array;
+}
+```
+
+---
+
+### PhysicsData
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs`
+
+**Purpose:** Encapsulates original and adjusted physics values for response building. Groups related physics data (drag, inertia, jerk) with their original and adjusted values to reduce parameter count in response builders.
+
+**Since:** 1.3.0
+
+```php
+final readonly class PhysicsData
+{
+    /**
+     * Constructor.
+     *
+     * @param Drag $originalDrag Original drag values from ship definition
+     * @param AdjustedDrag $adjustedDrag Adjusted drag values after cargo increase
+     * @param Inertia $originalInertia Original inertia values from ship definition
+     * @param AdjustedInertia $adjustedInertia Adjusted inertia values after cargo increase
+     * @param Jerk $originalJerk Original jerk values from ship definition
+     * @param AdjustedJerk $adjustedJerk Adjusted jerk values after cargo increase
+     */
+    public function __construct(
+        public Drag $originalDrag,
+        public AdjustedDrag $adjustedDrag,
+        public Inertia $originalInertia,
+        public AdjustedInertia $adjustedInertia,
+        public Jerk $originalJerk,
+        public AdjustedJerk $adjustedJerk
+    );
+}
+```
+
+---
+
+### ReductionTiers
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs`
+
+**Purpose:** Encapsulates drag and jerk reduction tier configuration. Groups reduction tier values to reduce parameter count in response builders and provide convenient tier-level operations.
+
+**Since:** 1.3.0
+
+```php
+final readonly class ReductionTiers
+{
+    /**
+     * Constructor.
+     *
+     * @param ReductionTier $drag Drag reduction tier configuration
+     * @param ReductionTier $jerk Jerk reduction tier configuration
+     */
+    public function __construct(
+        public ReductionTier $drag,
+        public ReductionTier $jerk
+    );
+
+    /**
+     * Get formatted active tier label for display.
+     *
+     * Generates a human-readable label showing the reduction percentages
+     * for both drag and jerk tiers (e.g., "Drag: 25% reduction | Jerk: 33% reduction").
+     *
+     * @return string Formatted tier label with reduction percentages
+     */
+    public function getActiveTierLabel(): string;
 }
 ```
 

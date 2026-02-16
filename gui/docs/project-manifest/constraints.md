@@ -1,7 +1,7 @@
 # Constraints & Conventions
 
-> **Version:** 1.1  
-> **Last Updated:** February 15, 2026  
+> **Version:** 1.3  
+> **Last Updated:** February 16, 2026  
 > **Purpose:** Non-negotiable rules and established conventions
 
 ---
@@ -470,6 +470,47 @@ export function usePhysicsCalculation(): UsePhysicsCalculationResult {
 - PHP: 4 spaces
 - TypeScript/JSX: 2 spaces
 
+### Method Parameter Guidelines
+
+**RULE:** Methods with >5 parameters SHOULD use parameter objects (DTOs) to improve readability and maintainability.
+
+**Rationale:**
+- Reduces cognitive load at call sites
+- Groups related parameters cohesively
+- Makes it easier to add new related parameters
+- Improves IDE autocomplete usability
+
+**Example:**
+```php
+// ❌ Bad - too many parameters (11)
+private function buildPhysicsResponse(
+    PhysicsCalculator $calculator,
+    Drag $originalDrag,
+    AdjustedDrag $adjustedDrag,
+    Inertia $originalInertia,
+    AdjustedInertia $adjustedInertia,
+    Jerk $originalJerk,
+    AdjustedJerk $adjustedJerk,
+    ReductionTier $dragTier,
+    ReductionTier $jerkTier,
+    PhysicsRequest $request,
+    ?EnginePerformance $enginePerformance
+): PhysicsResponse
+
+// ✅ Good - parameter objects (5 parameters)
+private function buildPhysicsResponse(
+    PhysicsCalculator $calculator,
+    PhysicsData $physicsData,        // Groups 6 physics parameters
+    ReductionTiers $tiers,            // Groups 2 tier parameters
+    PhysicsRequest $request,
+    ?EnginePerformance $enginePerformance
+): PhysicsResponse
+```
+
+**See Also:**
+- `tech-stack.md` → Pattern #12: Parameter Object Pattern
+- `public-api.md` → DTOs → PhysicsData, ReductionTiers
+
 ---
 
 ## Testing Constraints
@@ -549,6 +590,35 @@ function useClassRange() {
 **RULE:** Don't optimize unless profiling shows a bottleneck.
 
 **Exception:** Known performance anti-patterns (e.g., no debouncing = API spam).
+
+---
+
+### 4. **Median Calculation Performance**
+
+**RULE:** Array sort() acceptable for datasets <1000 items.
+
+**Threshold:** Implement optimized selection algorithm when datasets exceed 1000 items.
+
+**Target Overhead:** Median calculation <5ms for typical datasets.
+
+**Monitoring:** Profile median calculation if response times degrade.
+
+**Current State:**
+- Implementation: `sort()` with O(n log n) complexity
+- Dataset: ~80 ships per type
+- Overhead: ~0.5ms per calculation
+- Status: Acceptable (well below threshold)
+
+**Future Optimization:**
+- Algorithm: Quickselect with O(n) average case
+- Trigger: Dataset >1000 items OR profiled overhead >5ms
+- Reference: [Quickselect - Wikipedia](https://en.wikipedia.org/wiki/Quickselect)
+
+**Rationale:** sort() provides O(n log n) complexity, which is negligible for current X4 ship counts (~80 per type). Premature optimization violates project principles. Optimize only when profiling indicates actual bottleneck.
+
+**See Also:**
+- tech-stack.md → Performance Considerations → Median Calculation Strategy
+- ClassRangeService.php → computeMedian() inline comments
 
 ---
 
@@ -638,6 +708,58 @@ Endpoint → Service → Business Logic
 **RULE:** No SQL queries, no database connections.
 
 **Rationale:** All data comes from JSON files or parent mod's X4 Core library integration.
+
+---
+
+### 4. **Dependency Injection for Services**
+
+**RULE:** Endpoints and services MUST accept dependencies via constructor injection.
+
+**Pattern (Since 1.2.0):**
+```php
+class ClassRangeEndpoint
+{
+    public function __construct(
+        private readonly ShipDataService $shipDataService,
+        private readonly ClassRangeService $classRangeService
+    ) {}
+}
+```
+
+**Required:**
+- Constructor parameters for all service dependencies
+- `private readonly` properties for injected dependencies
+- No instantiation of services inside endpoint/service constructors
+- Services instantiated in Router (manual DI, no framework)
+
+**Why Constructor Injection?**
+- Enables unit testing with mock dependencies
+- Makes dependencies explicit (visible in constructor signature)
+- Follows SOLID Dependency Inversion Principle
+- Prevents incomplete object construction
+
+**Why Not Setter Injection?**
+- Constructor injection enforces required dependencies
+- Readonly properties prevent accidental mutation
+- Clearer lifecycle (dependencies set once at construction)
+
+**Router Pattern:**
+```php
+// Router.php - instantiate and inject
+$shipDataService = new ShipDataService();
+$classRangeService = new ClassRangeService($shipDataService);
+$endpoint = new ClassRangeEndpoint($shipDataService, $classRangeService);
+$app->post('/api/calculate/class-range', [$endpoint, 'calculate']);
+```
+
+**Rationale:**
+- Manual DI sufficient for small projects (<10 endpoints)
+- No DI container framework needed (keeps dependencies minimal)
+- Clear and maintainable for future developers
+
+**See Also:**
+- tech-stack.md → Architectural Patterns → Dependency Injection for Endpoints
+- public-api.md → ClassRangeService constructor
 
 ---
 

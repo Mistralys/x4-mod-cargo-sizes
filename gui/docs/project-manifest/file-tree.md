@@ -1,7 +1,7 @@
 # File Tree - Directory Structure
 
-> **Version:** 1.1  
-> **Last Updated:** February 15, 2026  
+> **Version:** 1.3  
+> **Last Updated:** February 16, 2026  
 > **Purpose:** Visual directory structure for quick file location
 
 ---
@@ -64,6 +64,8 @@ gui/
 │   │   │   ├── PhysicsRequest.php      # Input contract for physics calc
 │   │   │   ├── PhysicsResponse.php     # Output contract for physics calc
 │   │   │   ├── EnginePerformance.php   # Engine performance data
+│   │   │   ├── PhysicsData.php         # Physics values (drag/inertia/jerk)
+│   │   │   ├── ReductionTiers.php      # Reduction tier configuration
 │   │   │   ├── ShipDetails.php         # Ship detail data
 │   │   │   ├── ClassRangeRequest.php   # Input contract for class-range calc
 │   │   │   ├── ClassRangeResponse.php  # Output contract for class-range calc
@@ -178,8 +180,9 @@ gui/
 |-----------|---------|-----------|
 | `backend/public/` | Web server document root | `index.php` (Slim entry point) |
 | `backend/src/API/` | API layer (routing, middleware) | `Router.php`, `CorsMiddleware.php` |
-| `backend/src/Services/` | Business logic wrappers | `PhysicsService.php`, `ShipDataService.php`, `ConfigService.php` |
-| `backend/src/DTOs/` | Type-safe data contracts | `PhysicsRequest.php`, `PhysicsResponse.php` |
+| `backend/src/Services/` | Business logic wrappers | `PhysicsService.php`, `ShipDataService.php`, `ConfigService.php`, `ClassRangeService.php` |
+| `backend/src/Utils/` | Shared utilities (traits) | `PhysicsCalculationHelper.php` (since 1.2.0) |
+| `backend/src/DTOs/` | Type-safe data contracts | `PhysicsRequest.php`, `PhysicsResponse.php`, `ClassRangeRequest.php` |
 | `backend/src/Exceptions/` | Exception classes | `GUIException.php` |
 
 ### Frontend Structure
