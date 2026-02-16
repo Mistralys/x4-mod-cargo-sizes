@@ -10,3 +10,6 @@ docs/agents/project-ledger.json
 /gui/backend/vendor/
 /node_modules/
 /.context/
+.ledger/
+work/
+work.md
