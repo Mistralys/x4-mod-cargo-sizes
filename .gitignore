@@ -8,6 +8,7 @@ docs/nexus-description.bbcode
 docs/agents/project-ledger-schema.md
 docs/agents/project-ledger.json
 /gui/backend/vendor/
+/gui/backend/coverage/
 /node_modules/
 /.context/
 .ledger/

@@ -12,7 +12,20 @@
       "Mistralys\\X4\\Mods\\CargoSizesMod\\GUI\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Mistralys\\X4\\Mods\\CargoSizesMod\\GUI\\Tests\\": "tests/"
+    }
+  },
   "config": {
     "sort-packages": true
+  },
+  "require-dev": {
+    "phpunit/phpunit": ">=12.0"
+  },
+  "scripts": {
+    "test": "phpunit",
+    "test:unit": "phpunit --testsuite=Unit",
+    "test:coverage": "phpunit --coverage-html coverage/"
   }
 }
