@@ -5,6 +5,7 @@ namespace Mistralys\X4\Mods\CargoSizesMod\GUI\Services;
 
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\PhysicsRequest;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\PhysicsResponse;
+use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\PhysicsResponseData;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\EnginePerformance;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\PhysicsData;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ReductionTiers;
@@ -103,13 +104,15 @@ class PhysicsService
             );
             $tiers = new ReductionTiers($dragTier, $jerkTier);
 
-            return $this->buildPhysicsResponse(
+            $responseData = new PhysicsResponseData(
                 $calculator,
                 $physicsData,
                 $tiers,
                 $request,
                 $enginePerformance
             );
+
+            return $this->buildPhysicsResponse($responseData);
         } catch (\Exception $e) {
             throw new GUIException(
                 'Physics calculation failed: ' . $e->getMessage(),
@@ -244,25 +247,15 @@ class PhysicsService
      * Constructs a complete PhysicsResponse DTO from all calculated physics
      * values, including drag, inertia, jerk, and optional engine performance.
      *
-     * Uses parameter objects to reduce parameter count from 11 to 5, improving
-     * maintainability and readability.
+     * Uses Parameter Object pattern to reduce parameter count from 5 to 1,
+     * improving maintainability and readability.
      *
-     * @param PhysicsCalculator $calculator Physics calculator with mass calculations
-     * @param PhysicsData $physicsData Original and adjusted physics values (drag, inertia, jerk)
-     * @param ReductionTiers $tiers Active reduction tiers for drag and jerk
-     * @param PhysicsRequest $request Original request data
-     * @param EnginePerformance|null $enginePerformance Engine performance metrics (optional)
+     * @param PhysicsResponseData $data All data needed to construct the response
      * @return PhysicsResponse Complete physics response DTO
      * @since 1.2.0 Method introduced
-     * @since 1.3.0 Refactored to use parameter objects (PhysicsData, ReductionTiers)
+     * @since 1.3.0 Refactored to use parameter objects (PhysicsData, ReductionTiers, PhysicsResponseData)
      */
-    private function buildPhysicsResponse(
-        PhysicsCalculator $calculator,
-        PhysicsData $physicsData,
-        ReductionTiers $tiers,
-        PhysicsRequest $request,
-        ?EnginePerformance $enginePerformance
-    ): PhysicsResponse
+    private function buildPhysicsResponse(PhysicsResponseData $data): PhysicsResponse
     {
         // Extract engine performance metrics if available
         $topSpeedOriginal = null;
@@ -270,88 +263,88 @@ class PhysicsService
         $accelerationOriginal = null;
         $accelerationAdjusted = null;
         
-        if ($enginePerformance !== null) {
-            $topSpeedOriginal = $enginePerformance->topSpeed;
-            $topSpeedAdjusted = $enginePerformance->topSpeedAdjusted;
-            $accelerationOriginal = $enginePerformance->originalAcceleration;
-            $accelerationAdjusted = $enginePerformance->adjustedAcceleration;
+        if ($data->enginePerformance !== null) {
+            $topSpeedOriginal = $data->enginePerformance->topSpeed;
+            $topSpeedAdjusted = $data->enginePerformance->topSpeedAdjusted;
+            $accelerationOriginal = $data->enginePerformance->originalAcceleration;
+            $accelerationAdjusted = $data->enginePerformance->adjustedAcceleration;
         }
 
         return new PhysicsResponse(
-            massRatio: $calculator->getMassRatio(),
-            effectiveRatio: $calculator->getEffectiveRatio(),
-            originalFullMass: $calculator->getOriginalFullMass(),
-            adjustedFullMass: $calculator->getAdjustedFullMass(),
-            massIncrease: $calculator->getMassIncrease(),
-            originalCargo: $request->originalCargo,
-            adjustedCargo: $request->adjustedCargo,
+            massRatio: $data->calculator->getMassRatio(),
+            effectiveRatio: $data->calculator->getEffectiveRatio(),
+            originalFullMass: $data->calculator->getOriginalFullMass(),
+            adjustedFullMass: $data->calculator->getAdjustedFullMass(),
+            massIncrease: $data->calculator->getMassIncrease(),
+            originalCargo: $data->request->originalCargo,
+            adjustedCargo: $data->request->adjustedCargo,
             dragOriginal: [
-                'forward' => $physicsData->originalDrag->getForward(),
-                'reverse' => $physicsData->originalDrag->getReverse(),
-                'horizontal' => $physicsData->originalDrag->getHorizontal(),
-                'vertical' => $physicsData->originalDrag->getVertical(),
-                'pitch' => $physicsData->originalDrag->getPitch(),
-                'yaw' => $physicsData->originalDrag->getYaw(),
-                'roll' => $physicsData->originalDrag->getRoll()
+                'forward' => $data->physicsData->originalDrag->getForward(),
+                'reverse' => $data->physicsData->originalDrag->getReverse(),
+                'horizontal' => $data->physicsData->originalDrag->getHorizontal(),
+                'vertical' => $data->physicsData->originalDrag->getVertical(),
+                'pitch' => $data->physicsData->originalDrag->getPitch(),
+                'yaw' => $data->physicsData->originalDrag->getYaw(),
+                'roll' => $data->physicsData->originalDrag->getRoll()
             ],
             dragAdjusted: [
-                'forward' => $physicsData->adjustedDrag->getForward(),
-                'reverse' => $physicsData->adjustedDrag->getReverse(),
-                'horizontal' => $physicsData->adjustedDrag->getHorizontal(),
-                'vertical' => $physicsData->adjustedDrag->getVertical(),
-                'pitch' => $physicsData->adjustedDrag->getPitch(),
-                'yaw' => $physicsData->adjustedDrag->getYaw(),
-                'roll' => $physicsData->adjustedDrag->getRoll()
+                'forward' => $data->physicsData->adjustedDrag->getForward(),
+                'reverse' => $data->physicsData->adjustedDrag->getReverse(),
+                'horizontal' => $data->physicsData->adjustedDrag->getHorizontal(),
+                'vertical' => $data->physicsData->adjustedDrag->getVertical(),
+                'pitch' => $data->physicsData->adjustedDrag->getPitch(),
+                'yaw' => $data->physicsData->adjustedDrag->getYaw(),
+                'roll' => $data->physicsData->adjustedDrag->getRoll()
             ],
             dragPercentChange: [
-                'forward' => $this->calculatePercentChange($physicsData->originalDrag->getForward(), $physicsData->adjustedDrag->getForward()),
-                'reverse' => $this->calculatePercentChange($physicsData->originalDrag->getReverse(), $physicsData->adjustedDrag->getReverse()),
-                'horizontal' => $this->calculatePercentChange($physicsData->originalDrag->getHorizontal(), $physicsData->adjustedDrag->getHorizontal()),
-                'vertical' => $this->calculatePercentChange($physicsData->originalDrag->getVertical(), $physicsData->adjustedDrag->getVertical()),
-                'pitch' => $this->calculatePercentChange($physicsData->originalDrag->getPitch(), $physicsData->adjustedDrag->getPitch()),
-                'yaw' => $this->calculatePercentChange($physicsData->originalDrag->getYaw(), $physicsData->adjustedDrag->getYaw()),
-                'roll' => $this->calculatePercentChange($physicsData->originalDrag->getRoll(), $physicsData->adjustedDrag->getRoll())
+                'forward' => $this->calculatePercentChange($data->physicsData->originalDrag->getForward(), $data->physicsData->adjustedDrag->getForward()),
+                'reverse' => $this->calculatePercentChange($data->physicsData->originalDrag->getReverse(), $data->physicsData->adjustedDrag->getReverse()),
+                'horizontal' => $this->calculatePercentChange($data->physicsData->originalDrag->getHorizontal(), $data->physicsData->adjustedDrag->getHorizontal()),
+                'vertical' => $this->calculatePercentChange($data->physicsData->originalDrag->getVertical(), $data->physicsData->adjustedDrag->getVertical()),
+                'pitch' => $this->calculatePercentChange($data->physicsData->originalDrag->getPitch(), $data->physicsData->adjustedDrag->getPitch()),
+                'yaw' => $this->calculatePercentChange($data->physicsData->originalDrag->getYaw(), $data->physicsData->adjustedDrag->getYaw()),
+                'roll' => $this->calculatePercentChange($data->physicsData->originalDrag->getRoll(), $data->physicsData->adjustedDrag->getRoll())
             ],
             inertiaOriginal: [
-                'pitch' => $physicsData->originalInertia->getPitch(),
-                'yaw' => $physicsData->originalInertia->getYaw(),
-                'roll' => $physicsData->originalInertia->getRoll()
+                'pitch' => $data->physicsData->originalInertia->getPitch(),
+                'yaw' => $data->physicsData->originalInertia->getYaw(),
+                'roll' => $data->physicsData->originalInertia->getRoll()
             ],
             inertiaAdjusted: [
-                'pitch' => $physicsData->adjustedInertia->getPitch(),
-                'yaw' => $physicsData->adjustedInertia->getYaw(),
-                'roll' => $physicsData->adjustedInertia->getRoll()
+                'pitch' => $data->physicsData->adjustedInertia->getPitch(),
+                'yaw' => $data->physicsData->adjustedInertia->getYaw(),
+                'roll' => $data->physicsData->adjustedInertia->getRoll()
             ],
             inertiaPercentChange: [
-                'pitch' => $this->calculatePercentChange($physicsData->originalInertia->getPitch(), $physicsData->adjustedInertia->getPitch()),
-                'yaw' => $this->calculatePercentChange($physicsData->originalInertia->getYaw(), $physicsData->adjustedInertia->getYaw()),
-                'roll' => $this->calculatePercentChange($physicsData->originalInertia->getRoll(), $physicsData->adjustedInertia->getRoll())
+                'pitch' => $this->calculatePercentChange($data->physicsData->originalInertia->getPitch(), $data->physicsData->adjustedInertia->getPitch()),
+                'yaw' => $this->calculatePercentChange($data->physicsData->originalInertia->getYaw(), $data->physicsData->adjustedInertia->getYaw()),
+                'roll' => $this->calculatePercentChange($data->physicsData->originalInertia->getRoll(), $data->physicsData->adjustedInertia->getRoll())
             ],
             jerkOriginal: [
-                'forward' => ['accel' => $physicsData->originalJerk->getForward()->getAcceleration(), 'decel' => $physicsData->originalJerk->getForward()->getDeceleration()],
-                'boost' => ['accel' => $physicsData->originalJerk->getBoost()->getAcceleration()],
-                'travel' => ['accel' => $physicsData->originalJerk->getTravel()->getAcceleration(), 'decel' => $physicsData->originalJerk->getTravel()->getDeceleration()]
+                'forward' => ['accel' => $data->physicsData->originalJerk->getForward()->getAcceleration(), 'decel' => $data->physicsData->originalJerk->getForward()->getDeceleration()],
+                'boost' => ['accel' => $data->physicsData->originalJerk->getBoost()->getAcceleration()],
+                'travel' => ['accel' => $data->physicsData->originalJerk->getTravel()->getAcceleration(), 'decel' => $data->physicsData->originalJerk->getTravel()->getDeceleration()]
             ],
             jerkAdjusted: [
-                'forward' => ['accel' => $physicsData->adjustedJerk->getForward()->getAcceleration(), 'decel' => $physicsData->adjustedJerk->getForward()->getDeceleration()],
-                'boost' => ['accel' => $physicsData->adjustedJerk->getBoost()->getAcceleration()],
-                'travel' => ['accel' => $physicsData->adjustedJerk->getTravel()->getAcceleration(), 'decel' => $physicsData->adjustedJerk->getTravel()->getDeceleration()]
+                'forward' => ['accel' => $data->physicsData->adjustedJerk->getForward()->getAcceleration(), 'decel' => $data->physicsData->adjustedJerk->getForward()->getDeceleration()],
+                'boost' => ['accel' => $data->physicsData->adjustedJerk->getBoost()->getAcceleration()],
+                'travel' => ['accel' => $data->physicsData->adjustedJerk->getTravel()->getAcceleration(), 'decel' => $data->physicsData->adjustedJerk->getTravel()->getDeceleration()]
             ],
             jerkPercentChange: [
                 'forward' => [
-                    'accel' => $this->calculatePercentChange($physicsData->originalJerk->getForward()->getAcceleration(), $physicsData->adjustedJerk->getForward()->getAcceleration()),
-                    'decel' => $this->calculatePercentChange($physicsData->originalJerk->getForward()->getDeceleration(), $physicsData->adjustedJerk->getForward()->getDeceleration())
+                    'accel' => $this->calculatePercentChange($data->physicsData->originalJerk->getForward()->getAcceleration(), $data->physicsData->adjustedJerk->getForward()->getAcceleration()),
+                    'decel' => $this->calculatePercentChange($data->physicsData->originalJerk->getForward()->getDeceleration(), $data->physicsData->adjustedJerk->getForward()->getDeceleration())
                 ],
                 'boost' => [
-                    'accel' => $this->calculatePercentChange($physicsData->originalJerk->getBoost()->getAcceleration(), $physicsData->adjustedJerk->getBoost()->getAcceleration())
+                    'accel' => $this->calculatePercentChange($data->physicsData->originalJerk->getBoost()->getAcceleration(), $data->physicsData->adjustedJerk->getBoost()->getAcceleration())
                 ],
                 'travel' => [
-                    'accel' => $this->calculatePercentChange($physicsData->originalJerk->getTravel()->getAcceleration(), $physicsData->adjustedJerk->getTravel()->getAcceleration()),
-                    'decel' => $this->calculatePercentChange($physicsData->originalJerk->getTravel()->getDeceleration(), $physicsData->adjustedJerk->getTravel()->getDeceleration())
+                    'accel' => $this->calculatePercentChange($data->physicsData->originalJerk->getTravel()->getAcceleration(), $data->physicsData->adjustedJerk->getTravel()->getAcceleration()),
+                    'decel' => $this->calculatePercentChange($data->physicsData->originalJerk->getTravel()->getDeceleration(), $data->physicsData->adjustedJerk->getTravel()->getDeceleration())
                 ]
             ],
-            enginePerformance: $enginePerformance,
-            activeTier: $tiers->getActiveTierLabel(),
+            enginePerformance: $data->enginePerformance,
+            activeTier: $data->tiers->getActiveTierLabel(),
             topSpeedOriginal: $topSpeedOriginal,
             topSpeedAdjusted: $topSpeedAdjusted,
             accelerationOriginal: $accelerationOriginal,

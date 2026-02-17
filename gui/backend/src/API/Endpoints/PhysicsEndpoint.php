@@ -17,12 +17,12 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class PhysicsEndpoint
 {
-    private PhysicsService $physicsService;
-
-    public function __construct()
-    {
-        $this->physicsService = new PhysicsService();
-    }
+    /**
+     * @param PhysicsService $physicsService Injected physics calculation service
+     */
+    public function __construct(
+        private readonly PhysicsService $physicsService
+    ) {}
 
     /**
      * POST /api/calculate/physics

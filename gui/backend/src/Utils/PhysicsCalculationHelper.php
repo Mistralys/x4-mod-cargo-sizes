@@ -49,7 +49,7 @@ trait PhysicsCalculationHelper
      */
     private function calculatePercentChange(float $original, float $modified): float
     {
-        if ($original == 0) {
+        if ($original === 0.0) {
             return 0.0;
         }
         return (($modified - $original) / $original) * 100.0;
