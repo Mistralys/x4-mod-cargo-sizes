@@ -237,7 +237,30 @@ class PhysicsEndpoint {
 - Testable service layer
 - Reusable business logic
 
-### 3. **Data Transfer Objects (DTOs)**
+### 3. **Dependency Injection (Service Container)**
+
+Lightweight, custom Service Container for managing dependencies.
+
+**Pattern:**
+```php
+// Registration (Router.php)
+$container->register('physics_service', fn($c) => new PhysicsService());
+
+// Usage (Endpoint)
+class PhysicsEndpoint {
+    public function __construct(
+        private readonly PhysicsService $physicsService
+    ) {}
+}
+```
+
+**Benefits:**
+- Lazy instantiation (services created only when needed)
+- Singleton lifecycle (shared instances)
+- Decoupled components (easier testing)
+- Constructor injection (explicit dependencies)
+
+### 4. **Data Transfer Objects (DTOs)**
 
 Type-safe contracts between frontend and backend.
 
@@ -261,7 +284,7 @@ class PhysicsRequest {
 - Contract-first design
 - Mirrors TypeScript types exactly
 
-### 4. **React Hooks Pattern**
+### 5. **React Hooks Pattern**
 
 Custom hooks encapsulate stateful logic.
 
@@ -284,7 +307,7 @@ function usePhysicsCalculation() {
 - Clean component code
 - Easy testing
 
-### 5. **Debounced API Calls**
+### 6. **Debounced API Calls**
 
 300ms debounce on physics calculations to prevent API spam.
 
@@ -303,7 +326,7 @@ const calculate = useCallback((config: PhysicsConfig) => {
 
 **Result:** User experience target of <500ms feedback (300ms debounce + ~100ms API call).
 
-### 6. **Component Composition**
+### 7. **Component Composition**
 
 UI built from composable, single-responsibility components.
 
@@ -330,7 +353,7 @@ App
 - Reusable components
 - Testable in isolation
 
-### 7. **Middleware Pattern**
+### 8. **Middleware Pattern**
 
 CORS support via middleware for cross-origin requests.
 
@@ -351,7 +374,7 @@ class CorsMiddleware {
 $app->add(new CorsMiddleware());
 ```
 
-### 8. **Configuration as Code**
+### 9. **Configuration as Code**
 
 All build configuration stored in JSON files (synchronous file I/O).
 
@@ -558,13 +581,13 @@ class ClassRangeService
 
 ---
 
-### 11. **Dependency Injection for Endpoints**
+### 11. **Dependency Injection via Service Container**
 
-Endpoints accept service dependencies via constructor injection instead of instantiating them internally.
+Endpoints accept service dependencies via constructor injection, with service instantiation managed by a lightweight Service Container.
 
-**Pattern:** Constructor injection for testability and explicit dependencies.
+**Pattern:** Service Container + Constructor Injection for testability, explicit dependencies, and centralized lifecycle management.
 
-**Since:** 1.2.0 (applied to ClassRangeEndpoint)
+**Since:** 1.3.0 (ServiceContainer added in WP-002)
 
 **Problem:**
 ```php
@@ -583,10 +606,25 @@ class ClassRangeEndpoint
 - Hard to unit test (can't mock services)
 - Dependencies hidden until reading constructor body
 - Violates Dependency Inversion Principle (SOLID)
+- No centralized service lifecycle management
 
 **Solution:**
 ```php
-// New pattern - dependencies injected via constructor
+// Step 1: Endpoints accept dependencies via constructor
+class PhysicsEndpoint
+{
+    public function __construct(
+        private readonly PhysicsService $service
+    ) {}
+    
+    public function calculate(Request $request, Response $response): Response
+    {
+        $dto = PhysicsRequest::fromArray($request->getParsedBody());
+        $result = $this->service->calculatePhysics($dto);
+        return $response->withJson($result);
+    }
+}
+
 class ClassRangeEndpoint
 {
     public function __construct(
@@ -596,25 +634,72 @@ class ClassRangeEndpoint
     
     public function calculate(Request $request, Response $response): Response
     {
-        // Use $this->classRangeService directly
         $result = $this->classRangeService->calculateClassRange($dto);
-        // ...
+        return $response->withJson($result);
     }
 }
 ```
 
-**Router Instantiation:**
+**Service Container Orchestration:**
 ```php
-// Router.php - manual dependency injection
+// Router.php - ServiceContainer manages service instantiation
 public static function register(App $app): void
 {
-    // Instantiate services
-    $shipDataService = new ShipDataService();
-    $classRangeService = new ClassRangeService($shipDataService);
-    
-    // Inject into endpoint
-    $classRangeEndpoint = new ClassRangeEndpoint($shipDataService, $classRangeService);
+    // Create and configure container
+    $container = new ServiceContainer();
+
+    // Register services with factory functions
+    $container->register('ship_data', fn() => new ShipDataService());
+    $container->register('physics', fn() => new PhysicsService());
+    $container->register('class_range', fn(ServiceContainer $c) =>
+        new ClassRangeService($c->get('ship_data'))
+    );
+
+    // Instantiate endpoints with container-managed services
+    $physicsEndpoint = new PhysicsEndpoint($container->get('physics'));
+    $classRangeEndpoint = new ClassRangeEndpoint(
+        $container->get('ship_data'),
+        $container->get('class_range')
+    );
+
+    // Register routes
+    $app->post('/api/calculate/physics', [$physicsEndpoint, 'calculate']);
     $app->post('/api/calculate/class-range', [$classRangeEndpoint, 'calculate']);
+    
+    // Endpoints with no dependencies instantiated directly
+    $shipsEndpoint = new ShipsEndpoint();
+    $app->get('/api/ships/types', [$shipsEndpoint, 'getTypes']);
+}
+```
+
+**ServiceContainer Features:**
+```php
+class ServiceContainer
+{
+    private array $services = [];
+    private array $singletons = [];
+
+    // Register a service with a factory function
+    public function register(string $id, callable $factory): void
+    {
+        $this->services[$id] = $factory;
+    }
+
+    // Get a service (lazy instantiation + singleton pattern)
+    public function get(string $id): object
+    {
+        if (!isset($this->singletons[$id])) {
+            $factory = $this->services[$id] ?? throw new ServiceNotFoundException($id);
+            $this->singletons[$id] = $factory($this);
+        }
+        return $this->singletons[$id];
+    }
+
+    // Check if service is registered
+    public function has(string $id): bool
+    {
+        return isset($this->services[$id]);
+    }
 }
 ```
 
@@ -622,18 +707,25 @@ public static function register(App $app): void
 - **Testability:** Can inject mock services for unit tests
 - **Explicit Dependencies:** Constructor signature shows what's needed
 - **SOLID Compliance:** Depends on abstractions, not concrete implementations
-- **Lifecycle Control:** Services instantiated once per request in Router
+- **Lazy Instantiation:** Services only created when first requested
+- **Singleton Pattern:** Same service instance returned on multiple calls
+- **Centralized Management:** All service lifecycle in one place
+- **Dependency Resolution:** Container resolves nested dependencies automatically
 
-**Why Not DI Container?**
-- Small project (only 4 endpoints) doesn't justify framework overhead
-- Manual instantiation in Router is simple and clear
-- No complex dependency graphs to resolve
+**Container Overhead:**
+- Effectively zero (<1ms) - simple array lookups only
+- No reflection, no autowiring, no complex dependency graphs
 
-**Future:** If project grows to 20+ endpoints with complex dependencies, consider PHP-DI or Symfony DI container.
+**Why ServiceContainer vs Full DI Framework?**
+- Lightweight solution (60 lines of code)
+- No external dependencies (PSR-11 compliance not required)
+- Simple enough for 4 endpoints + 3 services
+- Avoids PHP-DI or Symfony DI container complexity
 
 **See Also:**
+- `public-api.md` → Backend API → ServiceContainer
 - `constraints.md` → Dependency Injection Best Practices
-- `public-api.md` → ClassRangeService constructor signature
+- `file-tree.md` → `gui/backend/src/API/ServiceContainer.php`
 
 ---
 
@@ -757,6 +849,79 @@ return $this->buildPhysicsResponse(
 - `public-api.md` → DTOs → PhysicsData, ReductionTiers
 - `file-tree.md` → `gui/backend/src/DTOs/`
 - Martin Fowler's "Introduce Parameter Object" refactoring
+
+---
+
+## Testing Infrastructure
+
+**Framework:** PHPUnit 12.5+  
+**Test Suites:** Unit, Integration  
+**Coverage:** HTML reports via `composer test:coverage`  
+**Test Count:** 25+ tests (44 assertions)  
+**Execution Time:** <0.2 seconds
+
+### Directory Structure
+
+```
+gui/backend/tests/
+├── bootstrap.php              # Test autoloader
+├── phpunit.xml                # PHPUnit configuration
+├── Unit/                      # Unit tests (fast, no external dependencies)
+│   ├── Utils/
+│   │   └── PhysicsCalculationHelperTest.php
+│   ├── Services/
+│   │   └── ClassRangeServiceTest.php
+│   ├── API/
+│   │   └── ServiceContainerTest.php
+│   └── DTOs/
+│       └── PhysicsResponseDataTest.php
+└── Integration/               # Integration tests (slower, test full flows)
+    └── Endpoints/
+        └── .gitkeep           # Placeholder for future endpoint tests
+```
+
+### Test Patterns
+
+**Trait Testing:**
+```php
+class PhysicsCalculationHelperTest extends TestCase
+{
+    use PhysicsCalculationHelper;  // Import trait for testing
+    
+    public function testCalculatePercentChange(): void
+    {
+        $result = $this->calculatePercentChange(100.0, 150.0);
+        $this->assertEqualsWithDelta(50.0, $result, 0.01);
+    }
+}
+```
+
+**Dependency Injection Mocking:**
+```php
+public function testServiceWithMockDependency(): void
+{
+    // Create mock dependency
+    $mockShipData = $this->createMock(ShipDataService::class);
+    $mockShipData->method('getShips')->willReturn([/* test data */]);
+    
+    // Inject mock
+    $service = new ClassRangeService($mockShipData);
+    
+    // Test with controlled dependency
+    $result = $service->calculateClassRangeData('M');
+    $this->assertIsArray($result);
+}
+```
+
+### Running Tests
+
+```bash
+composer test              # Run all tests
+composer test:unit         # Run unit tests only
+composer test:coverage     # Generate HTML coverage report
+```
+
+**Since:** v1.3.0
 
 ---
 

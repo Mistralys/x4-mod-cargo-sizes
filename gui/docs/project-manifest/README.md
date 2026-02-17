@@ -1,7 +1,7 @@
 # X4 Cargo Sizes Mod - Physics Tuning GUI - Project Manifest
 
-> **Version:** 1.0  
-> **Last Updated:** February 12, 2026  
+> **Version:** 1.3  
+> **Last Updated:** February 17, 2026  
 > **Purpose:** Source of Truth for AI Agents
 
 ---
@@ -97,6 +97,7 @@ An **interactive web-based tool** for real-time physics tuning of the X4 Cargo S
 
 - **Frontend:** React 18, TypeScript 5.6 (strict mode), Vite 7
 - **Backend:** PHP 8.4, Slim Framework 4, Composer 2.x
+- **Testing:** PHPUnit 12.5+ (25+ tests, <0.2s execution)
 - **Architecture:** Stateless REST API with reactive frontend
 - **Components:** ~15 React components, 3 backend services, 12 API endpoints
 - **Total Lines (est.):** ~3,500 across frontend/backend
@@ -222,8 +223,7 @@ An agent has successfully integrated with this codebase when:
 ## 🔄 Version History
 
 | Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | Feb 12, 2026 | Initial Project Manifest creation |
+|---------|------|---------|| 1.3 | Feb 17, 2026 | Added PHPUnit 12.5+ test infrastructure (25+ tests) || 1.0 | Feb 12, 2026 | Initial Project Manifest creation |
 
 ---
 
@@ -262,7 +262,7 @@ Reading the manifest (~15-20 minutes) replaces reading dozens of source files (~
 | **Start GUI** | `composer gui:start-win` (Windows) or `./gui/start-dev.sh` | [constraints.md](constraints.md) |
 | **Install Dependencies** | `composer gui:install` | [tech-stack.md](tech-stack.md) |
 | **Build Frontend** | `cd gui/frontend && npm run build` | [tech-stack.md](tech-stack.md) |
-| **Run Tests** | Backend tests not yet implemented | [constraints.md](constraints.md) |
+| **Run Tests** | `cd gui/backend && composer test` | [DEVELOPMENT.md](../DEVELOPMENT.md#testing) |
 | **Lint Code** | `cd gui/frontend && npm run lint` | [constraints.md](constraints.md) |
 
 ---

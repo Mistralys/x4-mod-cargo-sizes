@@ -1,8 +1,8 @@
 # Development Guide
 
 > **X4 Cargo Sizes Mod - Physics Tuning GUI**  
-> **Version:** 1.0  
-> **Last Updated:** February 12, 2026
+> **Version:** 1.3  
+> **Last Updated:** February 17, 2026
 
 ---
 
@@ -331,52 +331,180 @@ export function ComponentName({ prop1, prop2 }: Props) {
 
 ## Testing
 
-### Backend Testing (PHPUnit)
+### Backend Testing (PHPUnit 12.5+)
+
+The GUI backend uses **PHPUnit 12.5+** for automated testing. The test suite includes 25+ tests covering Services, Utils, DTOs, and API layers.
+
+#### Directory Structure
+
+```
+gui/backend/tests/
+├── bootstrap.php                           # Test autoloader
+├── Unit/                                   # Unit tests (fast, isolated)
+│   ├── Utils/
+│   │   └── PhysicsCalculationHelperTest.php
+│   ├── Services/
+│   │   └── ClassRangeServiceTest.php
+│   ├── API/
+│   │   └── ServiceContainerTest.php
+│   └── DTOs/
+│       └── PhysicsResponseDataTest.php
+└── Integration/                            # Integration tests (full workflows)
+    └── Endpoints/
+        └── .gitkeep                        # Placeholder for future endpoint tests
+```
 
 #### Running Tests
 
 ```bash
-# From project root
+# From gui/backend directory
+cd gui/backend
+
+# Run all tests (Unit + Integration)
 composer test
 
-# Run specific test file
-./vendor/bin/phpunit tests/CargoSizesModTests/PhysicsCalculatorTest.php
+# Run only unit tests (faster)
+composer test:unit
 
-# Run with coverage (requires Xdebug)
-./vendor/bin/phpunit --coverage-html coverage/
+# Generate HTML coverage report
+# First, configure XDebug:
+export XDEBUG_MODE=coverage  # Linux/Mac
+set XDEBUG_MODE=coverage     # Windows CMD
+$env:XDEBUG_MODE="coverage"  # Windows PowerShell
+
+# Then run coverage
+composer test:coverage
+
+# Open coverage report
+open coverage/index.html  # Mac
+xdg-open coverage/index.html  # Linux
+start coverage/index.html  # Windows
+```
+
+**Output:**
+```
+PHPUnit 12.5.12 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.4.0
+Configuration: phpunit.xml
+
+.........................                                         25 / 25 (100%)
+
+Time: 00:00.051, Memory: 10.00 MB
+
+OK (25 tests, 44 assertions)
 ```
 
 #### Writing Tests
 
-Place tests in `tests/CargoSizesModTests/GUI/`:
+**Unit Test Example:**
 
 ```php
 <?php
 declare(strict_types=1);
 
-namespace Mistralys\X4\Mods\CargoSizesMod\Tests\GUI;
+namespace Mistralys\X4\Mods\CargoSizesMod\GUI\Tests\Unit\Services;
 
 use PHPUnit\Framework\TestCase;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Services\PhysicsService;
+use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\PhysicsRequest;
 
 class PhysicsServiceTest extends TestCase
 {
-    public function test_calculatePhysics_returnsCorrectValues(): void
+    /**
+     * Test that calculatePhysics returns correct values for valid input.
+     */
+    public function testCalculatePhysicsReturnsCorrectValues(): void
     {
         $service = new PhysicsService();
-        // ... test implementation
+        $request = new PhysicsRequest(
+            shipClass: 'transporter',
+            multiplier: 4,
+            // ... other parameters
+        );
+        
+        $result = $service->calculatePhysics($request);
         
         $this->assertInstanceOf(PhysicsResponse::class, $result);
-        $this->assertEquals(expected, $result->someValue);
+        $this->assertEqualsWithDelta(10000.0, $result->cargoMass, 0.01);
+    }
+    
+    /**
+     * Test that exception is thrown for invalid multiplier.
+     */
+    public function testCalculatePhysicsThrowsExceptionOnInvalidMultiplier(): void
+    {
+        $this->expectException(GUIException::class);
+        $this->expectExceptionMessage('Invalid multiplier');
+        
+        $service = new PhysicsService();
+        // ... create request with invalid multiplier
+        $service->calculatePhysics($request);
     }
 }
 ```
 
+**Mocking Dependencies:**
+
+```php
+public function testServiceWithMockedDependency(): void
+{
+    // Create mock
+    $mockShipData = $this->createMock(ShipDataService::class);
+    $mockShipData->method('getShips')
+        ->willReturn([/* test fixtures */]);
+    
+    // Inject mock via constructor (DI pattern)
+    $service = new ClassRangeService($mockShipData);
+    
+    $result = $service->calculateClassRangeData('transporter', 4);
+    
+    $this->assertInstanceOf(ClassRangeResponse::class, $result);
+}
+```
+
+#### Test Naming Conventions
+
+- **Test files:** `{ClassName}Test.php` (e.g., `PhysicsServiceTest.php`)
+- **Test methods:** `test{MethodName}{Condition}` (e.g., `testCalculatePhysicsReturnsCorrectValues`)
+- **Descriptive names:** Clearly describe what is being tested
+- **Use camelCase:** Follow PHP naming conventions
+
 #### Test Coverage Goals
 
 - **Services:** 80%+ coverage
+- **Utils/Traits:** 90%+ coverage
 - **DTOs:** 100% coverage (simple validation logic)
-- **Endpoints:** 70%+ coverage
+- **API/Endpoints:** 70%+ coverage (future goal)
+- **Overall:** Target 85%+ coverage
+
+**Current Coverage (as of v1.3):**
+- 25 tests covering Utils, Services, DTOs, API layers
+- 44 assertions
+- Execution time: <0.2 seconds
+
+#### Testing Considerations
+
+**XDebug Configuration:**
+
+Code coverage generation requires XDebug with coverage mode enabled:
+
+```bash
+# Set before running coverage
+export XDEBUG_MODE=coverage  # Linux/Mac
+set XDEBUG_MODE=coverage     # Windows CMD
+$env:XDEBUG_MODE="coverage"  # Windows PowerShell
+```
+
+**Test Autoloader:**
+
+The test bootstrap (`tests/bootstrap.php`) loads both backend and main project autoloaders. This is necessary for accessing X4 Core library classes but creates coupling between backend tests and main project dependencies.
+
+**Known Patterns:**
+
+- **Anonymous Class Pattern:** `PhysicsCalculationHelperTest` uses an anonymous class to test private trait methods. This is a creative but non-standard approach.
+- **Incomplete DI:** Some services (e.g., `ClassRangeService`) still use `::getInstance()` internally despite constructor injection. Future refactoring will complete the DI pattern.
+- **Parameter Objects:** Some DTOs (e.g., `ClassRangeRequest`) have many constructor parameters (9+). Consider grouping related parameters into nested DTOs for better maintainability.
 
 ### Frontend Testing
 
@@ -782,4 +910,4 @@ Write tests for edge cases:
 
 **Happy Coding!**
 
-Last Updated: February 12, 2026
+Last Updated: February 17, 2026

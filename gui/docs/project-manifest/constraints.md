@@ -513,25 +513,85 @@ private function buildPhysicsResponse(
 
 ---
 
-## Testing Constraints
+## Testing Conventions
 
-### Backend Testing (TODO)
+**Test Framework:** PHPUnit 11.0+
 
-**Status:** Not yet implemented.
+### Test File Naming
 
-**Planned:**
-- PHPUnit tests for services
-- Mock X4 Core dependencies
-- Test DTOs, validation, file I/O
+**MUST:**
+- Test files MUST be named `{ClassName}Test.php`
+- Test files MUST be in `tests/` directory
+- Test namespace MUST mirror `src/` namespace + `Tests` segment
 
-### Frontend Testing (TODO)
+**Example:**
+- Source: `src/Services/PhysicsService.php`
+- Test: `tests/Unit/Services/PhysicsServiceTest.php`
+- Namespace: `Mistralys\X4\Mods\CargoSizesMod\GUI\Tests\Unit\Services`
 
-**Status:** Not yet implemented.
+### Test Method Naming
 
-**Planned:**
-- Vitest for unit tests
-- React Testing Library for component tests
-- Mock axios API calls
+**MUST:**
+- Test methods MUST start with `test` prefix OR use `@test` annotation
+- Test names MUST describe what is being tested (descriptive)
+- Use `testMethodNameWithCondition` naming pattern
+
+**Examples:**
+```php
+public function testCalculatePercentChangeWithPositiveValues(): void
+public function testConstructorThrowsExceptionOnInvalidInput(): void
+public function testGetReturnsNullWhenServiceNotFound(): void
+```
+
+### Test Assertions
+
+**MUST:**
+- Use strict assertions (`assertSame()` over `assertEquals()` for scalars)
+- Use `assertEqualsWithDelta()` for float comparisons (tolerance 0.01)
+- Always include failure message for complex assertions
+
+**Example:**
+```php
+$this->assertSame(0.0, $result, 'Zero original should return 0.0');
+$this->assertEqualsWithDelta(50.0, $result, 0.01);
+```
+
+### Mock Framework
+
+**MUST:**
+- Use PHPUnit's built-in mocking (`createMock()`)
+- Prefer constructor injection over setter injection (testability)
+- Mock external dependencies, not value objects (DTOs)
+
+**Example:**
+```php
+$mock = $this->createMock(ShipDataService::class);
+$mock->method('getShips')->willReturn([/* test data */]);
+```
+
+### Test Execution Constraints
+
+**MUST:**
+- Full test suite MUST run in <10 seconds
+- Unit tests MUST run in <5 seconds
+- Tests MUST NOT require full X4 game data extraction
+- Tests MUST use minimal hardcoded fixtures
+
+### Test Coverage
+
+**SHOULD:**
+- Aim for >80% coverage of new code
+- 100% coverage not required (pragmatic approach)
+- Tests should verify behavior, not line coverage
+
+### Test Organization
+
+**MUST:**
+- Unit tests in `tests/Unit/` (fast, isolated)
+- Integration tests in `tests/Integration/` (slower, full flows)
+- Test fixtures inline in test methods (no external files unless large)
+
+**Since:** v1.3.0
 
 ---
 

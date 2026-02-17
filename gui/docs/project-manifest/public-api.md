@@ -17,12 +17,13 @@ Use this as a quick reference to understand what methods exist without reading s
 ## Table of Contents
 
 1. [Backend Utilities](#backend-utilities)
-2. [Backend Services](#backend-services)
-3. [Backend DTOs](#backend-dtos)
-4. [Backend Exceptions](#backend-exceptions)
-5. [Frontend Services (API Client)](#frontend-services-api-client)
-6. [Frontend Hooks](#frontend-hooks)
-7. [Frontend TypeScript Types](#frontend-typescript-types)
+2. [Backend API](#backend-api)
+3. [Backend Services](#backend-services)
+4. [Backend DTOs](#backend-dtos)
+5. [Backend Exceptions](#backend-exceptions)
+6. [Frontend Services (API Client)](#frontend-services-api-client)
+7. [Frontend Hooks](#frontend-hooks)
+8. [Frontend TypeScript Types](#frontend-typescript-types)
 
 ---
 
@@ -92,6 +93,89 @@ Calculate average inertia change percentage across all inertia axes.
 - `$adjusted` — Adjusted inertia values after modifications
 
 **Returns:** Average percentage change across all 3 inertia axes.
+
+---
+
+## Backend API
+
+### ServiceContainer
+
+**Location:** `gui/backend/src/API/ServiceContainer.php`  
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\API`  
+**Since:** 1.3.0
+
+**Purpose:** Lightweight dependency injection container for service lifecycle management. Provides service registration and retrieval with lazy instantiation and singleton pattern.
+
+**Not PSR-11 compliant** (intentionally lightweight for local-only tool).
+
+#### Methods
+
+##### register()
+
+```php
+public function register(string $id, callable $factory): void
+```
+
+Register a service factory function.
+
+Factory is not called until `get()` is invoked (lazy instantiation). Factory receives container instance as parameter for dependency resolution.
+
+**Parameters:**
+- `$id` — Service identifier (e.g., 'ship_data', 'physics')
+- `$factory` — Factory function: `function(ServiceContainer): object`
+
+**Returns:** void
+
+**Throws:** None
+
+**Example:**
+```php
+// Simple service (no dependencies)
+$container->register('logger', fn() => new Logger());
+
+// Service with dependencies
+$container->register('user_service', fn(ServiceContainer $c) =>
+    new UserService($c->get('logger'))
+);
+```
+
+---
+
+##### get()
+
+```php
+public function get(string $id): object
+```
+
+Get a service instance (lazy instantiation, singleton pattern).
+
+If service not yet instantiated, calls factory and caches result. Subsequent calls return cached instance (singleton pattern).
+
+**Parameters:**
+- `$id` — Service identifier
+
+**Returns:** Service instance (object)
+
+**Throws:** `RuntimeException` if service not registered
+
+---
+
+##### has()
+
+```php
+public function has(string $id): bool
+```
+
+Check if service is registered.
+
+Returns true if a factory is registered for the given service ID, regardless of whether the service has been instantiated yet.
+
+**Parameters:**
+- `$id` — Service identifier
+
+**Returns:** True if service factory registered, false otherwise
+
+**Throws:** None
 
 ---
 
@@ -491,6 +575,53 @@ final readonly class ReductionTiers
      */
     public function getActiveTierLabel(): string;
 }
+```
+
+---
+
+### PhysicsResponseData
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs`
+
+**Purpose:** Parameter object for PhysicsService::buildPhysicsResponse() method. Encapsulates all data needed to construct a PhysicsResponse, reducing method signature from 5 parameters to 1.
+
+Follows Parameter Object pattern to improve code readability and make method signatures more maintainable.
+
+**Since:** 1.3.0
+
+```php
+readonly class PhysicsResponseData
+{
+    /**
+     * Constructor.
+     *
+     * @param PhysicsCalculator $calculator Physics calculator with mass calculations
+     * @param PhysicsData $physicsData Original and adjusted physics values (drag, inertia, jerk)
+     * @param ReductionTiers $tiers Active reduction tiers for drag and jerk
+     * @param PhysicsRequest $request Original request data
+     * @param EnginePerformance|null $enginePerformance Engine performance metrics (optional)
+     */
+    public function __construct(
+        public PhysicsCalculator $calculator,
+        public PhysicsData $physicsData,
+        public ReductionTiers $tiers,
+        public PhysicsRequest $request,
+        public ?EnginePerformance $enginePerformance
+    );
+}
+```
+
+**Usage Example:**
+```php
+$responseData = new PhysicsResponseData(
+    calculator: $calculator,
+    physicsData: $physicsData,
+    tiers: $tiers,
+    request: $request,
+    enginePerformance: $enginePerformance
+);
+
+return $this->buildPhysicsResponse($responseData);
 ```
 
 ---

@@ -37,12 +37,29 @@ gui/
 ├── backend/                            # 🔧 PHP Backend (API Server)
 │   ├── composer.json                   # PHP dependencies (Slim, etc.)
 │   ├── composer.lock                   # Locked dependency versions
+│   ├── phpunit.xml                     # PHPUnit configuration (NEW in v1.3)
+│   │
+│   ├── tests/                          # 🧪 Test suite (NEW in v1.3)
+│   │   ├── bootstrap.php               # Test autoloader
+│   │   ├── Unit/                       # Unit tests (fast, no external dependencies)
+│   │   │   ├── Utils/
+│   │   │   │   └── PhysicsCalculationHelperTest.php  # Trait unit tests
+│   │   │   ├── Services/
+│   │   │   │   └── ClassRangeServiceTest.php         # DI mocking demo
+│   │   │   ├── API/
+│   │   │   │   └── ServiceContainerTest.php          # Container tests
+│   │   │   └── DTOs/
+│   │   │       └── PhysicsResponseDataTest.php       # DTO tests
+│   │   └── Integration/                # Integration tests (slower, test full flows)
+│   │       └── Endpoints/
+│   │           └── .gitkeep            # Placeholder for future endpoint tests
 │   │
 │   ├── public/                         # 🌐 Web server document root
 │   │   └── index.php                   # API entry point, Slim bootstrap
 │   │
 │   ├── src/                            # 💻 Backend source code
 │   │   ├── API/                        # API layer
+│   │   │   ├── ServiceContainer.php    # DI container (NEW in v1.3)
 │   │   │   ├── Router.php              # Route definitions
 │   │   │   │
 │   │   │   ├── Endpoints/              # API endpoint handlers
@@ -60,11 +77,15 @@ gui/
 │   │   │   ├── ShipDataService.php     # Ship/engine data access
 │   │   │   └── ConfigService.php       # Configuration management
 │   │   │
+│   │   ├── Utils/                      # 🔧 Utilities (NEW in v1.2.0)
+│   │   │   └── PhysicsCalculationHelper.php   # Shared calculation trait
+│   │   │
 │   │   ├── DTOs/                       # 📦 Data Transfer Objects
 │   │   │   ├── PhysicsRequest.php      # Input contract for physics calc
 │   │   │   ├── PhysicsResponse.php     # Output contract for physics calc
 │   │   │   ├── EnginePerformance.php   # Engine performance data
 │   │   │   ├── PhysicsData.php         # Physics values (drag/inertia/jerk)
+│   │   │   ├── PhysicsResponseData.php # Parameter object (NEW in v1.3)
 │   │   │   ├── ReductionTiers.php      # Reduction tier configuration
 │   │   │   ├── ShipDetails.php         # Ship detail data
 │   │   │   ├── ClassRangeRequest.php   # Input contract for class-range calc
@@ -179,11 +200,12 @@ gui/
 | Directory | Purpose | Key Files |
 |-----------|---------|-----------|
 | `backend/public/` | Web server document root | `index.php` (Slim entry point) |
-| `backend/src/API/` | API layer (routing, middleware) | `Router.php`, `CorsMiddleware.php` |
+| `backend/src/API/` | API layer (routing, middleware) | `Router.php`, `CorsMiddleware.php`, `ServiceContainer.php` |
 | `backend/src/Services/` | Business logic wrappers | `PhysicsService.php`, `ShipDataService.php`, `ConfigService.php`, `ClassRangeService.php` |
 | `backend/src/Utils/` | Shared utilities (traits) | `PhysicsCalculationHelper.php` (since 1.2.0) |
-| `backend/src/DTOs/` | Type-safe data contracts | `PhysicsRequest.php`, `PhysicsResponse.php`, `ClassRangeRequest.php` |
+| `backend/src/DTOs/` | Type-safe data contracts | `PhysicsRequest.php`, `PhysicsResponse.php`, `PhysicsResponseData.php`, `ClassRangeRequest.php` |
 | `backend/src/Exceptions/` | Exception classes | `GUIException.php` |
+| `backend/tests/` | Test suite | `Unit/`, `Integration/` (since 1.3.0) |
 
 ### Frontend Structure
 

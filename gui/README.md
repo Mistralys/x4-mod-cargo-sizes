@@ -387,11 +387,34 @@ curl http://localhost:8080/api/config
 
 ### Testing
 
-**Backend** (PHPUnit):
+**Backend** (PHPUnit 12.5+):
+
+The GUI backend has a comprehensive PHPUnit test suite with 25+ tests covering Services, Utils, DTOs, and API layers.
+
 ```bash
+# Run all tests (Unit + Integration)
 cd gui/backend
 composer test
+
+# Run only unit tests (fast)
+composer test:unit
+
+# Generate HTML coverage report (requires XDebug)
+export XDEBUG_MODE=coverage  # Linux/Mac
+set XDEBUG_MODE=coverage     # Windows CMD
+$env:XDEBUG_MODE="coverage"  # Windows PowerShell
+composer test:coverage
+
+# Coverage report will be in gui/backend/coverage/index.html
 ```
+
+**Test Structure:**
+- **Unit Tests:** `tests/Unit/` - Fast, isolated tests with mocked dependencies
+- **Integration Tests:** `tests/Integration/` - Full workflow tests (future endpoint tests)
+- **Execution Time:** All 25 tests run in <0.2 seconds
+- **Coverage:** HTML reports generated in `coverage/` directory
+
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#testing) for detailed testing guidelines.
 
 **Frontend** (build verification):
 ```bash

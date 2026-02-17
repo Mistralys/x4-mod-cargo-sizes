@@ -1,8 +1,8 @@
 # Architecture Documentation
 
 > **X4 Cargo Sizes Mod - Physics Tuning GUI**  
-> **Version:** 1.0  
-> **Last Updated:** February 12, 2026
+> **Version:** 1.3  
+> **Last Updated:** February 17, 2026
 
 ---
 
@@ -130,6 +130,7 @@ gui/backend/
 │   ├── DTOs/               # Data Transfer Objects
 │   │   ├── PhysicsRequest.php
 │   │   ├── PhysicsResponse.php
+│   │   ├── PhysicsResponseData.php
 │   │   ├── EnginePerformance.php
 │   │   ├── ShipDetails.php
 │   │   └── ValidationResult.php
@@ -163,7 +164,25 @@ class PhysicsEndpoint {
 - Services can be unit tested independently
 - Reusable logic across multiple endpoints
 
-#### 2. Data Transfer Objects (DTOs)
+#### 2. Dependency Injection (DI) with Service Container
+
+Dependencies are managed by a custom `ServiceContainer` implementation:
+
+```php
+// ServiceContainer: Singleton-based lazy loading
+$container->register('physics_service', fn($c) => new PhysicsService());
+
+// Router: Injects services into endpoints
+$endpoints['/api/physics'] = fn() => new PhysicsEndpoint($container->get('physics_service'));
+```
+
+**Benefits:**
+- **Lazy Instantiation:** Services created only when requested (performance)
+- **Singleton Lifecycle:** Services are shared across the application request
+- **Testability:** Mock services can be injected during testing
+- **Decoupling:** Components don't instantiate their dependencies
+
+#### 3. Data Transfer Objects (DTOs)
 
 All API contracts are defined as strongly-typed DTOs:
 
@@ -189,7 +208,7 @@ class PhysicsRequest {
 - Validation at construction time
 - Mirror frontend TypeScript types exactly
 
-#### 3. Exception Hierarchy
+#### 4. Exception Hierarchy
 
 All exceptions extend `CargoSizeException` to maintain consistency with the parent project:
 
@@ -622,6 +641,6 @@ Any future enhancements must respect the project constraints:
 
 ---
 
-**Last Updated:** February 12, 2026  
+**Last Updated:** February 17, 2026  
 **Maintainer:** Sebastian Mordziol  
 **Contact:** s.mordziol@mistralys.eu

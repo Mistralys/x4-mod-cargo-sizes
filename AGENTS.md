@@ -1,7 +1,7 @@
 # AI Agent Operating System - X4 Cargo Sizes Mod
 
-> **Version:** 1.2
-> **Last Updated:** February 12, 2026
+> **Version:** 1.3
+> **Last Updated:** February 17, 2026
 > **Purpose:** Source of Truth and Operating Procedures for AI Agents
 
 ---
@@ -479,10 +479,7 @@ This project depends heavily on the **mistralys/x4-core** library. When working 
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.2 | Feb 12, 2026 | Added Physics Tuning GUI documentation and manifest references. |
-| 1.1 | Feb 11, 2026 | Synchronized with PHP 8.4 upgrade. |
-| 1.0 | Feb 9, 2026 | Initial AGENTS.md with complete manifest integration |
-
+| 1.3 | Feb 17, 2026 | Added GUI test infrastructure (PHPUnit 11), Service Container pattern, Parameter Object pattern, strict equality refactoring. Updated manifest docs to v1.3. |
 ---
 
 ## 💡 Pro Tips for Maximum Efficiency
