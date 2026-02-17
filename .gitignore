@@ -13,3 +13,4 @@ docs/agents/project-ledger.json
 .ledger/
 work/
 work.md
+.phpunit.cache
