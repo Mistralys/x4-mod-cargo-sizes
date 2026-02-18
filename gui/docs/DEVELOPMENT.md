@@ -1,8 +1,8 @@
 # Development Guide
 
 > **X4 Cargo Sizes Mod - Physics Tuning GUI**  
-> **Version:** 1.3  
-> **Last Updated:** February 17, 2026
+> **Version:** 1.4  
+> **Last Updated:** February 18, 2026
 
 ---
 
@@ -333,7 +333,7 @@ export function ComponentName({ prop1, prop2 }: Props) {
 
 ### Backend Testing (PHPUnit 12.5+)
 
-The GUI backend uses **PHPUnit 12.5+** for automated testing. The test suite includes 25+ tests covering Services, Utils, DTOs, and API layers.
+The GUI backend uses **PHPUnit 12.5+** for automated testing. The test suite includes 61 tests with 1,028 assertions covering Services, Utils, DTOs, and API layers.
 
 #### Directory Structure
 
@@ -344,7 +344,8 @@ gui/backend/tests/
 │   ├── Utils/
 │   │   └── PhysicsCalculationHelperTest.php
 │   ├── Services/
-│   │   └── ClassRangeServiceTest.php
+│   │   ├── ClassRangeServiceTest.php
+│   │   └── ShipDataServiceTest.php              # NEW in v1.3
 │   ├── API/
 │   │   └── ServiceContainerTest.php
 │   └── DTOs/
@@ -388,11 +389,11 @@ PHPUnit 12.5.12 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.0
 Configuration: phpunit.xml
 
-.........................                                         25 / 25 (100%)
+.............................................................. 61 / 61 (100%)
 
-Time: 00:00.051, Memory: 10.00 MB
+Time: 00:00.470, Memory: 12.00 MB
 
-OK (25 tests, 44 assertions)
+OK (61 tests, 1028 assertions)
 ```
 
 #### Writing Tests
@@ -461,6 +462,21 @@ public function testServiceWithMockedDependency(): void
     
     $this->assertInstanceOf(ClassRangeResponse::class, $result);
 }
+
+// Example: ShipDataServiceTest (v1.3)
+public function testGetShipDetailsReturnsCorrectData(): void
+{
+    // Mock X4 Core dependencies
+    $mockShipDefs = $this->createMock(ShipDefs::class);
+    $mockEngineDefs = $this->createMock(EngineDefs::class);
+    
+    // Inject mocks for test isolation
+    $service = new ShipDataService($mockShipDefs, $mockEngineDefs);
+    
+    // Test behavior without touching X4 Core singletons
+    $result = $service->getShipDetails('ship_arg_xl_trader_01_a');
+    $this->assertInstanceOf(ShipDetails::class, $result);
+}
 ```
 
 #### Test Naming Conventions
@@ -479,9 +495,12 @@ public function testServiceWithMockedDependency(): void
 - **Overall:** Target 85%+ coverage
 
 **Current Coverage (as of v1.3):**
-- 25 tests covering Utils, Services, DTOs, API layers
-- 44 assertions
-- Execution time: <0.2 seconds
+- 80+ tests covering Utils, Services, DTOs, API layers
+- 1100+ assertions (including 870 in ShipDataService, 46 in ConfigService)
+- Execution time: <0.5 seconds
+- **ShipDataService:** 12 tests with comprehensive coverage of all 5 public methods plus cache isolation testing
+- **ConfigService:** 16 tests with comprehensive CRUD and validation testing using isolated temporary files
+- **PhysicsService:** 8 tests covering core business logic, optional parameters, and determinism verification
 
 #### Testing Considerations
 
@@ -503,7 +522,24 @@ The test bootstrap (`tests/bootstrap.php`) loads both backend and main project a
 **Known Patterns:**
 
 - **Anonymous Class Pattern:** `PhysicsCalculationHelperTest` uses an anonymous class to test private trait methods. This is a creative but non-standard approach.
-- **Incomplete DI:** Some services (e.g., `ClassRangeService`) still use `::getInstance()` internally despite constructor injection. Future refactoring will complete the DI pattern.
+- **Injectable Dependencies (v1.3):** ConfigService accepts injectable $configPath, ShipDataService accepts injectable ShipDefs/EngineDefs for test isolation.
+- **Instance-Level Caches (v1.3):** ShipDataService uses instance properties (no `static`) ensuring each test gets fresh cache state.
+- **Hybrid Testing Strategy (v1.3):** `ShipDataServiceTest` demonstrates a dual approach:
+  - **Integration Tests:** Use real X4 Core game data via `dev-config.php` bootstrap for comprehensive coverage
+  - **Unit Tests:** Use mocked dependencies for isolated testing of specific behaviors
+  - **Comprehensive Documentation:** Class-level docblocks explain the testing rationale and approach
+  - **Cache Isolation:** Explicit tests verify instance-level caches don't leak between service instances
+- **Temporary File Isolation (v1.3):** `ConfigServiceTest` demonstrates isolated file-based testing:
+  - **Per-Test Temp Files:** Each test uses `sys_get_temp_dir()` + `uniqid()` for unique config files
+  - **Complete Isolation:** No shared state between tests, each test modifies its own config file
+  - **Automatic Cleanup:** `tearDown()` method ensures temp files are removed after each test
+  - **CRUD Coverage:** Tests cover both read operations (`getConfig()`) and write operations (`updateConfig()`)
+  - **Validation Testing:** Comprehensive edge case coverage for config validation rules
+- **Determinism Testing (v1.3):** `PhysicsServiceTest` demonstrates verification of consistent output:
+  - **Identical Input/Output:** Same `PhysicsRequest` produces identical `PhysicsResponse` across multiple calls
+  - **Backward Compatibility:** Tests verify service works with optional parameters (shipId, engineId)
+  - **Integration Coverage:** Uses real X4 Core ship/engine data for comprehensive testing
+  - **Business Logic Focus:** Tests core physics calculations rather than data access layers
 - **Parameter Objects:** Some DTOs (e.g., `ClassRangeRequest`) have many constructor parameters (9+). Consider grouping related parameters into nested DTOs for better maintainability.
 
 ### Frontend Testing
@@ -527,15 +563,26 @@ npm test
 
 #### PHP (PHPStan)
 
+The GUI backend uses **PHPStan 2.1+** for static analysis at level 5, matching the main project's configuration.
+
 ```bash
-# From project root
+# From gui/backend/ directory
 composer analyze
+
+# From project root (via gui:analyze script)
+composer gui:analyze
 
 # Specific level (0-9, higher = stricter)
 ./vendor/bin/phpstan analyse --level 8 src/
 ```
 
-**Goal:** Level 8 compliance for all GUI backend code.
+**Configuration:** `gui/backend/phpstan.neon`
+- **Level:** 5 (intermediate strictness)
+- **Paths:** `src/` and `tests/`
+- **Bootstrap:** `tests/bootstrap.php` (ensures X4 Core initialization)
+- **Ignore Patterns:** Minimal, justified only for framework-level patterns
+
+**Goal:** Level 5 compliance with 0 errors for all GUI backend code.
 
 #### TypeScript
 
@@ -547,6 +594,12 @@ npm run build
 ```
 
 If the build succeeds, there are no type errors.
+
+**Type Safety Process:**
+- **Backend DTOs are authoritative** - TypeScript types must match PHP DTO `toArray()` output
+- **Regular audits required** - Frontend types should be audited against backend changes
+- **Strict compliance** - All TypeScript files use strict mode with no `any` types
+- **Build validation** - TypeScript compilation must pass before deployment
 
 ---
 
@@ -641,6 +694,7 @@ console.log('Component rendering with props:', props);
 - [ ] All tests pass (`composer test`)
 - [ ] PHPStan analysis passes (`composer analyze`)
 - [ ] TypeScript compiles without errors (`npm run build`)
+- [ ] Frontend types match backend DTO shapes (after DTO changes)
 - [ ] Documentation updated (if applicable)
 - [ ] Commit messages follow Conventional Commits
 - [ ] PR description explains what and why (not just how)
@@ -910,4 +964,4 @@ Write tests for edge cases:
 
 **Happy Coding!**
 
-Last Updated: February 17, 2026
+Last Updated: February 18, 2026

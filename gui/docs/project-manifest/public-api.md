@@ -1,7 +1,7 @@
 # Public API - Signatures Only
 
-> **Version:** 1.3  
-> **Last Updated:** February 16, 2026  
+> **Version:** 1.4  
+> **Last Updated:** February 18, 2026  
 > **Purpose:** Public method signatures and contracts (NO implementations)
 
 ---
@@ -93,6 +93,69 @@ Calculate average inertia change percentage across all inertia axes.
 - `$adjusted` — Adjusted inertia values after modifications
 
 **Returns:** Average percentage change across all 3 inertia axes.
+
+---
+
+##### findTierForMultiplier()
+
+```php
+private function findTierForMultiplier(
+    array $tiers,
+    float $multiplier
+): \Mistralys\X4\Mods\CargoSizesMod\Output\Physics\ReductionTier
+```
+
+Find the appropriate reduction tier for a given cargo multiplier.
+
+**Parameters:**
+- `$tiers` — Array of ReductionTier objects sorted by maxMultiplier
+- `$multiplier` — Cargo multiplier to match
+
+**Returns:** The matching ReductionTier (highest maxMultiplier that doesn't exceed multiplier).
+
+**Throws:** `GUIException` if no suitable tier found.
+
+---
+
+### ErrorResponseTrait
+
+**Location:** `gui/backend/src/API/Endpoints/ErrorResponseTrait.php`  
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\API\Endpoints`  
+**Since:** 1.3.0  
+**Usage:** Mixed into all 4 endpoint classes
+
+**Purpose:** Provides standardized JSON error response formatting for API endpoints.
+
+#### Methods
+
+##### errorResponse()
+
+```php
+private function errorResponse(
+    \Psr\Http\Message\ResponseInterface $response,
+    string $message,
+    int $statusCode = 400,
+    string $errorCode = GUIException::ERROR_GENERIC
+): \Psr\Http\Message\ResponseInterface
+```
+
+Creates a standardized JSON error response.
+
+**Parameters:**
+- `$response` — PSR-7 response object
+- `$message` — Human-readable error message
+- `$statusCode` — HTTP status code (default: 400 Bad Request)
+- `$errorCode` — Machine-readable error identifier
+
+**Returns:** JSON error response with appropriate status code.
+
+**Response Format:**
+```json
+{
+  "error": "Invalid configuration: Missing required field",
+  "code": "ERROR_INVALID_CONFIG"
+}
+```
 
 ---
 
@@ -224,6 +287,18 @@ class PhysicsService
 class ShipDataService
 {
     /**
+     * Constructor with optional dependency injection for testability.
+     *
+     * @param \Mistralys\X4\Database\Ships\ShipDefs|null $shipDefs Optional ship definitions (defaults to X4 Core singleton)
+     * @param \Mistralys\X4\Database\Engines\EngineDefs|null $engineDefs Optional engine definitions (defaults to X4 Core singleton)
+     * @since 1.3.0 - Made data sources injectable for unit testing
+     */
+    public function __construct(
+        ?\Mistralys\X4\Database\Ships\ShipDefs $shipDefs = null,
+        ?\Mistralys\X4\Database\Engines\EngineDefs $engineDefs = null
+    );
+    
+    /**
      * Gets all supported ship types.
      *
      * @return array{type: string, label: string}[]
@@ -310,6 +385,16 @@ class ClassRangeService
 ```php
 class ConfigService
 {
+    /**
+     * Constructor with injectable configuration path for testability.
+     *
+     * @param string $configPath Path to build-config.json (defaults to production path)
+     * @since 1.3.0 - Made config path injectable for unit testing
+     */
+    public function __construct(
+        string $configPath = __DIR__ . '/../../../../config/build-config.json'
+    );
+    
     /**
      * Gets the current configuration.
      *

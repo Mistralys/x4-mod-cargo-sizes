@@ -29,7 +29,7 @@ export function ActionButtons({ onSave, onReset, isSaving, saveError }: ActionBu
       await onSave();
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-    } catch (error) {
+    } catch {
       // Error handled by parent component
     }
   }, [onSave]);

@@ -17,6 +17,8 @@ use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Drag;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Inertia;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedDrag;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedInertia;
+use Mistralys\X4\Mods\CargoSizesMod\Build\ReductionTier;
+use Mistralys\X4\Mods\CargoSizesMod\GUI\Exceptions\GUIException;
 
 /**
  * Trait PhysicsCalculationHelper
@@ -34,6 +36,30 @@ use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedInertia;
  */
 trait PhysicsCalculationHelper
 {
+    /**
+     * Finds the appropriate tier for a cargo multiplier.
+     *
+     * @param array<array{maxMultiplier: float, reductionPercent: float}> $tiers
+     * @param float $multiplier
+     * @return ReductionTier
+     * @throws GUIException
+     */
+    protected function findTierForMultiplier(array $tiers, float $multiplier): ReductionTier
+    {
+        foreach ($tiers as $tierData) {
+            $tier = ReductionTier::fromArray($tierData);
+            if ($tier->appliesToMultiplier($multiplier)) {
+                return $tier;
+            }
+        }
+
+        throw new GUIException(
+            sprintf('No tier found for cargo multiplier %.1fx', $multiplier),
+            '',
+            GUIException::ERROR_UNHANDLED_SHIP_TYPE
+        );
+    }
+
     /**
      * Calculate percentage change between original and modified values.
      *

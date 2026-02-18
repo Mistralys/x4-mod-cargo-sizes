@@ -1,7 +1,7 @@
 # Constraints & Conventions
 
-> **Version:** 1.3  
-> **Last Updated:** February 16, 2026  
+> **Version:** 1.4  
+> **Last Updated:** February 18, 2026  
 > **Purpose:** Non-negotiable rules and established conventions
 
 ---
@@ -31,6 +31,7 @@
 | **No Database Connections** | Config stored in JSON files only | Use `build-config.json` only |
 | **Strict Types Everywhere (PHP)** | Type safety, catch errors early | `declare(strict_types=1);` |
 | **TypeScript Strict Mode** | Type safety on frontend | `"strict": true` in tsconfig.json |
+| **PHPStan Level 5** | Static analysis enforcement | Run `composer analyze` before committing |
 | **No User-Generated Code Execution** | Security | Never use `eval()`, `exec()`, etc. |
 | **Readonly Properties for DTOs** | Immutability | `public readonly float $baseMass` |
 | **Local Development Only** | Not a production web app | No auth, no multi-user, localhost only |
@@ -513,9 +514,49 @@ private function buildPhysicsResponse(
 
 ---
 
-## Testing Conventions
+## Testing Constraints
 
-**Test Framework:** PHPUnit 11.0+
+**Test Framework:** PHPUnit 12.5+  
+**Static Analysis:** PHPStan 1.6.1+ (level 5)  
+**Current Coverage:** 61 tests, 1,028 assertions, <0.6s execution
+
+### Static Analysis Requirement
+
+**RULE:** All code MUST pass PHPStan level 5 analysis with 0 errors.
+
+```bash
+cd gui/backend
+composer analyze
+# Expected: 0 errors
+```
+
+**When to Run:**
+- Before committing changes
+- After adding new classes or methods
+- When modifying type signatures
+- As part of code review process
+
+**PHPStan Configuration:** `gui/backend/phpstan.neon`
+
+**See Also:**
+- `tech-stack.md` → PHPStan Static Analysis
+- `file-tree.md` → `gui/backend/phpstan.neon`
+
+### Minimum Test Count
+
+**RULE:** Backend MUST maintain ≥61 tests to prevent regression.
+
+**Current Metrics:**
+- **Test Count:** 61 tests
+- **Assertions:** 1,028 assertions
+- **Execution Time:** <0.6 seconds
+- **Test Suites:** Unit (fast), Integration (as needed)
+
+**Coverage Targets:**
+- **Services:** 100% (all 5 services have complete test coverage)
+- **DTOs:** ≥80% (constructor validation, readonly enforcement)
+- **Utilities:** 100% (PhysicsCalculationHelper fully covered)
+- **API Components:** ≥90% (ServiceContainer, ErrorResponseTrait)
 
 ### Test File Naming
 

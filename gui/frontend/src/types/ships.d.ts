@@ -24,15 +24,19 @@ export interface ShipTypeInfo {
 
 /**
  * Basic ship information (list item).
+ * Matches getShipsByType() backend response.
  */
 export interface ShipInfo {
   id: string;
   name: string;
+  type: ShipType;
   size: ShipSize;
+  mass: number;
+  cargo: number;
 }
 
 /**
- * Detailed ship information (matching ShipDetails DTO).
+ * Detailed ship information (matching ShipDetails DTO toArray() output).
  */
 export interface ShipDetails {
   id: string;
@@ -42,9 +46,9 @@ export interface ShipDetails {
   mass: number;
   cargo: number;
   engines: string[];
-  engineCount?: number;
-  cargoType?: string;
-  dragOriginal?: Record<string, number>;
-  inertiaOriginal?: Record<string, number>;
-  jerkOriginal?: Record<string, number>;
+  engineCount: number;
+  cargoType: string;
+  dragOriginal: Record<string, number>;
+  inertiaOriginal: Record<string, number>;
+  jerkOriginal: Record<string, number>;
 }

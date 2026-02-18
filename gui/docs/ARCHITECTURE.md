@@ -1,8 +1,8 @@
 # Architecture Documentation
 
 > **X4 Cargo Sizes Mod - Physics Tuning GUI**  
-> **Version:** 1.3  
-> **Last Updated:** February 17, 2026
+> **Version:** 1.4  
+> **Last Updated:** February 18, 2026
 
 ---
 
@@ -170,10 +170,21 @@ Dependencies are managed by a custom `ServiceContainer` implementation:
 
 ```php
 // ServiceContainer: Singleton-based lazy loading
-$container->register('physics_service', fn($c) => new PhysicsService());
+$container->register('config', fn() => new ConfigService(
+    __DIR__ . '/../../../config/build-config.json'  // Injectable path
+));
+$container->register('ship_data', fn() => new ShipDataService(
+    null,  // Optional ShipDefs injection
+    null   // Optional EngineDefs injection
+));
+$container->register('physics', fn(ServiceContainer $c) =>
+    new PhysicsService($c->get('ship_data'))
+);
 
 // Router: Injects services into endpoints
-$endpoints['/api/physics'] = fn() => new PhysicsEndpoint($container->get('physics_service'));
+$configEndpoint = new ConfigEndpoint($container->get('config'));
+$shipsEndpoint = new ShipsEndpoint($container->get('ship_data'));
+$physicsEndpoint = new PhysicsEndpoint($container->get('physics'));
 ```
 
 **Benefits:**
@@ -181,6 +192,15 @@ $endpoints['/api/physics'] = fn() => new PhysicsEndpoint($container->get('physic
 - **Singleton Lifecycle:** Services are shared across the application request
 - **Testability:** Mock services can be injected during testing
 - **Decoupling:** Components don't instantiate their dependencies
+- **Injectable Paths:** ConfigService accepts custom config paths for tests
+- **Instance-Level Caches:** ShipDataService uses instance properties (no static) for test isolation
+
+**Key Improvements in v1.3:**
+- All 4 endpoints now use constructor injection
+- ConfigService path is injectable (defaults to production)
+- ShipDataService data sources are injectable (defaults to X4 Core singletons)
+- PhysicsService receives ShipDataService via DI
+- Instance-level caches replace static caches for test isolation
 
 #### 3. Data Transfer Objects (DTOs)
 
@@ -208,7 +228,46 @@ class PhysicsRequest {
 - Validation at construction time
 - Mirror frontend TypeScript types exactly
 
-#### 4. Exception Hierarchy
+#### 4. Shared Traits for Code Reuse
+
+Common functionality is extracted into traits to eliminate duplication:
+
+**PhysicsCalculationHelper Trait:**
+```php
+// Used by PhysicsService and ClassRangeService
+trait PhysicsCalculationHelper {
+    private function calculatePercentChange(float $original, float $modified): float;
+    private function calculateAverageDragChange(Drag $original, AdjustedDrag $adjusted): float;
+    private function findTierForMultiplier(array $tiers, float $multiplier): ReductionTier;
+}
+```
+
+**ErrorResponseTrait (NEW in v1.3):**
+```php
+// Used by all 4 endpoint classes
+trait ErrorResponseTrait {
+    private function errorResponse(
+        Response $response,
+        string $message,
+        int $statusCode = 400,
+        string $errorCode = GUIException::ERROR_GENERIC
+    ): Response {
+        return $response
+            ->withStatus($statusCode)
+            ->withHeader('Content-Type', 'application/json')
+            ->withJson(['error' => $message, 'code' => $errorCode]);
+    }
+}
+```
+
+**Benefits:**
+- **DRY Principle:** Single source of truth for shared logic
+- **Consistency:** All endpoints return identical error formats
+- **Maintainability:** Change in one place, all users benefit
+- **Private Methods:** Implementation details stay hidden
+- **Zero Runtime Overhead:** Traits are compiled inline
+
+#### 5. Exception Hierarchy
 
 All exceptions extend `CargoSizeException` to maintain consistency with the parent project:
 

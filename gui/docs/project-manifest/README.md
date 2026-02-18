@@ -1,7 +1,7 @@
 # X4 Cargo Sizes Mod - Physics Tuning GUI - Project Manifest
 
-> **Version:** 1.3  
-> **Last Updated:** February 17, 2026  
+> **Version:** 1.4  
+> **Last Updated:** February 18, 2026  
 > **Purpose:** Source of Truth for AI Agents
 
 ---
@@ -95,9 +95,9 @@ An **interactive web-based tool** for real-time physics tuning of the X4 Cargo S
 
 ### Core Metrics
 
-- **Frontend:** React 18, TypeScript 5.6 (strict mode), Vite 7
-- **Backend:** PHP 8.4, Slim Framework 4, Composer 2.x
-- **Testing:** PHPUnit 12.5+ (25+ tests, <0.2s execution)
+- **Frontend:** React 19.2, TypeScript 5.9.3 (strict mode), Vite 7.3.1
+- **Backend:** PHP 8.4, Slim Framework 4, Composer 2.x, PHPStan 1.6.1+ (level 5)
+- **Testing:** PHPUnit 12.5+ (61 tests, 1,028 assertions, <0.6s execution)
 - **Architecture:** Stateless REST API with reactive frontend
 - **Components:** ~15 React components, 3 backend services, 12 API endpoints
 - **Total Lines (est.):** ~3,500 across frontend/backend
@@ -223,7 +223,10 @@ An agent has successfully integrated with this codebase when:
 ## 🔄 Version History
 
 | Version | Date | Changes |
-|---------|------|---------|| 1.3 | Feb 17, 2026 | Added PHPUnit 12.5+ test infrastructure (25+ tests) || 1.0 | Feb 12, 2026 | Initial Project Manifest creation |
+|---------|------|---------|
+| 1.4 | Feb 18, 2026 | PHPStan integration (level 5), test count increased to 61 tests/1,028 assertions, DI refactoring, corrected framework versions (React 19.2, TypeScript 5.9.3, Vite 7.3.1) |
+| 1.3 | Feb 17, 2026 | Added PHPUnit 12.5+ test infrastructure (25+ tests) |
+| 1.0 | Feb 12, 2026 | Initial Project Manifest creation |
 
 ---
 

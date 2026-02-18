@@ -1,7 +1,7 @@
 # File Tree - Directory Structure
 
-> **Version:** 1.3  
-> **Last Updated:** February 16, 2026  
+> **Version:** 1.4  
+> **Last Updated:** February 18, 2026  
 > **Purpose:** Visual directory structure for quick file location
 
 ---
@@ -38,6 +38,7 @@ gui/
 │   ├── composer.json                   # PHP dependencies (Slim, etc.)
 │   ├── composer.lock                   # Locked dependency versions
 │   ├── phpunit.xml                     # PHPUnit configuration (NEW in v1.3)
+│   ├── phpstan.neon                    # PHPStan static analysis config (NEW in v1.4)
 │   │
 │   ├── tests/                          # 🧪 Test suite (NEW in v1.3)
 │   │   ├── bootstrap.php               # Test autoloader
@@ -45,7 +46,10 @@ gui/
 │   │   │   ├── Utils/
 │   │   │   │   └── PhysicsCalculationHelperTest.php  # Trait unit tests
 │   │   │   ├── Services/
-│   │   │   │   └── ClassRangeServiceTest.php         # DI mocking demo
+│   │   │   │   ├── ClassRangeServiceTest.php         # DI mocking demo
+│   │   │   │   ├── ConfigServiceTest.php             # Config service tests (NEW in v1.4)
+│   │   │   │   ├── PhysicsServiceTest.php            # Physics service tests (NEW in v1.4)
+│   │   │   │   └── ShipDataServiceTest.php           # Ship data service tests (NEW in v1.3)
 │   │   │   ├── API/
 │   │   │   │   └── ServiceContainerTest.php          # Container tests
 │   │   │   └── DTOs/
@@ -63,6 +67,7 @@ gui/
 │   │   │   ├── Router.php              # Route definitions
 │   │   │   │
 │   │   │   ├── Endpoints/              # API endpoint handlers
+│   │   │   │   ├── ErrorResponseTrait.php  # Shared error response formatting (NEW in v1.3)
 │   │   │   │   ├── PhysicsEndpoint.php # Physics calculation routes
 │   │   │   │   ├── ClassRangeEndpoint.php # Class-range calculation routes
 │   │   │   │   ├── ShipsEndpoint.php   # Ship/engine data routes

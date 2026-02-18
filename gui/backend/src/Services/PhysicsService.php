@@ -9,6 +9,7 @@ use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\PhysicsResponseData;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\EnginePerformance;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\PhysicsData;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ReductionTiers;
+use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ShipDetails;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Exceptions\GUIException;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\PhysicsCalculator;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedDrag;
@@ -16,7 +17,6 @@ use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedInertia;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Jerk\AdjustedJerk;
 use Mistralys\X4\Mods\CargoSizesMod\Build\ReductionTier;
 use Mistralys\X4\Database\Engines\EngineDefs;
-use Mistralys\X4\Database\Ships\ShipDefs;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Drag;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Inertia;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Jerk;
@@ -34,6 +34,18 @@ use Mistralys\X4\Mods\CargoSizesMod\GUI\Utils\PhysicsCalculationHelper;
 class PhysicsService
 {
     use PhysicsCalculationHelper;
+
+    private readonly ShipDataService $shipDataService;
+    private readonly EngineDefs $engineDefs;
+
+    public function __construct(
+        ShipDataService $shipDataService,
+        ?EngineDefs $engineDefs = null
+    ) {
+        $this->shipDataService = $shipDataService;
+        $this->engineDefs = $engineDefs ?? EngineDefs::getInstance();
+    }
+    
     /**
      * Calculates adjusted physics values for a ship.
      *
@@ -62,7 +74,7 @@ class PhysicsService
             $originalDrag = $shipData['originalDrag'];
             $originalInertia = $shipData['originalInertia'];
             $originalJerk = $shipData['originalJerk'];
-            $shipDef = $shipData['shipDef'];
+            $shipDetails = $shipData['shipDetails'];
 
             // Apply drag reduction
             $adjustedDrag = new AdjustedDrag($originalDrag, $dragTier->getReductionPercent());
@@ -80,8 +92,8 @@ class PhysicsService
             if ($request->engineId !== null) {
                 // Get engine count (default to 1 for backward compatibility)
                 $engineCount = 1;
-                if ($shipDef !== null) {
-                    $engineCount = $shipDef->countEngines();
+                if ($shipDetails !== null) {
+                    $engineCount = $shipDetails->engineCount;
                 }
                 
                 $enginePerformance = $this->calculateEnginePerformance(
@@ -124,30 +136,6 @@ class PhysicsService
     }
 
     /**
-     * Finds the appropriate tier for a cargo multiplier.
-     *
-     * @param array<array{maxMultiplier: float, reductionPercent: float}> $tiers
-     * @param float $multiplier
-     * @return ReductionTier
-     * @throws GUIException
-     */
-    private function findTierForMultiplier(array $tiers, float $multiplier): ReductionTier
-    {
-        foreach ($tiers as $tierData) {
-            $tier = ReductionTier::fromArray($tierData);
-            if ($tier->appliesToMultiplier($multiplier)) {
-                return $tier;
-            }
-        }
-
-        throw new GUIException(
-            sprintf('No tier found for cargo multiplier %.1fx', $multiplier),
-            '',
-            GUIException::ERROR_UNHANDLED_SHIP_TYPE
-        );
-    }
-
-    /**
      * Calculates engine performance metrics including top speeds.
      *
      * @param string $engineId Engine identifier
@@ -167,7 +155,7 @@ class PhysicsService
     ): EnginePerformance
     {
         try {
-            $engineDef = EngineDefs::getInstance()->getByID($engineId);
+            $engineDef = $this->engineDefs->getByID($engineId);
             
             // Get real thrust values from EngineDef
             $thrustForward = $engineDef->getThrustForward();
@@ -360,7 +348,7 @@ class PhysicsService
      *
      * @param string|null $shipId Ship identifier (e.g., 'ship_arg_s_fighter_01_a_macro')
      * @return array{
-     *     shipDef: \Mistralys\X4\Database\Ships\ShipDef|null,
+     *     shipDetails: \Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ShipDetails|null,
      *     originalDrag: Drag,
      *     originalInertia: Inertia,
      *     originalJerk: Jerk
@@ -370,47 +358,48 @@ class PhysicsService
      */
     private function loadShipPhysicsData(?string $shipId): array
     {
-        $shipDef = null;
+        $shipDetails = null;
 
         // Load real ship data if shipId provided, otherwise use hardcoded defaults
         if ($shipId !== null) {
-            $shipDef = ShipDefs::getInstance()->getByID($shipId);
-            
+            $shipDetails = $this->shipDataService->getShipDetails($shipId);
+
             // Create drag from real ship data
             $originalDrag = new Drag(
-                $shipDef->getDragForward(),
-                $shipDef->getDragReverse(),
-                $shipDef->getDragHorizontal(),
-                $shipDef->getDragVertical(),
-                $shipDef->getDragPitch(),
-                $shipDef->getDragYaw(),
-                $shipDef->getDragRoll()
+                $shipDetails->dragOriginal['forward'],
+                $shipDetails->dragOriginal['reverse'],
+                $shipDetails->dragOriginal['horizontal'],
+                $shipDetails->dragOriginal['vertical'],
+                $shipDetails->dragOriginal['pitch'],
+                $shipDetails->dragOriginal['yaw'],
+                $shipDetails->dragOriginal['roll']
             );
-            
+
             // Create inertia from real ship data
             $originalInertia = new Inertia(
-                $shipDef->getInertiaPitch(),
-                $shipDef->getInertiaYaw(),
-                $shipDef->getInertiaRoll()
+                $shipDetails->inertiaOriginal['pitch'],
+                $shipDetails->inertiaOriginal['yaw'],
+                $shipDetails->inertiaOriginal['roll']
             );
-            
+
             // Create jerk from real ship data
+            $jerk = $shipDetails->jerkOriginal;
             $originalJerk = new Jerk(
-                $shipDef->getJerkStrafe(),
-                $shipDef->getJerkAngular(),
+                $jerk['strafe'],
+                $jerk['angular'],
                 new JerkForward(
-                    $shipDef->getJerkForwardAccel(),
-                    $shipDef->getJerkForwardDecel(),
-                    $shipDef->getJerkForwardRatio()
+                    $jerk['forwardAccel'],
+                    $jerk['forwardDecel'],
+                    $jerk['forwardRatio']
                 ),
                 new JerkBoost(
-                    $shipDef->getJerkBoostAccel(),
-                    $shipDef->getJerkBoostRatio()
+                    $jerk['boostAccel'],
+                    $jerk['boostRatio']
                 ),
                 new JerkTravel(
-                    $shipDef->getJerkTravelAccel(),
-                    $shipDef->getJerkTravelDecel(),
-                    $shipDef->getJerkTravelRatio()
+                    $jerk['travelAccel'],
+                    $jerk['travelDecel'],
+                    $jerk['travelRatio']
                 )
             );
         } else {
@@ -437,7 +426,7 @@ class PhysicsService
         }
 
         return [
-            'shipDef' => $shipDef,
+            'shipDetails' => $shipDetails,
             'originalDrag' => $originalDrag,
             'originalInertia' => $originalInertia,
             'originalJerk' => $originalJerk

@@ -1,7 +1,7 @@
 # Tech Stack & Architectural Patterns
 
-> **Version:** 1.3  
-> **Last Updated:** February 16, 2026  
+> **Version:** 1.4  
+> **Last Updated:** February 18, 2026  
 > **Purpose:** Runtime, dependencies, and architectural patterns reference
 
 ---
@@ -74,9 +74,12 @@ $app->post('/api/calculate/physics', [PhysicsEndpoint::class, 'calculate']);
 {
   "require": {
     "php": "^8.4",
-    "slim/slim": "^4.0",
-    "slim/psr7": "^1.6",
-    "nikic/fast-route": "^1.3"
+    "slim/slim": "^4.13",
+    "slim/psr7": "^1.6"
+  },
+  "require-dev": {
+    "phpstan/phpstan": ">=1.6.1",
+    "phpunit/phpunit": ">=12.0"
   }
 }
 ```
@@ -84,7 +87,67 @@ $app->post('/api/calculate/physics', [PhysicsEndpoint::class, 'calculate']);
 **Dependency Roles:**
 - `slim/slim` - Core framework (routing, middleware, DI)
 - `slim/psr7` - PSR-7 HTTP message implementation
-- `nikic/fast-route` - High-performance URL router
+- `phpstan/phpstan` - Static analysis tool (level 5)
+- `phpunit/phpunit` - Testing framework (v12.5+)
+
+### PHPStan Static Analysis
+
+**PHPStan 1.6.1+** - PHP static analyzer at level 5
+
+**Why PHPStan?**
+- Catches type errors before runtime
+- Enforces strict type consistency
+- Detects unreachable code and logic errors
+- No runtime overhead (analysis only)
+
+**Configuration:** `gui/backend/phpstan.neon`
+
+```neon
+parameters:
+    level: 5                    # Strictness level (0-9, using 5)
+    paths:
+        - src                   # Analyze all source code
+        - tests                 # Analyze all tests
+    bootstrapFiles:
+        - tests/bootstrap.php   # Load test dependencies
+    ignoreErrors:
+        # Intentional test patterns that trigger false positives
+        - '#Call to method PHPUnit\\Framework\\Assert::.*#'
+```
+
+**Running Analysis:**
+```bash
+cd gui/backend
+composer analyze                # Run PHPStan analysis
+# Output: 0 errors expected after WP-005 fixes
+```
+
+**Composer Script:**
+```json
+{
+  "scripts": {
+    "analyze": "phpstan analyse --configuration=phpstan.neon"
+  }
+}
+```
+
+**Level 5 Guarantees:**
+- All function parameters have type hints
+- All return types declared
+- No mixed types without explicit annotation
+- Property types declared
+- Strict comparison enforcement (===$)
+- Dead code detection
+
+**Integration with Workflow:**
+- Run `composer analyze` before committing changes
+- CI pipeline should enforce 0 errors (when CI set up)
+- PHPStan errors block code review
+
+**See Also:**
+- `constraints.md` → PHPStan Level 5 constraint
+- `file-tree.md` → `gui/backend/phpstan.neon`
+- [PHPStan Documentation](https://phpstan.org/)
 
 ---
 
@@ -92,17 +155,18 @@ $app->post('/api/calculate/physics', [PhysicsEndpoint::class, 'calculate']);
 
 ### Core Framework
 
-**React 18** - Component-based UI library with concurrent rendering
+**React 19.2** - Component-based UI library with concurrent rendering
 
-**Why React 18?**
+**Why React 19?**
 - Concurrent rendering for smooth UI
 - Automatic batching for better performance
 - Mature ecosystem (hooks, context, etc.)
 - TypeScript first-class support
+- Enhanced compiler optimizations
 
 ### Build Tool
 
-**Vite 7** - Next-generation frontend build tool
+**Vite 7.3.1** - Next-generation frontend build tool
 
 **Why Vite?**
 - Lightning-fast HMR (Hot Module Replacement)
@@ -112,7 +176,7 @@ $app->post('/api/calculate/physics', [PhysicsEndpoint::class, 'calculate']);
 
 ### Styling
 
-**TailwindCSS v4** - Utility-first CSS framework
+**TailwindCSS v4.1.18** - Utility-first CSS framework
 
 **Why Tailwind?**
 - Rapid UI development with utility classes
@@ -125,21 +189,21 @@ $app->post('/api/calculate/physics', [PhysicsEndpoint::class, 'calculate']);
 ```json
 {
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "axios": "^1.7.9",
-    "react-hook-form": "^7.54.2",
-    "recharts": "^2.15.0",
-    "lodash": "^4.17.21"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "axios": "^1.13.5",
+    "react-hook-form": "^7.71.1",
+    "recharts": "^3.7.0",
+    "lodash": "^4.17.23"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^7.0.0",
-    "typescript": "~5.6.2",
-    "tailwindcss": "^4.0.0",
-    "postcss": "^8.4.49",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^9.17.0"
+    "@vitejs/plugin-react": "^5.1.1",
+    "vite": "^7.3.1",
+    "typescript": "~5.9.3",
+    "tailwindcss": "^4.1.18",
+    "postcss": "^8.5.6",
+    "autoprefixer": "^10.4.24",
+    "eslint": "^9.39.1"
   }
 }
 ```
@@ -581,7 +645,110 @@ class ClassRangeService
 
 ---
 
-### 11. **Dependency Injection via Service Container**
+### 11. **Error Response Trait Pattern**
+
+Eliminate duplicate error handling code by extracting shared HTTP error response logic into a reusable trait.
+
+**Pattern:** `ErrorResponseTrait` provides a single implementation of JSON error response formatting used by all API endpoints.
+
+**Location:** `gui/backend/src/API/Endpoints/ErrorResponseTrait.php`  
+**Since:** 1.3.0
+
+**Problem Solved:**  
+All 4 endpoints (`PhysicsEndpoint`, `ClassRangeEndpoint`, `ShipsEndpoint`, `ConfigEndpoint`) originally had identical `errorResponse()` private methods, creating maintenance burden and violating DRY principle.
+
+**Solution:** Extract the method into a trait that all endpoints can mix in.
+
+**Implementation:**
+```php
+/**
+ * Trait providing shared error response formatting for API endpoints.
+ */
+trait ErrorResponseTrait
+{
+    /**
+     * Creates a standardized JSON error response.
+     *
+     * @param Response $response PSR-7 response object
+     * @param string $message Human-readable error message
+     * @param int $statusCode HTTP status code (default: 400 Bad Request)
+     * @param string $errorCode Machine-readable error identifier
+     * @return Response JSON error response with appropriate status code
+     */
+    private function errorResponse(
+        Response $response,
+        string $message,
+        int $statusCode = 400,
+        string $errorCode = GUIException::ERROR_GENERIC
+    ): Response {
+        return $response
+            ->withStatus($statusCode)
+            ->withHeader('Content-Type', 'application/json')
+            ->withJson([
+                'error' => $message,
+                'code' => $errorCode
+            ]);
+    }
+}
+```
+
+**Usage:**
+```php
+class PhysicsEndpoint
+{
+    use ErrorResponseTrait;
+    
+    public function calculate(Request $request, Response $response): Response
+    {
+        try {
+            $dto = PhysicsRequest::fromArray($request->getParsedBody());
+            $result = $this->service->calculatePhysics($dto);
+            return $response->withJson($result);
+        } catch (GUIException $e) {
+            return $this->errorResponse(
+                $response,
+                $e->getMessage(),
+                400,
+                $e->getCode()
+            );
+        }
+    }
+}
+
+// All 4 endpoints use the same trait:
+class ClassRangeEndpoint { use ErrorResponseTrait; /* ... */ }
+class ShipsEndpoint { use ErrorResponseTrait; /* ... */ }
+class ConfigEndpoint { use ErrorResponseTrait; /* ... */ }
+```
+
+**Benefits:**
+- **DRY Principle:** Single source of truth for error response format
+- **Consistency:** All endpoints return identical error structures
+- **Maintainability:** Change error format in one place, all endpoints benefit
+- **Testability:** Trait can be tested independently
+- **Zero Overhead:** Traits copy code at compile time (no runtime performance cost)
+
+**Error Response Format:**
+```json
+{
+  "error": "Invalid configuration: Missing required field 'baseMass'",
+  "code": "ERROR_INVALID_CONFIG"
+}
+```
+
+**HTTP Status Codes Used:**
+- `400 Bad Request` - Invalid input data
+- `404 Not Found` - Ship/engine ID not found
+- `500 Internal Server Error` - Unexpected failures
+
+**See Also:**
+- `public-api.md` → Backend API → ErrorResponseTrait
+- `file-tree.md` → `gui/backend/src/API/Endpoints/ErrorResponseTrait.php`
+- `constraints.md` → Error Handling Best Practices
+
+---
+
+### 12. **Dependency Injection via Service Container**
 
 Endpoints accept service dependencies via constructor injection, with service instantiation managed by a lightweight Service Container.
 
@@ -729,7 +896,57 @@ class ServiceContainer
 
 ---
 
-### 12. **Parameter Object Pattern**
+**ServiceContainer Service Registration (Complete):**
+```php
+// Router.php - All services registered in v1.3
+public static function register(App $app): void
+{
+    $container = new ServiceContainer();
+
+    // Core services with injectable dependencies
+    $container->register('config', fn() => new ConfigService(
+        __DIR__ . '/../../../config/build-config.json'  // Default path
+    ));
+    
+    $container->register('ship_data', fn() => new ShipDataService(
+        null,  // ShipDefs - null uses X4 Core singleton
+        null   // EngineDefs - null uses X4 Core singleton
+    ));
+    
+    $container->register('physics', fn(ServiceContainer $c) => 
+        new PhysicsService($c->get('ship_data'))
+    );
+    
+    $container->register('class_range', fn(ServiceContainer $c) =>
+        new ClassRangeService($c->get('ship_data'))
+    );
+
+    // Instantiate endpoints with container-managed services
+    $physicsEndpoint = new PhysicsEndpoint($container->get('physics'));
+    $classRangeEndpoint = new ClassRangeEndpoint(
+        $container->get('ship_data'),
+        $container->get('class_range')
+    );
+    $shipsEndpoint = new ShipsEndpoint($container->get('ship_data'));
+    $configEndpoint = new ConfigEndpoint($container->get('config'));
+
+    // Register routes
+    $app->post('/api/calculate/physics', [$physicsEndpoint, 'calculate']);
+    $app->post('/api/calculate/class-range', [$classRangeEndpoint, 'calculate']);
+    $app->get('/api/ships/types', [$shipsEndpoint, 'getTypes']);
+    $app->get('/api/config', [$configEndpoint, 'get']);
+    // ... more routes
+}
+```
+
+**Key DI Improvements in v1.3:**
+- **ConfigService:** Accepts injectable `$configPath` with production default for testability
+- **ShipDataService:** Accepts optional `ShipDefs`/`EngineDefs` injection (defaults to X4 Core singletons)
+- **PhysicsService:** Receives `ShipDataService` via constructor (no internal instantiation)
+- **All Endpoints:** All 4 endpoints now use constructor injection for service dependencies
+- **Instance-Level Caches:** `ShipDataService` uses instance properties (no `static` keyword) for test isolation
+
+### 13. **Parameter Object Pattern**
 
 Methods with excessive parameters (>5) use parameter objects to group related values and improve maintainability.
 
@@ -857,7 +1074,7 @@ return $this->buildPhysicsResponse(
 **Framework:** PHPUnit 12.5+  
 **Test Suites:** Unit, Integration  
 **Coverage:** HTML reports via `composer test:coverage`  
-**Test Count:** 25+ tests (44 assertions)  
+**Test Count:** 30+ tests (50+ assertions)  
 **Execution Time:** <0.2 seconds
 
 ### Directory Structure

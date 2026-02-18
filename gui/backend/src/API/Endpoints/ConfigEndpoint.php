@@ -16,11 +16,13 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class ConfigEndpoint
 {
+    use ErrorResponseTrait;
+
     private ConfigService $configService;
 
-    public function __construct()
+    public function __construct(ConfigService $configService)
     {
-        $this->configService = new ConfigService();
+        $this->configService = $configService;
     }
 
     /**
@@ -103,21 +105,5 @@ class ConfigEndpoint
         } catch (\Exception $e) {
             return $this->errorResponse($response, 'Validation failed: ' . $e->getMessage(), 500);
         }
-    }
-
-    /**
-     * Create an error response.
-     *
-     * @param ResponseInterface $response
-     * @param string $message
-     * @param int $statusCode
-     * @return ResponseInterface
-     */
-    private function errorResponse(ResponseInterface $response, string $message, int $statusCode): ResponseInterface
-    {
-        $response->getBody()->write(json_encode(['error' => $message], JSON_THROW_ON_ERROR));
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus($statusCode);
     }
 }

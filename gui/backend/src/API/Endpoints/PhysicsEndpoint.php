@@ -17,6 +17,8 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class PhysicsEndpoint
 {
+    use ErrorResponseTrait;
+
     /**
      * @param PhysicsService $physicsService Injected physics calculation service
      */
@@ -89,20 +91,5 @@ class PhysicsEndpoint
             return $this->errorResponse($response, 'Internal server error: ' . $e->getMessage(), 500);
         }
     }
-
-    /**
-     * Create an error response.
-     *
-     * @param ResponseInterface $response
-     * @param string $message
-     * @param int $statusCode
-     * @return ResponseInterface
-     */
-    private function errorResponse(ResponseInterface $response, string $message, int $statusCode): ResponseInterface
-    {
-        $response->getBody()->write(json_encode(['error' => $message], JSON_THROW_ON_ERROR));
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus($statusCode);
-    }
 }
+

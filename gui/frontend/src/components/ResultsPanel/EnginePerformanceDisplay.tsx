@@ -61,14 +61,14 @@ export function EnginePerformanceDisplay({ enginePerformance, engine }: EnginePe
             label="Thrust-to-Weight Ratio (TWR)"
             original={enginePerformance.originalTWR}
             adjusted={enginePerformance.adjustedTWR}
-            percent={enginePerformance.reductionPercent}
+            percent={enginePerformance.twrReductionPercent}
             decimals={3}
           />
           <ValueComparison
             label="Estimated Acceleration"
             original={enginePerformance.originalAcceleration}
             adjusted={enginePerformance.adjustedAcceleration}
-            percent={enginePerformance.reductionPercent}
+            percent={enginePerformance.twrReductionPercent}
             unit="m/s²"
             decimals={2}
           />
@@ -121,7 +121,7 @@ export function EnginePerformanceDisplay({ enginePerformance, engine }: EnginePe
       <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
         <div className="text-xs text-yellow-800">
           <strong>Note:</strong> TWR reduction of{' '}
-          <span className="font-semibold">{Math.abs(enginePerformance.reductionPercent).toFixed(1)}%</span> means the ship
+          <span className="font-semibold">{Math.abs(enginePerformance.twrReductionPercent).toFixed(1)}%</span> means the ship
           will accelerate more slowly when fully loaded. Adjust physics parameters to compensate.
         </div>
       </div>

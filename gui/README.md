@@ -389,7 +389,7 @@ curl http://localhost:8080/api/config
 
 **Backend** (PHPUnit 12.5+):
 
-The GUI backend has a comprehensive PHPUnit test suite with 25+ tests covering Services, Utils, DTOs, and API layers.
+The GUI backend has a comprehensive PHPUnit test suite with 61 tests and 1,028 assertions covering Services, Utils, DTOs, and API layers.
 
 ```bash
 # Run all tests (Unit + Integration)
@@ -410,8 +410,11 @@ composer test:coverage
 
 **Test Structure:**
 - **Unit Tests:** `tests/Unit/` - Fast, isolated tests with mocked dependencies
+  - **ShipDataService:** 12 tests with 870 assertions covering all public methods and cache isolation
+  - **ConfigService:** 16 tests with 46 assertions covering CRUD operations and comprehensive validation
+  - **PhysicsService:** 8 tests covering core business logic with determinism verification
 - **Integration Tests:** `tests/Integration/` - Full workflow tests (future endpoint tests)
-- **Execution Time:** All 25 tests run in <0.2 seconds
+- **Execution Time:** All 61 tests run in <0.6 seconds with 1,028 assertions
 - **Coverage:** HTML reports generated in `coverage/` directory
 
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#testing) for detailed testing guidelines.
@@ -547,5 +550,5 @@ For issues, bugs, or questions:
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: February 12, 2026
+**Version**: 1.4  
+**Last Updated**: February 18, 2026

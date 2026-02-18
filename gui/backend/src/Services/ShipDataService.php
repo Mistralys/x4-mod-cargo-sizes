@@ -21,7 +21,6 @@ class ShipDataService
      * Ship type constants matching CargoSizeExtractor.
      */
     private const string SHIP_TYPE_TRANSPORT = 'trans';
-    private const string SHIP_TYPE_STORAGE = 'storage';
     private const string SHIP_TYPE_MINING = 'miner';
     private const string SHIP_TYPE_AUXILIARY = 'resupplier';
     private const string SHIP_TYPE_CARRIER = 'carrier';
@@ -43,15 +42,36 @@ class ShipDataService
 
     /**
      * Cache for loaded ships (loaded once per request).
-     * @var array<string,array>|null
+     * @var array<array{id: string, name: string, type: string, size: string, mass: float, cargo: float}>|null
      */
-    private static ?array $shipCache = null;
+    private ?array $shipCache = null;
 
     /**
      * Cache for loaded engines (loaded once per request).
      * @var array<array{id: string, name: string, thrustForward: float, thrustReverse: float, thrustBoost: float, thrustTravel: float}>|null
      */
-    private static ?array $engineCache = null;
+    private ?array $engineCache = null;
+
+    private ?ShipDefs $shipDefs;
+    private ?EngineDefs $engineDefs;
+
+    public function __construct(
+        ?ShipDefs $shipDefs = null,
+        ?EngineDefs $engineDefs = null
+    ) {
+        $this->shipDefs = $shipDefs;
+        $this->engineDefs = $engineDefs;
+    }
+
+    private function getShipDefs(): ShipDefs
+    {
+        return $this->shipDefs ?? ShipDefs::getInstance();
+    }
+
+    private function getEngineDefs(): EngineDefs
+    {
+        return $this->engineDefs ?? EngineDefs::getInstance();
+    }
 
     /**
      * Gets all supported ship types.
@@ -75,7 +95,7 @@ class ShipDataService
      * Ships are classified by their macro name patterns (e.g., "ship_arg_m_trans_...")
      *
      * @param string $type Ship type (transport, mining, auxiliary, carrier)
-     * @return array<array{id: string, name: string, size: string, mass: float, cargo: float}>
+     * @return array<array{id: string, name: string, type: string, size: string, mass: float, cargo: float}>
      * @throws GUIException
      */
     public function getShipsByType(string $type): array
@@ -89,13 +109,13 @@ class ShipDataService
         }
 
         // Load all ships if not cached
-        if (self::$shipCache === null) {
+        if ($this->shipCache === null) {
             $this->loadAllShips();
         }
 
         // Filter by requested type
         return array_values(array_filter(
-            self::$shipCache,
+            $this->shipCache,
             fn($ship) => $ship['type'] === $type
         ));
     }
@@ -110,7 +130,7 @@ class ShipDataService
     public function getShipDetails(string $shipId): ShipDetails
     {
         try {
-            $shipDef = ShipDefs::getInstance()->getByID($shipId);
+            $shipDef = $this->getShipDefs()->getByID($shipId);
             
             // Determine ship type from macro name
             $type = $this->determineShipType($shipId);
@@ -200,7 +220,7 @@ class ShipDataService
     {
         try {
             // Load all engines if not cached
-            if (self::$engineCache === null) {
+            if ($this->engineCache === null) {
                 $this->loadAllEngines();
             }
             
@@ -208,7 +228,7 @@ class ShipDataService
             
             // Filter engines by size
             return array_values(array_filter(
-                self::$engineCache,
+                $this->engineCache,
                 function($engine) use ($size) {
                     $engineSize = $this->extractEngineSize($engine['id']);
                     return $engineSize === $size;
@@ -234,11 +254,11 @@ class ShipDataService
     {
         try {
             // Load all engines if not cached
-            if (self::$engineCache === null) {
+            if ($this->engineCache === null) {
                 $this->loadAllEngines();
             }
 
-            return self::$engineCache;
+            return $this->engineCache;
         } catch (\Exception $e) {
             throw new GUIException(
                 'Failed to get engines: ' . $e->getMessage(),
@@ -273,8 +293,8 @@ class ShipDataService
      */
     private function loadAllShips(): void
     {
-        self::$shipCache = [];
-        $shipDefs = ShipDefs::getInstance();
+        $this->shipCache = [];
+        $shipDefs = $this->getShipDefs();
 
         foreach ($shipDefs->getAll() as $shipDef) {
             $shipId = $shipDef->getID();
@@ -296,7 +316,7 @@ class ShipDataService
             // Get cargo capacity with fallback
             $cargo = $this->getShipCargoCapacity($shipDef, $size);
             
-            self::$shipCache[] = [
+            $this->shipCache[] = [
                 'id' => $shipId,
                 'name' => $shipDef->getLabel(),
                 'type' => $shipType,
@@ -368,8 +388,8 @@ class ShipDataService
      */
     private function loadAllEngines(): void
     {
-        self::$engineCache = [];
-        $engineDefs = EngineDefs::getInstance();
+        $this->engineCache = [];
+        $engineDefs = $this->getEngineDefs();
 
         foreach ($engineDefs->getAll() as $engineDef) {
             $thrustForward = $engineDef->getThrustForward();
@@ -377,7 +397,7 @@ class ShipDataService
             $thrustBoost = $engineDef->getBoostThrust();
             $thrustTravel = $engineDef->getTravelThrust();
             
-            self::$engineCache[] = [
+            $this->engineCache[] = [
                 'id' => $engineDef->getID(),
                 'name' => $engineDef->getLabel(),
                 'thrustForward' => $thrustForward,
@@ -406,3 +426,4 @@ class ShipDataService
         return 'm'; // Default to medium
     }
 }
+

@@ -35,9 +35,9 @@ class ShipDetails
         public array $engines = [],
         public readonly int $engineCount = 0,
         public readonly string $cargoType = 'none',
-        public readonly array $dragOriginal = [],
-        public readonly array $inertiaOriginal = [],
-        public readonly array $jerkOriginal = []
+        public readonly array $dragOriginal = ['forward' => 0.0, 'reverse' => 0.0, 'horizontal' => 0.0, 'vertical' => 0.0, 'pitch' => 0.0, 'yaw' => 0.0, 'roll' => 0.0],
+        public readonly array $inertiaOriginal = ['pitch' => 0.0, 'yaw' => 0.0, 'roll' => 0.0],
+        public readonly array $jerkOriginal = ['strafe' => 0.0, 'angular' => 0.0, 'forwardAccel' => 0.0, 'forwardDecel' => 0.0, 'forwardRatio' => 0.0, 'boostAccel' => 0.0, 'boostRatio' => 0.0, 'travelAccel' => 0.0, 'travelDecel' => 0.0, 'travelRatio' => 0.0]
     ) {}
 
     /**

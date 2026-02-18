@@ -400,28 +400,5 @@ class ClassRangeService
             return $values[$middle];
         }
     }
-
-    /**
-     * Finds the appropriate tier for a cargo multiplier.
-     *
-     * @param array<array{maxMultiplier: float, reductionPercent: float}> $tiers
-     * @param float $multiplier
-     * @return ReductionTier
-     * @throws GUIException
-     */
-    private function findTierForMultiplier(array $tiers, float $multiplier): ReductionTier
-    {
-        foreach ($tiers as $tierData) {
-            $tier = ReductionTier::fromArray($tierData);
-            if ($tier->appliesToMultiplier($multiplier)) {
-                return $tier;
-            }
-        }
-
-        throw new GUIException(
-            sprintf('No tier found for cargo multiplier %.1fx', $multiplier),
-            '',
-            GUIException::ERROR_UNHANDLED_SHIP_TYPE
-        );
-    }
 }
+

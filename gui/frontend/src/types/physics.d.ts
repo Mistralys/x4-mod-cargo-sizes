@@ -63,39 +63,48 @@ export interface AdjustedInertia {
 }
 
 /**
- * Jerk values for one thrust mode (accel/decel).
+ * Jerk values for thrust modes that support both acceleration and deceleration (forward, travel).
  */
 export interface JerkValues {
   accel: number;
-  accelPercent: number;
   decel: number;
-  decelPercent: number;
+}
+
+/**
+ * Jerk values for boost mode (acceleration only, no deceleration).
+ */
+export interface JerkBoostValues {
+  accel: number;
 }
 
 /**
  * Adjusted jerk values for all thrust modes.
+ * Note: boost only has acceleration, forward and travel have both accel and decel.
  */
 export interface AdjustedJerk {
   forward: JerkValues;
-  boost: JerkValues;
+  boost: JerkBoostValues;
   travel: JerkValues;
 }
 
 /**
  * Engine performance metrics.
+ * Matches EnginePerformance DTO toArray() output.
  */
 export interface EnginePerformance {
+  engineId: string;
+  thrustForward: number;
   originalTWR: number;
   adjustedTWR: number;
-  reductionPercent: number;
+  twrReductionPercent: number;
   originalAcceleration: number;
   adjustedAcceleration: number;
-  engineCount?: number;
-  topSpeed?: number | null;
-  topSpeedAdjusted?: number | null;
-  topSpeedReverse?: number | null;
-  topSpeedBoost?: number | null;
-  topSpeedTravel?: number | null;
+  engineCount: number;
+  topSpeed: number | null;
+  topSpeedAdjusted: number | null;
+  topSpeedReverse: number | null;
+  topSpeedBoost: number | null;
+  topSpeedTravel: number | null;
 }
 
 /**

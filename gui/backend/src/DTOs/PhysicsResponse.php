@@ -25,9 +25,9 @@ class PhysicsResponse
      * @param array{pitch: float, yaw: float, roll: float} $inertiaOriginal Original inertia values
      * @param array{pitch: float, yaw: float, roll: float} $inertiaAdjusted Adjusted inertia values
      * @param array{pitch: float, yaw: float, roll: float} $inertiaPercentChange Inertia percentage changes
-     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float, decel: float}, travel: array{accel: float, decel: float}} $jerkOriginal Original jerk values
-     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float, decel: float}, travel: array{accel: float, decel: float}} $jerkAdjusted Adjusted jerk values
-     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float, decel: float}, travel: array{accel: float, decel: float}} $jerkPercentChange Jerk percentage changes
+     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float}, travel: array{accel: float, decel: float}} $jerkOriginal Original jerk values
+     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float}, travel: array{accel: float, decel: float}} $jerkAdjusted Adjusted jerk values
+     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float}, travel: array{accel: float, decel: float}} $jerkPercentChange Jerk percentage changes
      * @param EnginePerformance|null $enginePerformance Optional engine performance metrics
      * @param string $activeTier Active tier description
      * @param float|null $topSpeedOriginal Original top speed in m/s (null if no engine)

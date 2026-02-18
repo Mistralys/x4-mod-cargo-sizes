@@ -10,6 +10,7 @@ use Mistralys\X4\Mods\CargoSizesMod\GUI\API\Endpoints\ClassRangeEndpoint;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Services\ShipDataService;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Services\PhysicsService;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Services\ClassRangeService;
+use Mistralys\X4\Mods\CargoSizesMod\GUI\Services\ConfigService;
 use Slim\App;
 
 /**
@@ -32,8 +33,11 @@ class Router
         $container = new ServiceContainer();
 
         // Register services with factory functions
+        $container->register('config_service', fn() => new ConfigService());
         $container->register('ship_data', fn() => new ShipDataService());
-        $container->register('physics', fn() => new PhysicsService());
+        $container->register('physics', fn(ServiceContainer $c) => 
+            new PhysicsService($c->get('ship_data'))
+        );
         $container->register('class_range', fn(ServiceContainer $c) =>
             new ClassRangeService($c->get('ship_data'))
         );
@@ -41,9 +45,10 @@ class Router
         // Instantiate endpoints with container-managed services
         $physicsEndpoint = new PhysicsEndpoint($container->get('physics'));
         $classRangeEndpoint = new ClassRangeEndpoint(
-            $container->get('ship_data'),
             $container->get('class_range')
         );
+        $shipsEndpoint = new ShipsEndpoint($container->get('ship_data'));
+        $configEndpoint = new ConfigEndpoint($container->get('config_service'));
 
         // Physics calculation endpoints
         $app->post('/api/calculate/physics', [$physicsEndpoint, 'calculate']);
@@ -52,16 +57,14 @@ class Router
         // Class-range calculation endpoint
         $app->post('/api/calculate/class-range', [$classRangeEndpoint, 'calculate']);
 
-        // Ship data endpoints (no DI dependencies)
-        $shipsEndpoint = new ShipsEndpoint();
+        // Ship data endpoints
         $app->get('/api/ships/types', [$shipsEndpoint, 'getTypes']);
         $app->get('/api/ships/{type}', [$shipsEndpoint, 'getShipsByType']);
         $app->get('/api/ships/details/{shipId}', [$shipsEndpoint, 'getDetails']);
         $app->get('/api/ships/{shipId}/engines', [$shipsEndpoint, 'getEnginesForShip']);
         $app->get('/api/engines', [$shipsEndpoint, 'getAllEngines']);
 
-        // Configuration endpoints (no DI dependencies)
-        $configEndpoint = new ConfigEndpoint();
+        // Configuration endpoints
         $app->get('/api/config', [$configEndpoint, 'get']);
         $app->post('/api/config', [$configEndpoint, 'update']);
         $app->post('/api/config/validate', [$configEndpoint, 'validate']);

@@ -19,17 +19,17 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class ClassRangeEndpoint
 {
+    use ErrorResponseTrait;
+
     /**
      * Constructor with dependency injection.
      * 
      * Dependencies are injected to enable unit testing and follow SOLID principles.
      * 
-     * @param ShipDataService $shipDataService Ship data provider
      * @param ClassRangeService $classRangeService Physics calculation service
      * @since 3.0.0 (changed from no-args constructor to DI)
      */
     public function __construct(
-        private readonly ShipDataService $shipDataService,
         private readonly ClassRangeService $classRangeService
     ) {}
 
@@ -63,20 +63,5 @@ class ClassRangeEndpoint
             return $this->errorResponse($response, 'Internal server error: ' . $e->getMessage(), 500);
         }
     }
-
-    /**
-     * Create an error response.
-     *
-     * @param ResponseInterface $response
-     * @param string $message
-     * @param int $statusCode
-     * @return ResponseInterface
-     */
-    private function errorResponse(ResponseInterface $response, string $message, int $statusCode): ResponseInterface
-    {
-        $response->getBody()->write(json_encode(['error' => $message], JSON_THROW_ON_ERROR));
-        return $response
-            ->withHeader('Content-Type', 'application/json')
-            ->withStatus($statusCode);
-    }
 }
+

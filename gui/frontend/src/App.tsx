@@ -4,7 +4,7 @@
  * @package X4 Cargo Sizes Mod - Physics Tuning GUI
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Header } from './components/Layout/Header';
 import { TwoColumnLayout } from './components/Layout/TwoColumnLayout';
 import { Footer } from './components/Layout/Footer';
@@ -24,7 +24,6 @@ function App() {
   const [currentConfig, setCurrentConfig] = useState<BuildConfig | null>(null);
   const [selectedMultiplier, setSelectedMultiplier] = useState<number>(2);
   const [selectedEngineId, setSelectedEngineId] = useState<string | null>(null);
-  const [selectedEngine, setSelectedEngine] = useState<any>(null);
   const [shipDetails, setShipDetails] = useState<ShipDetails | null>(null);
   const [engines, setEngines] = useState<EngineDef[]>([]);
   
@@ -32,14 +31,12 @@ function App() {
   const [shipId, setShipId] = useState<string | null>(null);
   const [shipType, setShipType] = useState<string | null>(null);
 
-  // Update selected engine when engine ID or engines array changes
-  useEffect(() => {
+  // Derive selected engine from engine ID and engines array (memoized)
+  const selectedEngine = useMemo<EngineDef | null>(() => {
     if (selectedEngineId && engines.length > 0) {
-      const engine = engines.find((e) => e.id === selectedEngineId);
-      setSelectedEngine(engine || null);
-    } else {
-      setSelectedEngine(null);
+      return engines.find((e) => e.id === selectedEngineId) || null;
     }
+    return null;
   }, [selectedEngineId, engines]);
 
   // Trigger physics calculation when all required data is available

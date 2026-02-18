@@ -16,7 +16,14 @@ use Mistralys\X4\Mods\CargoSizesMod\GUI\Exceptions\GUIException;
  */
 class ConfigService
 {
-    private const string CONFIG_PATH = __DIR__ . '/../../../../config/build-config.json';
+    private const string DEFAULT_CONFIG_PATH = __DIR__ . '/../../../../config/build-config.json';
+
+    private string $configPath;
+
+    public function __construct(string $configPath = self::DEFAULT_CONFIG_PATH)
+    {
+        $this->configPath = $configPath;
+    }
 
     /**
      * Gets the current configuration.
@@ -27,15 +34,15 @@ class ConfigService
     public function getConfig(): array
     {
         try {
-            if (!file_exists(self::CONFIG_PATH)) {
+            if (!file_exists($this->configPath)) {
                 throw new GUIException(
-                    'Configuration file not found: ' . self::CONFIG_PATH,
+                    'Configuration file not found: ' . $this->configPath,
                     '',
                     GUIException::ERROR_UNHANDLED_SHIP_TYPE
                 );
             }
 
-            $content = file_get_contents(self::CONFIG_PATH);
+            $content = file_get_contents($this->configPath);
             if ($content === false) {
                 throw new GUIException(
                     'Failed to read configuration file',
@@ -79,7 +86,7 @@ class ConfigService
         try {
             $json = json_encode($config, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             
-            $result = file_put_contents(self::CONFIG_PATH, $json);
+            $result = file_put_contents($this->configPath, $json);
             
             if ($result === false) {
                 throw new GUIException(

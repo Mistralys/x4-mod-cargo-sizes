@@ -4,7 +4,7 @@
  * @package X4 Cargo Sizes Mod - Physics Tuning GUI
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useShipData } from '../../hooks/useShipData';
 import type { ShipType, ShipSize } from '../../types/ships';
 import { TypeFilter } from './TypeFilter';
@@ -41,7 +41,6 @@ export function ShipSelector({ onShipChange, onEngineChange, onShipDetailsChange
   const [selectedType, setSelectedType] = useState<ShipType | null>(null);
   const [selectedSize, setSelectedSize] = useState<ShipSize | null>(null);
   const [selectedEngineId, setSelectedEngineId] = useState<string | null>(null);
-  const [filteredShips, setFilteredShips] = useState(ships);
 
   // Load ship types on mount
   useEffect(() => {
@@ -55,13 +54,12 @@ export function ShipSelector({ onShipChange, onEngineChange, onShipDetailsChange
     }
   }, [selectedType, loadShipsByType]);
 
-  // Filter ships by size
-  useEffect(() => {
+  // Filter ships by size (memoized)
+  const filteredShips = useMemo(() => {
     if (selectedSize) {
-      setFilteredShips(ships.filter((ship) => ship.size === selectedSize));
-    } else {
-      setFilteredShips(ships);
+      return ships.filter((ship) => ship.size === selectedSize);
     }
+    return ships;
   }, [ships, selectedSize]);
 
   // Load engines when ship changes
