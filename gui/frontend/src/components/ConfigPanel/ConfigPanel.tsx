@@ -6,11 +6,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useConfig } from '../../hooks/useConfig';
-import type { BuildConfig, FlightMechanics } from '../../types/config';
-import type { Tier } from '../../types/physics';
+import type { BuildConfig } from '../../types/config';
 import { SliderInput } from './SliderInput';
-import { TierEditor } from './TierEditor';
-import { ToggleInput } from './ToggleInput';
 import { ActionButtons } from './ActionButtons';
 import { CargoMultiplierSelector } from './CargoMultiplierSelector';
 import { Spinner } from '../UI/Spinner';
@@ -24,18 +21,8 @@ interface ConfigPanelProps {
 const TOOLTIPS = {
   cargoMultiplier:
     'The multiplier applied to ship cargo capacity. Higher values create larger cargo holds but also increase ship mass, requiring physics adjustments.',
-  dragReductionFactor:
-    'Base multiplier for drag reduction across all axes. Higher values reduce more drag to compensate for increased mass. Range: 0.5 (less reduction) to 2.0 (more reduction).',
-  inertiaImpactFactor:
-    'Controls how much the mass ratio affects rotational inertia. 0.0 = no inertia adjustment, 1.0 = full mass ratio applied to inertia. Affects ship turning responsiveness.',
   accelerationResponsiveness:
-    'Compensates the acceleration loss from increased mass. 0.0 = no compensation (full mass penalty), 0.5 = restore half the lost acceleration, 1.0 = fully restore original acceleration. Applied via per-ship acceleration factors in the mod.',
-  dragReductionTiers:
-    'Tier-based drag reduction percentages. Each tier applies additional reduction based on cargo multiplier ranges. Higher multipliers get more aggressive reduction.',
-  jerkReductionTiers:
-    'Tier-based jerk (acceleration rate) reduction percentages. Balances acceleration feel across different cargo multiplier levels.',
-  useEffectiveRatioCap:
-    'When enabled, caps the effective mass ratio to prevent extreme physics behavior at very high cargo multipliers. Recommended for multipliers above 10x.',
+    'Compensates the acceleration loss from increased mass. 1.0 = fully preserve original acceleration feel. 0.7 = slightly heavier feel. Range: 0.1 (very sluggish) to 5.0 (very snappy).',
 };
 
 export function ConfigPanel({ onChange }: ConfigPanelProps) {
@@ -64,7 +51,7 @@ export function ConfigPanel({ onChange }: ConfigPanelProps) {
   }, [localConfig, selectedMultiplier, onChange]);
 
   const handleFlightMechanicsChange = useCallback(
-    (field: keyof FlightMechanics, value: number | boolean | Tier[]) => {
+    (field: 'accelerationResponsiveness', value: number) => {
       if (!localConfig) return;
 
       setLocalConfig({
@@ -153,66 +140,20 @@ export function ConfigPanel({ onChange }: ConfigPanelProps) {
             />
           </div>
 
-          {/* Base Physics Parameters */}
+          {/* Acceleration Responsiveness */}
           <div className="pb-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Base Parameters</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Physics Tuning</h3>
 
             <SliderInput
-              label="Drag Reduction Factor"
-              value={flightMechanics.dragReductionFactor}
-              min={0.5}
-              max={2.0}
-              step={0.1}
-              onChange={(value) => handleFlightMechanicsChange('dragReductionFactor', value)}
-              tooltip={TOOLTIPS.dragReductionFactor}
-            />
-
-            <SliderInput
-              label="Inertia Impact Factor"
-              value={flightMechanics.inertiaImpactFactor}
-              min={0.0}
-              max={1.0}
-              step={0.05}
-              onChange={(value) => handleFlightMechanicsChange('inertiaImpactFactor', value)}
-              tooltip={TOOLTIPS.inertiaImpactFactor}
-            />
-
-            <SliderInput
-              label="Acceleration Compensation"
+              label="Acceleration Responsiveness"
               value={flightMechanics.accelerationResponsiveness}
-              min={0.0}
-              max={1.0}
+              min={0.1}
+              max={5.0}
               step={0.05}
               onChange={(value) =>
                 handleFlightMechanicsChange('accelerationResponsiveness', value)
               }
               tooltip={TOOLTIPS.accelerationResponsiveness}
-            />
-
-            <ToggleInput
-              label="Use Effective Ratio Cap"
-              checked={flightMechanics.useEffectiveRatioCap}
-              onChange={(value) => handleFlightMechanicsChange('useEffectiveRatioCap', value)}
-              tooltip={TOOLTIPS.useEffectiveRatioCap}
-            />
-          </div>
-
-          {/* Tier-Based Reductions */}
-          <div className="pb-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Tier-Based Reductions</h3>
-
-            <TierEditor
-              label="Drag Reduction Tiers"
-              tiers={flightMechanics.dragReductionTiers}
-              onChange={(value) => handleFlightMechanicsChange('dragReductionTiers', value)}
-              tooltip={TOOLTIPS.dragReductionTiers}
-            />
-
-            <TierEditor
-              label="Jerk Reduction Tiers"
-              tiers={flightMechanics.jerkReductionTiers}
-              onChange={(value) => handleFlightMechanicsChange('jerkReductionTiers', value)}
-              tooltip={TOOLTIPS.jerkReductionTiers}
             />
           </div>
 

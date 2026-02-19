@@ -15,4 +15,5 @@ use Mistralys\X4\Mods\CargoSizesMod\CargoSizeException;
  */
 class GUIException extends CargoSizeException
 {
+    public const ERROR_CONFIG_INVALID = 178010;
 }

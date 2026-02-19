@@ -43,12 +43,6 @@ export function WorstCaseCard({ worstCase, bestCase, engineSelected }: WorstCase
             <span className="text-gray-600">Mass Ratio:</span>
             <span className="font-semibold text-gray-900">{ship.massRatio.toFixed(2)}x</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Drag Change:</span>
-            <span className="font-semibold text-gray-900">
-              {ship.dragChangePercent.toFixed(1)}%
-            </span>
-          </div>
 
           {/* Top speed (only if engine selected) */}
           {engineSelected && ship.topSpeed && (

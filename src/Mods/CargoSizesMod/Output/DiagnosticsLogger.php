@@ -9,21 +9,15 @@ declare(strict_types=1);
 namespace Mistralys\X4\Mods\CargoSizesMod\Output;
 
 use AppUtils\FileHelper;
-use Mistralys\X4\Mods\CargoSizesMod\Build\BuildConfig;
-use Mistralys\X4\Mods\CargoSizesMod\Build\ReductionTier;
-use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\PhysicsCalculator;
 use Mistralys\X4\Mods\CargoSizesMod\ShipResult;
 use function Mistralys\X4\dec;
-use function Mistralys\X4\dec2;
 
 /**
  * Diagnostics logger for physics calculations.
  *
- * Generates comprehensive reports showing:
- * - Ship-by-ship calculations
- * - Tier applications
- * - Configuration used
- * - Warnings for extreme cases
+ * Generates reports showing:
+ * - Ship-by-ship calculations (mass ratio, acceleration scaling, responsiveness)
+ * - Warnings for extreme mass ratios
  *
  * **Purpose:** Transparency and debugging for users and developers.
  *
@@ -63,92 +57,56 @@ class DiagnosticsLogger
      * Logs calculations for a ship.
      *
      * @param ShipResult $ship Ship result
-     * @param PhysicsCalculator $physics Physics calculations
-     * @param ReductionTier $dragTier Drag reduction tier applied
-     * @param ReductionTier $jerkTier Jerk reduction tier applied
-     * @param BuildConfig $config Build configuration
+     * @param float $massRatio Adjusted-full-mass / original-full-mass ratio
+     * @param float $accelerationScalingFactor Pre-calculated scaling: massRatio × responsiveness
+     * @param float $responsiveness Acceleration responsiveness factor from build config
      * @return void
      */
     public function logShip(
         ShipResult $ship,
-        PhysicsCalculator $physics,
-        ReductionTier $dragTier,
-        ReductionTier $jerkTier,
-        BuildConfig $config
+        float $massRatio,
+        float $accelerationScalingFactor,
+        float $responsiveness
     ): void
     {
-        $shipName = $ship->getShipLabel();
         $shipID = $ship->getShipXMLFile()->getMacroName();
-        $shipSize = $ship->getSize();
-        $shipType = $ship->getShipType();
 
         $this->ships[$shipID] = [
-            'name' => $shipName,
+            'name' => $ship->getShipLabel(),
             'id' => $shipID,
-            'size' => $shipSize,
-            'type' => $shipType,
-            'baseMass' => $physics->getBaseMass(),
-            'originalCargo' => $physics->getBaseMass() === $physics->getOriginalFullMass()
-                ? 0
-                : $physics->getOriginalFullMass() - $physics->getBaseMass(),
-            'adjustedCargo' => $physics->getAdjustedFullMass() - $physics->getBaseMass(),
-            'originalFullMass' => $physics->getOriginalFullMass(),
-            'adjustedFullMass' => $physics->getAdjustedFullMass(),
-            'massRatio' => $physics->getMassRatio(),
-            'cargoMultiplier' => $physics->getCargoMultiplier(),
-            'effectiveRatio' => $physics->getEffectiveRatio(),
-            'dragTierMaxMultiplier' => $dragTier->getMaxMultiplier(),
-            'dragTierReduction' => $dragTier->getReductionPercent(),
-            'jerkTierMaxMultiplier' => $jerkTier->getMaxMultiplier(),
-            'jerkTierReduction' => $jerkTier->getReductionPercent(),
-            'inertiaImpactFactor' => $config->getInertiaImpactFactor(),
-            'accelerationResponsiveness' => $config->getAccelerationResponsiveness(),
-            'effectiveRatioCap' => $config->getUseEffectiveRatioCap()
+            'size' => $ship->getSize(),
+            'type' => $ship->getShipType(),
+            'massRatio' => $massRatio,
+            'accelerationScalingFactor' => $accelerationScalingFactor,
+            'responsiveness' => $responsiveness,
         ];
 
-        // Check for warnings
-        $this->checkWarnings($shipID, $shipName, $physics);
+        $this->checkWarnings($shipID, $massRatio);
     }
 
     /**
-     * Checks for and logs warnings for extreme cases.
+     * Checks for and logs warnings for extreme mass ratios.
      *
      * @param string $shipID Ship ID
-     * @param string $shipName Ship name
-     * @param PhysicsCalculator $physics Physics calculations
+     * @param float $massRatio Mass ratio
      * @return void
      */
-    private function checkWarnings(string $shipID, string $shipName, PhysicsCalculator $physics): void
+    private function checkWarnings(string $shipID, float $massRatio): void
     {
-        // High mass ratio (>5.0x)
-        if ($physics->getMassRatio() > 5.0) {
+        if ($massRatio > 10.0) {
+            $this->addWarning(
+                $shipID,
+                sprintf(
+                    'Extreme mass ratio (%.2fx) - test carefully in-game',
+                    $massRatio
+                )
+            );
+        } elseif ($massRatio > 5.0) {
             $this->addWarning(
                 $shipID,
                 sprintf(
                     'High mass ratio (%.2fx) - test carefully in-game',
-                    $physics->getMassRatio()
-                )
-            );
-        }
-
-        // Extreme mass ratio (>10.0x)
-        if ($physics->getMassRatio() > 10.0) {
-            $this->addWarning(
-                $shipID,
-                sprintf(
-                    'Extreme mass ratio (%.2fx) - effective ratio cap applied',
-                    $physics->getMassRatio()
-                )
-            );
-        }
-
-        // Very low base mass (<100kg)
-        if ($physics->getBaseMass() < 100) {
-            $this->addWarning(
-                $shipID,
-                sprintf(
-                    'Very low base mass (%.1f kg) - physics may be unstable',
-                    $physics->getBaseMass()
+                    $massRatio
                 )
             );
         }
@@ -192,7 +150,7 @@ class DiagnosticsLogger
     }
 
     /**
-     * Generates a comprehensive diagnostics report.
+     * Generates a diagnostics report.
      *
      * @return string Report text
      */
@@ -204,7 +162,7 @@ class DiagnosticsLogger
         $report[] = str_repeat('=', 80);
         $report[] = 'CARGO SIZE MOD - Physics Diagnostics Report';
         $report[] = 'Build Date: ' . $this->buildDate;
-        $report[] = 'Configuration: Tier-based system';
+        $report[] = 'Configuration: Acceleration-only (preserve original flight feel)';
         $report[] = str_repeat('=', 80);
         $report[] = '';
 
@@ -214,79 +172,38 @@ class DiagnosticsLogger
             $report[] = sprintf('Class: %s %s', strtoupper($data['size']), $data['type']);
             $report[] = str_repeat('-', 80);
 
-            $report[] = 'Mass:';
-            $report[] = sprintf('  Base mass: %s kg', dec($data['baseMass'], 0));
-            $report[] = sprintf(
-                '  Original cargo: %s | New cargo: %s (%.1fx multiplier)',
-                dec($data['originalCargo'], 0),
-                dec($data['adjustedCargo'], 0),
-                $data['cargoMultiplier']
-            );
-            $report[] = sprintf(
-                '  Original full: %s kg | New full: %s kg',
-                dec($data['originalFullMass'], 0),
-                dec($data['adjustedFullMass'], 0)
-            );
-
             $massIncreasePercent = ($data['massRatio'] - 1.0) * 100;
             $report[] = sprintf(
-                '  Mass ratio: %.2fx (%.0f%% increase)',
+                'Mass ratio: %.2fx (%.0f%% increase)',
                 $data['massRatio'],
                 $massIncreasePercent
             );
 
-            if ($data['massRatio'] !== $data['effectiveRatio']) {
-                $report[] = sprintf(
-                    '  Effective ratio: %.2fx (capped from %.2fx)',
-                    $data['effectiveRatio'],
-                    $data['massRatio']
-                );
-            }
-
             $report[] = '';
-            $report[] = 'Tiers Applied:';
+            $report[] = 'Acceleration:';
             $report[] = sprintf(
-                '  Drag tier: %.1fx → %d%% reduction (%d%% drag remains)',
-                $data['dragTierMaxMultiplier'],
-                (int)($data['dragTierReduction'] * 100),
-                (int)((1.0 - $data['dragTierReduction']) * 100)
+                '  Scaling factor: %.3fx (= mass ratio × responsiveness = %.2f × %.2f)',
+                $data['accelerationScalingFactor'],
+                $data['massRatio'],
+                $data['responsiveness']
             );
             $report[] = sprintf(
-                '  Jerk tier: %.1fx → %d%% reduction (%d%% jerk remains)',
-                $data['jerkTierMaxMultiplier'],
-                (int)($data['jerkTierReduction'] * 100),
-                (int)((1.0 - $data['jerkTierReduction']) * 100)
-            );
-
-            $report[] = '';
-            $report[] = 'Configuration:';
-            $inertiaIncreasePercent = (($data['massRatio'] - 1.0) * $data['inertiaImpactFactor']) * 100;
-            $report[] = sprintf(
-                '  Inertia impact factor: %.2f (inertia increased %.0f%%)',
-                $data['inertiaImpactFactor'],
-                $inertiaIncreasePercent
-            );
-            $report[] = sprintf(
-                '  Acceleration responsiveness: %.2f (%s feel)',
-                $data['accelerationResponsiveness'],
-                $data['accelerationResponsiveness'] === 1.0 ? 'vanilla' : ($data['accelerationResponsiveness'] < 1.0 ? 'heavier' : 'lighter')
-            );
-            $report[] = sprintf(
-                '  Effective ratio cap: %s',
-                $data['effectiveRatioCap'] ? 'ENABLED' : 'DISABLED'
+                '  Responsiveness: %.2f (%s)',
+                $data['responsiveness'],
+                $data['responsiveness'] === 1.0 ? 'vanilla feel' : ($data['responsiveness'] < 1.0 ? 'heavier feel' : 'lighter feel')
             );
 
             // Status and warnings
             $hasWarnings = isset($this->warnings[$shipID]);
             if ($hasWarnings) {
                 $report[] = '';
-                $report[] = 'Status: ⚠️ WARNING';
+                $report[] = 'Status: WARNING';
                 foreach ($this->warnings[$shipID] as $warning) {
                     $report[] = '  - ' . $warning;
                 }
             } else {
                 $report[] = '';
-                $report[] = 'Status: ✓ OK';
+                $report[] = 'Status: OK';
             }
 
             $report[] = '';
@@ -302,7 +219,7 @@ class DiagnosticsLogger
         $report[] = sprintf('  Ships with mass ratio < 2.0x: %d (low impact)', $categorized['low']);
         $report[] = sprintf('  Ships with mass ratio 2.0-5.0x: %d (moderate impact)', $categorized['moderate']);
         $report[] = sprintf('  Ships with mass ratio 5.0-10.0x: %d (high impact - test carefully)', $categorized['high']);
-        $report[] = sprintf('  Ships with mass ratio > 10.0x: %d (extreme - effective ratio cap applied)', $categorized['extreme']);
+        $report[] = sprintf('  Ships with mass ratio > 10.0x: %d (extreme - test carefully)', $categorized['extreme']);
         $report[] = '';
         $report[] = sprintf('Warnings: %d ships flagged for testing', count($this->warnings));
 
@@ -311,11 +228,7 @@ class DiagnosticsLogger
             $firstShip = reset($this->ships);
             $report[] = '';
             $report[] = 'Configuration Used:';
-            $report[] = '  Drag reduction tiers: 4 tiers (10%, 30%, 50%, 70% max)';
-            $report[] = '  Jerk reduction tiers: 4 tiers (5%, 15%, 25%, 35% max)';
-            $report[] = sprintf('  Inertia impact factor: %.2f', $firstShip['inertiaImpactFactor']);
-            $report[] = sprintf('  Acceleration responsiveness: %.2f', $firstShip['accelerationResponsiveness']);
-            $report[] = sprintf('  Effective ratio cap: %s', $firstShip['effectiveRatioCap'] ? 'ENABLED' : 'DISABLED');
+            $report[] = sprintf('  Acceleration responsiveness: %.2f', $firstShip['responsiveness']);
         }
 
         $report[] = '';

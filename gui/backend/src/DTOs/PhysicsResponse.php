@@ -4,7 +4,11 @@ declare(strict_types=1);
 namespace Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs;
 
 /**
- * Output contract for physics calculations with all calculated values.
+ * Output contract for physics calculations.
+ *
+ * Contains mass ratio metrics, acceleration scaling factor, and optional
+ * engine performance data. Drag, inertia, and jerk are no longer included
+ * because only acceleration is overridden in the new mod design.
  *
  * @package X4 Cargo Sizes Mod
  * @subpackage GUI Backend
@@ -13,47 +17,29 @@ class PhysicsResponse
 {
     /**
      * @param float $massRatio Mass ratio (adjustedFullMass / originalFullMass)
-     * @param float $effectiveRatio Effective ratio (capped if enabled)
      * @param float $originalFullMass Original full mass
      * @param float $adjustedFullMass Adjusted full mass
      * @param float $massIncrease Mass increase amount
      * @param float $originalCargo Original cargo capacity
      * @param float $adjustedCargo Adjusted cargo capacity
-     * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float} $dragOriginal Original drag values
-     * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float} $dragAdjusted Adjusted drag values
-     * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float} $dragPercentChange Drag percentage changes
-     * @param array{pitch: float, yaw: float, roll: float} $inertiaOriginal Original inertia values
-     * @param array{pitch: float, yaw: float, roll: float} $inertiaAdjusted Adjusted inertia values
-     * @param array{pitch: float, yaw: float, roll: float} $inertiaPercentChange Inertia percentage changes
-     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float}, travel: array{accel: float, decel: float}} $jerkOriginal Original jerk values
-     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float}, travel: array{accel: float, decel: float}} $jerkAdjusted Adjusted jerk values
-     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float}, travel: array{accel: float, decel: float}} $jerkPercentChange Jerk percentage changes
+     * @param float $accelerationScalingFactor Computed scaling: massRatio × responsiveness
+     * @param float $accelerationResponsiveness Responsiveness input (1.0 = preserve feel)
      * @param EnginePerformance|null $enginePerformance Optional engine performance metrics
-     * @param string $activeTier Active tier description
      * @param float|null $topSpeedOriginal Original top speed in m/s (null if no engine)
      * @param float|null $topSpeedAdjusted Adjusted top speed in m/s (null if no engine)
      * @param float|null $accelerationOriginal Original acceleration in m/s² (null if no engine)
      * @param float|null $accelerationAdjusted Adjusted acceleration in m/s² (null if no engine)
      */
     public function __construct(
-        public float $massRatio,
-        public float $effectiveRatio,
-        public float $originalFullMass,
-        public float $adjustedFullMass,
-        public float $massIncrease,
-        public float $originalCargo,
-        public float $adjustedCargo,
-        public array $dragOriginal,
-        public array $dragAdjusted,
-        public array $dragPercentChange,
-        public array $inertiaOriginal,
-        public array $inertiaAdjusted,
-        public array $inertiaPercentChange,
-        public array $jerkOriginal,
-        public array $jerkAdjusted,
-        public array $jerkPercentChange,
-        public ?EnginePerformance $enginePerformance = null,
-        public string $activeTier = '',
+        public readonly float $massRatio,
+        public readonly float $originalFullMass,
+        public readonly float $adjustedFullMass,
+        public readonly float $massIncrease,
+        public readonly float $originalCargo,
+        public readonly float $adjustedCargo,
+        public readonly float $accelerationScalingFactor,
+        public readonly float $accelerationResponsiveness,
+        public readonly ?EnginePerformance $enginePerformance = null,
         public readonly ?float $topSpeedOriginal = null,
         public readonly ?float $topSpeedAdjusted = null,
         public readonly ?float $accelerationOriginal = null,
@@ -67,35 +53,19 @@ class PhysicsResponse
     {
         $data = [
             'massRatio' => $this->massRatio,
-            'effectiveRatio' => $this->effectiveRatio,
             'originalFullMass' => $this->originalFullMass,
             'adjustedFullMass' => $this->adjustedFullMass,
             'massIncrease' => $this->massIncrease,
             'originalCargo' => $this->originalCargo,
             'adjustedCargo' => $this->adjustedCargo,
-            'drag' => [
-                'original' => $this->dragOriginal,
-                'adjusted' => $this->dragAdjusted,
-                'percentChange' => $this->dragPercentChange
-            ],
-            'inertia' => [
-                'original' => $this->inertiaOriginal,
-                'adjusted' => $this->inertiaAdjusted,
-                'percentChange' => $this->inertiaPercentChange
-            ],
-            'jerk' => [
-                'original' => $this->jerkOriginal,
-                'adjusted' => $this->jerkAdjusted,
-                'percentChange' => $this->jerkPercentChange
-            ],
-            'activeTier' => $this->activeTier
+            'accelerationScalingFactor' => $this->accelerationScalingFactor,
+            'accelerationResponsiveness' => $this->accelerationResponsiveness,
         ];
 
         if ($this->enginePerformance !== null) {
             $data['enginePerformance'] = $this->enginePerformance->toArray();
         }
 
-        // Add absolute metrics (null when no engine selected)
         if ($this->topSpeedOriginal !== null) {
             $data['topSpeed'] = [
                 'original' => $this->topSpeedOriginal,

@@ -119,6 +119,8 @@ class CargoSizeExtractor
 
     private DataFolders $dataFolders;
 
+    private ?DiagnosticsLogger $diagnosticsLogger = null;
+
     public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder)
     {
         $this->outputFolder = $outputFolder;
@@ -154,8 +156,7 @@ class CargoSizeExtractor
         FileCollection::reset();
 
         // Create diagnostics logger for physics calculations
-        $diagnosticsLogger = new DiagnosticsLogger();
-        FlightMechanicsOverrideFile::setDiagnosticsLogger($diagnosticsLogger);
+        $this->diagnosticsLogger = new DiagnosticsLogger();
 
         $this->analyzeCargoMacros();
         $this->analyzeShipMacros();
@@ -166,19 +167,19 @@ class CargoSizeExtractor
         
         // Write diagnostics report to build folder
         Console::header('Writing diagnostics report');
-        Console::line1('Total ships logged to diagnostics: %d', $diagnosticsLogger->getShipCount());
+        Console::line1('Total ships logged to diagnostics: %d', $this->diagnosticsLogger->getShipCount());
         $diagnosticsPath = $this->outputFolder->getPath() . '/physics-diagnostics.txt';
-        $diagnosticsLogger->writeToFile($diagnosticsPath);
+        $this->diagnosticsLogger->writeToFile($diagnosticsPath);
         Console::line1('Diagnostics written to: [%s]', $diagnosticsPath);
         
         // Display warnings summary
-        $warnings = $diagnosticsLogger->getWarnings();
+        $warnings = $this->diagnosticsLogger->getWarnings();
         if (!empty($warnings)) {
             Console::line1('Physics warnings generated: %d (see physics-diagnostics.txt for details)', count($warnings));
         }
 
         // Clear logger
-        FlightMechanicsOverrideFile::clearDiagnosticsLogger();
+        $this->diagnosticsLogger = null;
     }
 
     /**
@@ -418,15 +419,15 @@ class CargoSizeExtractor
             )
         );
 
-        $this->registerOverrideFile(
-            $typeKey,
+        $flightFile = new FlightMechanicsOverrideFile(
+            $baseFolder,
             $multiplier,
-            new FlightMechanicsOverrideFile(
-                $baseFolder,
-                $multiplier,
-                $result
-            )
+            $result
         );
+        if ($this->diagnosticsLogger !== null) {
+            $flightFile->setDiagnosticsLogger($this->diagnosticsLogger);
+        }
+        $this->registerOverrideFile($typeKey, $multiplier, $flightFile);
     }
 
     private function registerOverrideFile(string $typeKey, int|float $multiplier, BaseOverrideFile $file) : void

@@ -91,7 +91,7 @@ export function ClassRangePanel({ data, loading, error, engineSelected }: ClassR
       <div className="space-y-6">
         {/* Always-shown metrics */}
         <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-3">Mass & Physics Changes</h4>
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">Mass & Acceleration</h4>
           <div className="space-y-1">
             {data.metrics.massRatio && (
               <RangeBar
@@ -102,31 +102,13 @@ export function ClassRangePanel({ data, loading, error, engineSelected }: ClassR
                 label={data.metrics.massRatio.label}
               />
             )}
-            {data.metrics.dragChange && (
+            {data.metrics.accelerationScaling && (
               <RangeBar
-                min={data.metrics.dragChange.min}
-                max={data.metrics.dragChange.max}
-                median={data.metrics.dragChange.median}
-                unit={data.metrics.dragChange.unit}
-                label={data.metrics.dragChange.label}
-              />
-            )}
-            {data.metrics.inertiaChange && (
-              <RangeBar
-                min={data.metrics.inertiaChange.min}
-                max={data.metrics.inertiaChange.max}
-                median={data.metrics.inertiaChange.median}
-                unit={data.metrics.inertiaChange.unit}
-                label={data.metrics.inertiaChange.label}
-              />
-            )}
-            {data.metrics.jerkChange && (
-              <RangeBar
-                min={data.metrics.jerkChange.min}
-                max={data.metrics.jerkChange.max}
-                median={data.metrics.jerkChange.median}
-                unit={data.metrics.jerkChange.unit}
-                label={data.metrics.jerkChange.label}
+                min={data.metrics.accelerationScaling.min}
+                max={data.metrics.accelerationScaling.max}
+                median={data.metrics.accelerationScaling.median}
+                unit={data.metrics.accelerationScaling.unit}
+                label={data.metrics.accelerationScaling.label}
               />
             )}
           </div>

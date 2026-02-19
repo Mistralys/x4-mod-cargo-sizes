@@ -18,7 +18,6 @@ class ShipMetricSummary
      * @param float $massRatio Mass ratio (adjustedFullMass / originalFullMass)
      * @param array{original: float, adjusted: float}|null $topSpeed Top speed values (null if no engine)
      * @param array{original: float, adjusted: float}|null $acceleration Acceleration values (null if no engine)
-     * @param float $dragChangePercent Average drag change percentage
      */
     public function __construct(
         public readonly string $shipId,
@@ -26,8 +25,7 @@ class ShipMetricSummary
         public readonly string $size,
         public readonly float $massRatio,
         public readonly ?array $topSpeed,
-        public readonly ?array $acceleration,
-        public readonly float $dragChangePercent
+        public readonly ?array $acceleration
     ) {}
 
     /**
@@ -39,8 +37,7 @@ class ShipMetricSummary
             'shipId' => $this->shipId,
             'shipName' => $this->shipName,
             'size' => $this->size,
-            'massRatio' => $this->massRatio,
-            'dragChangePercent' => $this->dragChangePercent
+            'massRatio' => $this->massRatio
         ];
 
         if ($this->topSpeed !== null) {
