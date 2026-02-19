@@ -10,6 +10,11 @@ interface AbsoluteMetricCardProps {
   adjustedValue: number;
   unit: string;
   contextPhrase?: string;
+  /**
+   * When true, an increase is shown as green (good) and a decrease as red (bad).
+   * Default (false): increase = red, decrease = green (suitable for mass/drag metrics).
+   */
+  higherIsBetter?: boolean;
 }
 
 /**
@@ -21,11 +26,18 @@ export function AbsoluteMetricCard({
   adjustedValue,
   unit,
   contextPhrase,
+  higherIsBetter = false,
 }: AbsoluteMetricCardProps) {
   // Calculate delta percentage
   const delta = originalValue !== 0 ? ((adjustedValue - originalValue) / originalValue) * 100 : 0;
   const deltaSign = delta > 0 ? '+' : '';
-  const deltaColor = delta > 0 ? 'text-red-600' : delta < 0 ? 'text-green-600' : 'text-gray-600';
+
+  // Color logic: green = good, red = bad.
+  // higherIsBetter=true: increase (delta>0) is green, decrease is red (e.g. speed, acceleration)
+  // higherIsBetter=false: increase is red, decrease is green (e.g. mass, drag)
+  const isPositiveChange = higherIsBetter ? delta > 0 : delta < 0;
+  const isNegativeChange = higherIsBetter ? delta < 0 : delta > 0;
+  const deltaColor = isPositiveChange ? 'text-green-600' : isNegativeChange ? 'text-red-600' : 'text-gray-600';
 
   const formatValue = (value: number): string => {
     return `${value.toFixed(1)}${unit}`;

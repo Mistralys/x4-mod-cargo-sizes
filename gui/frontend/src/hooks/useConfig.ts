@@ -42,7 +42,7 @@ const DEFAULT_CONFIG: BuildConfig = {
     ],
     inertiaImpactFactor: 0.5,
     useEffectiveRatioCap: true,
-    accelerationResponsiveness: 1.0,
+    accelerationResponsiveness: 0.5,
   },
 };
 

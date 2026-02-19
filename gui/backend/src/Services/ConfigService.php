@@ -147,11 +147,11 @@ class ConfigService
                 }
             }
 
-            // Validate accelerationResponsiveness
+            // Validate accelerationResponsiveness (0.0 = no compensation, 1.0 = fully restore original)
             if (isset($flightMechanics['accelerationResponsiveness'])) {
                 $factor = $flightMechanics['accelerationResponsiveness'];
-                if (!is_numeric($factor) || $factor < 0.1 || $factor > 5.0) {
-                    $errors[] = 'accelerationResponsiveness must be between 0.1 and 5.0';
+                if (!is_numeric($factor) || $factor < 0.0 || $factor > 1.0) {
+                    $errors[] = 'accelerationResponsiveness must be between 0.0 and 1.0';
                 }
             }
 

@@ -29,7 +29,7 @@ const TOOLTIPS = {
   inertiaImpactFactor:
     'Controls how much the mass ratio affects rotational inertia. 0.0 = no inertia adjustment, 1.0 = full mass ratio applied to inertia. Affects ship turning responsiveness.',
   accelerationResponsiveness:
-    'Adjusts acceleration compensation. Higher values increase jerk (acceleration rate) to maintain responsiveness. Range: 0.5 (slower) to 2.0 (faster).',
+    'Compensates the acceleration loss from increased mass. 0.0 = no compensation (full mass penalty), 0.5 = restore half the lost acceleration, 1.0 = fully restore original acceleration. Applied via per-ship acceleration factors in the mod.',
   dragReductionTiers:
     'Tier-based drag reduction percentages. Each tier applies additional reduction based on cargo multiplier ranges. Higher multipliers get more aggressive reduction.',
   jerkReductionTiers:
@@ -178,11 +178,11 @@ export function ConfigPanel({ onChange }: ConfigPanelProps) {
             />
 
             <SliderInput
-              label="Acceleration Responsiveness"
+              label="Acceleration Compensation"
               value={flightMechanics.accelerationResponsiveness}
-              min={0.5}
-              max={2.0}
-              step={0.1}
+              min={0.0}
+              max={1.0}
+              step={0.05}
               onChange={(value) =>
                 handleFlightMechanicsChange('accelerationResponsiveness', value)
               }

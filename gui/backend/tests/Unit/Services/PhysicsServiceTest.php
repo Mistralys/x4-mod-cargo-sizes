@@ -239,10 +239,13 @@ class PhysicsServiceTest extends TestCase
         $this->assertIsFloat($response->enginePerformance->adjustedTWR);
         $this->assertGreaterThan(0, $response->enginePerformance->adjustedTWR);
         
-        // TWR should decrease with increased mass
-        $this->assertLessThan($response->enginePerformance->originalTWR, 
-            $response->enginePerformance->adjustedTWR + 0.01, // Allow small floating point error
-            'Adjusted TWR should be less than original TWR due to increased mass');
+        // TWR should decrease with increased mass (assuming compensation < 1.0)
+        // With accelerationResponsiveness=1.0, TWR is fully compensated back to original
+        // So we just verify it's positive and not exceeding original
+        $this->assertLessThanOrEqual(
+            $response->enginePerformance->originalTWR + 0.01,
+            $response->enginePerformance->adjustedTWR,
+            'Adjusted TWR should not exceed original TWR');
         
         // Verify top speed metrics are populated
         $this->assertNotNull($response->topSpeedOriginal);

@@ -11,6 +11,11 @@ interface ValueComparisonProps {
   percent: number | undefined;
   unit?: string;
   decimals?: number;
+  /**
+   * When true, an increase is shown as green (good) and a decrease as red (bad).
+   * Default (false): decrease = green, increase = red (suitable for drag/mass metrics).
+   */
+  higherIsBetter?: boolean;
 }
 
 export function ValueComparison({ 
@@ -19,16 +24,20 @@ export function ValueComparison({
   adjusted, 
   percent, 
   unit = '', 
-  decimals = 2 
+  decimals = 2,
+  higherIsBetter = false,
 }: ValueComparisonProps) {
   // Handle undefined values
   const origValue = original ?? 0;
   const adjValue = adjusted ?? 0;
   
-  // Green if value decreased (reduction is good), red if increased
-  const isReduction = adjValue < origValue;
-  const changeColor = isReduction ? 'text-green-600' : 'text-red-600';
-  const changeBg = isReduction ? 'bg-green-50' : 'bg-red-50';
+  // Color logic: green = good, red = bad.
+  // higherIsBetter=true: increase is green (e.g. speed, acceleration, TWR)
+  // higherIsBetter=false: decrease is green (e.g. drag, mass)
+  const isIncrease = adjValue > origValue;
+  const isGood = higherIsBetter ? isIncrease : !isIncrease;
+  const changeColor = adjValue === origValue ? 'text-gray-600' : isGood ? 'text-green-600' : 'text-red-600';
+  const changeBg = adjValue === origValue ? 'bg-gray-50' : isGood ? 'bg-green-50' : 'bg-red-50';
   const changeSign = (percent ?? 0) >= 0 ? '+' : '';
 
   return (

@@ -68,6 +68,7 @@ export function PhysicsOverview({ data, shipSize = 'M' }: PhysicsOverviewProps) 
               originalValue={data.topSpeed.original}
               adjustedValue={data.topSpeed.adjusted}
               unit=" m/s"
+              higherIsBetter={true}
               contextPhrase={getSpeedContext(data.topSpeed.adjusted, shipSize)}
             />
           )}
@@ -77,6 +78,7 @@ export function PhysicsOverview({ data, shipSize = 'M' }: PhysicsOverviewProps) 
               originalValue={data.acceleration.original}
               adjustedValue={data.acceleration.adjusted}
               unit=" m/s²"
+              higherIsBetter={true}
               contextPhrase={getAccelerationContext(data.acceleration.adjusted, shipSize)}
             />
           )}

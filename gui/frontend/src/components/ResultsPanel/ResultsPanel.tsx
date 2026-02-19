@@ -126,6 +126,7 @@ export function ResultsPanel({
                 originalValue={data.topSpeed.original}
                 adjustedValue={data.topSpeed.adjusted}
                 unit=" m/s"
+                higherIsBetter={true}
                 contextPhrase="Maximum velocity with current engine configuration"
               />
             )}
@@ -135,7 +136,8 @@ export function ResultsPanel({
                 originalValue={data.acceleration.original}
                 adjustedValue={data.acceleration.adjusted}
                 unit=" m/s²"
-                contextPhrase="Time to reach top speed affected by mass changes"
+                higherIsBetter={true}
+                contextPhrase="Compensated via acceleration factor — tune with Acceleration Compensation slider"
               />
             )}
           </div>

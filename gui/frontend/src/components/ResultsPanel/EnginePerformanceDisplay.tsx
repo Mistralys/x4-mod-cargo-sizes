@@ -63,6 +63,7 @@ export function EnginePerformanceDisplay({ enginePerformance, engine }: EnginePe
             adjusted={enginePerformance.adjustedTWR}
             percent={enginePerformance.twrReductionPercent}
             decimals={3}
+            higherIsBetter={true}
           />
           <ValueComparison
             label="Estimated Acceleration"
@@ -71,6 +72,7 @@ export function EnginePerformanceDisplay({ enginePerformance, engine }: EnginePe
             percent={enginePerformance.twrReductionPercent}
             unit="m/s²"
             decimals={2}
+            higherIsBetter={true}
           />
         </div>
 
@@ -87,6 +89,7 @@ export function EnginePerformanceDisplay({ enginePerformance, engine }: EnginePe
                   percent={((enginePerformance.topSpeedAdjusted - enginePerformance.topSpeed) / enginePerformance.topSpeed) * 100}
                   unit="m/s"
                   decimals={1}
+                  higherIsBetter={true}
                 />
               )}
               {enginePerformance.topSpeedReverse != null && (

@@ -101,6 +101,8 @@ class PhysicsService
                     $calculator->getOriginalFullMass(),
                     $calculator->getAdjustedFullMass(),
                     $originalDrag->getForward(),
+                    $adjustedDrag->getForward(),
+                    $request->accelerationResponsiveness,
                     $engineCount
                 );
             }
@@ -141,7 +143,9 @@ class PhysicsService
      * @param string $engineId Engine identifier
      * @param float $originalMass Original ship mass
      * @param float $adjustedMass Adjusted ship mass
-     * @param float $dragForward Forward drag coefficient
+     * @param float $dragForward Original forward drag coefficient
+     * @param float $adjustedDragForward Adjusted forward drag coefficient (after reduction)
+     * @param float $accelerationCompensation Acceleration compensation factor (0.0–1.0)
      * @param int $engineCount Number of engines (default: 1)
      * @return EnginePerformance
      * @throws GUIException
@@ -151,6 +155,8 @@ class PhysicsService
         float $originalMass,
         float $adjustedMass,
         float $dragForward,
+        float $adjustedDragForward,
+        float $accelerationCompensation,
         int $engineCount = 1
     ): EnginePerformance
     {
@@ -164,12 +170,12 @@ class PhysicsService
             $thrustTravel = $engineDef->getTravelThrust();
             
             // Calculate total thrust (per engine * engine count)
+            // Note: thrustForward/Reverse are absolute values in kN
+            // boostThrust/travelThrust are speed MULTIPLIERS, not thrust values
             $totalThrustForward = $thrustForward * $engineCount;
             $totalThrustReverse = $thrustReverse * $engineCount;
-            $totalThrustBoost = $thrustBoost * $engineCount;
-            $totalThrustTravel = $thrustTravel * $engineCount;
 
-            // Convert thrust from kN to N (1 kN = 1000 N)
+            // Convert thrust from kN to N (1 kN = 1000 N) - needed for acceleration (F=ma)
             $thrustNewtonsForward = $totalThrustForward * 1000.0;
 
             // Calculate TWR (Thrust-to-Weight Ratio)
@@ -181,13 +187,22 @@ class PhysicsService
             $originalTWR = $thrustNewtonsForward / $originalWeight;
             $adjustedTWR = $thrustNewtonsForward / $adjustedWeight;
 
+            // Apply acceleration compensation factor to TWR as well (same proportion)
+            $adjustedTWR = $adjustedTWR + $accelerationCompensation * ($originalTWR - $adjustedTWR);
+
             $twrReductionPercent = (($originalTWR - $adjustedTWR) / $originalTWR) * 100.0;
 
             // Calculate acceleration (F = ma, so a = F/m)
             $originalAcceleration = $thrustNewtonsForward / $originalMass;
-            $adjustedAcceleration = $thrustNewtonsForward / $adjustedMass;
+            $rawAdjustedAcceleration = $thrustNewtonsForward / $adjustedMass;
+
+            // Apply acceleration compensation factor (0.0 = no help, 1.0 = fully restore original)
+            // Formula: compensated = raw + factor × (original - raw)
+            $adjustedAcceleration = $rawAdjustedAcceleration + $accelerationCompensation * ($originalAcceleration - $rawAdjustedAcceleration);
             
-            // Calculate top speeds (topSpeed = totalThrust * 1000 / drag)
+            // Calculate top speeds using X4 formula: v_max = thrust_kN / drag_coefficient
+            // In X4: thrust (kN) / drag = speed (m/s). No unit conversion needed.
+            // Boost/travel thrust values are speed MULTIPLIERS on base top speed.
             // Only calculate if drag > 0 to avoid division by zero
             $topSpeed = null;
             $topSpeedAdjusted = null;
@@ -196,12 +211,16 @@ class PhysicsService
             $topSpeedTravel = null;
             
             if ($dragForward > 0) {
-                // Top speed formula: v = (thrust_kN * 1000) / drag
-                $topSpeed = ($totalThrustForward * 1000.0) / $dragForward;
-                $topSpeedAdjusted = $topSpeed; // Top speed doesn't change with mass, only acceleration does
-                $topSpeedReverse = ($totalThrustReverse * 1000.0) / $dragForward;
-                $topSpeedBoost = ($totalThrustBoost * 1000.0) / $dragForward;
-                $topSpeedTravel = ($totalThrustTravel * 1000.0) / $dragForward;
+                // Top speed = thrust (kN) / drag coefficient
+                $topSpeed = $totalThrustForward / $dragForward;
+                // Adjusted top speed uses the reduced drag (mod reduces drag to compensate for mass)
+                $topSpeedAdjusted = ($adjustedDragForward > 0)
+                    ? $totalThrustForward / $adjustedDragForward
+                    : $topSpeed;
+                $topSpeedReverse = $totalThrustReverse / $dragForward;
+                // Boost and travel thrust are speed multipliers in X4, not absolute kN values
+                $topSpeedBoost = $topSpeed * $thrustBoost;
+                $topSpeedTravel = $topSpeed * $thrustTravel;
             }
 
             return new EnginePerformance(

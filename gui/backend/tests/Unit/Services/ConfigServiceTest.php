@@ -76,7 +76,7 @@ class ConfigServiceTest extends TestCase
             'cargo-multipliers' => [2, 4, 8],
             'flight-mechanics' => [
                 'inertiaImpactFactor' => 1.0,
-                'accelerationResponsiveness' => 1.5,
+                'accelerationResponsiveness' => 0.5,
                 'useEffectiveRatioCap' => true,
                 'dragReductionTiers' => [
                     ['maxMultiplier' => 2.0, 'reductionPercent' => 0.10],
@@ -417,7 +417,7 @@ class ConfigServiceTest extends TestCase
     /**
      * Test validateConfig with accelerationResponsiveness bounds.
      *
-     * Validates that accelerationResponsiveness range is enforced (0.1 to 5.0).
+     * Validates that accelerationResponsiveness range is enforced (0.0 to 1.0).
      */
     public function testValidateConfigAccelerationResponsivenessOutOfRange(): void
     {
@@ -425,7 +425,7 @@ class ConfigServiceTest extends TestCase
         $config = [
             'cargo-multipliers' => [2, 4],
             'flight-mechanics' => [
-                'accelerationResponsiveness' => 10.0  // Max is 5.0
+                'accelerationResponsiveness' => 2.0  // Max is 1.0
             ]
         ];
 

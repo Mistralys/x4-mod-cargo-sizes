@@ -195,17 +195,30 @@ class ClassRangeService
                 $dragForward = $shipDef->getDragForward();
                 
                 if ($dragForward > 0) {
-                    $topSpeedValue = ($totalThrust * 1000.0) / $dragForward;
+                    // X4 top speed formula: v_max = thrust_kN / drag_coefficient
+                    $topSpeedOriginal = $totalThrust / $dragForward;
+                    // Adjusted top speed uses reduced drag (mod reduces drag to compensate mass)
+                    $adjustedDragFwd = $adjustedDrag->getForward();
+                    $topSpeedAdjustedValue = ($adjustedDragFwd > 0)
+                        ? $totalThrust / $adjustedDragFwd
+                        : $topSpeedOriginal;
                     $topSpeed = [
-                        'original' => $topSpeedValue,
-                        'adjusted' => $topSpeedValue // Top speed doesn't change with mass
+                        'original' => $topSpeedOriginal,
+                        'adjusted' => $topSpeedAdjustedValue
                     ];
                 }
                 
                 $thrustNewtons = $totalThrust * 1000.0;
+                $originalAccel = $thrustNewtons / $calculator->getOriginalFullMass();
+                $rawAdjustedAccel = $thrustNewtons / $calculator->getAdjustedFullMass();
+
+                // Apply acceleration compensation factor (0.0 = no help, 1.0 = fully restore original)
+                $accelFactor = $request->accelerationResponsiveness;
+                $compensatedAccel = $rawAdjustedAccel + $accelFactor * ($originalAccel - $rawAdjustedAccel);
+
                 $acceleration = [
-                    'original' => $thrustNewtons / $calculator->getOriginalFullMass(),
-                    'adjusted' => $thrustNewtons / $calculator->getAdjustedFullMass()
+                    'original' => $originalAccel,
+                    'adjusted' => $compensatedAccel
                 ];
             }
 
