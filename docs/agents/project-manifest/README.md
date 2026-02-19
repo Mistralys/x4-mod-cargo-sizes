@@ -185,9 +185,8 @@ An interactive web-based GUI for real-time physics tuning and configuration.
 src/Mods/CargoSizesMod/
 ├── Build/           (8 files) - Build orchestration
 ├── FOMOD/           (3 files) - Installer generation
-├── Output/          (13 files) - Override file generation
-│   ├── Jerk/        (5 files) - Jerk adjustments
-│   └── Physics/     (5 files) - Physics adjustments
+├── Output/          (12 files) - Override file generation
+│   └── Physics/     (3 files) - Physics adjustments
 ├── References/      (3 files) - Documentation generators
 └── XML/             (14 files) - XML parsing
     └── ShipXML/     (11 files) - Ship physics value objects
@@ -432,7 +431,7 @@ Before committing code that changes architecture:
 ### Domain Organization
 - **Build System:** 8 classes
 - **XML Processing:** 14 classes (11 value objects)
-- **Output Generation:** 13 classes (5 physics, 5 jerk)
+- **Output Generation:** 12 classes (3 physics)
 - **FOMOD System:** 3 classes
 - **Reference Generators:** 3 classes
 

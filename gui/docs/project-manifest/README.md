@@ -1,7 +1,7 @@
 # X4 Cargo Sizes Mod - Physics Tuning GUI - Project Manifest
 
-> **Version:** 1.4  
-> **Last Updated:** February 18, 2026  
+> **Version:** 1.5  
+> **Last Updated:** February 19, 2026  
 > **Purpose:** Source of Truth for AI Agents
 
 ---
@@ -57,7 +57,7 @@ Step 5: Study data-flows.md
 
 An **interactive web-based tool** for real-time physics tuning of the X4 Cargo Sizes Mod. It allows users to:
 
-- **Configure Physics Parameters:** Drag reduction, inertia, acceleration adjustments
+- **Configure Physics Parameters:** Acceleration responsiveness tuning
 - **Test in Real-Time:** See results within 500ms (300ms debounce + API call)
 - **Browse Game Data:** Ships, engines, thrust specifications
 - **Save Configurations:** Update `build-config.json` for use with `composer build`
@@ -84,7 +84,6 @@ An **interactive web-based tool** for real-time physics tuning of the X4 Cargo S
 ┌─────────────────────────────────────────────────┐
 │  Core Business Logic (Parent Mod)              │
 │  • PhysicsCalculator                            │
-│  • AdjustedDrag, AdjustedInertia, AdjustedJerk │
 │  • X4 Core library integration                  │
 └─────────────────────────────────────────────────┘
 ```
@@ -97,7 +96,7 @@ An **interactive web-based tool** for real-time physics tuning of the X4 Cargo S
 
 - **Frontend:** React 19.2, TypeScript 5.9.3 (strict mode), Vite 7.3.1
 - **Backend:** PHP 8.4, Slim Framework 4, Composer 2.x, PHPStan 1.6.1+ (level 5)
-- **Testing:** PHPUnit 12.5+ (61 tests, 1,028 assertions, <0.6s execution)
+- **Testing:** PHPUnit 12.5+ (49 tests, 986 assertions, <0.6s execution)
 - **Architecture:** Stateless REST API with reactive frontend
 - **Components:** ~15 React components, 3 backend services, 12 API endpoints
 - **Total Lines (est.):** ~3,500 across frontend/backend
@@ -109,7 +108,7 @@ An **interactive web-based tool** for real-time physics tuning of the X4 Cargo S
 - **Frontend Hooks:** 3 (usePhysicsCalculation, useShipData, useConfig)
 - **API Endpoints:** 12 (physics, bulk calc, ships, engines, config)
 - **DTOs:** 5 (PhysicsRequest, PhysicsResponse, ShipDetails, EnginePerformance, ValidationResult)
-- **React Components:** ~15 (ConfigPanel, ResultsPanel, ShipSelector, TierEditor, etc.)
+- **React Components:** ~14 (ConfigPanel, ResultsPanel, ShipSelector, etc.)
 
 ---
 
@@ -224,6 +223,7 @@ An agent has successfully integrated with this codebase when:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.5 | Feb 19, 2026 | Removed tier/drag/inertia/jerk UI and tests (WP-007/WP-008). Backend: 49 tests/986 assertions. Frontend: TierEditor deleted, acceleration-only schema. |
 | 1.4 | Feb 18, 2026 | PHPStan integration (level 5), test count increased to 61 tests/1,028 assertions, DI refactoring, corrected framework versions (React 19.2, TypeScript 5.9.3, Vite 7.3.1) |
 | 1.3 | Feb 17, 2026 | Added PHPUnit 12.5+ test infrastructure (25+ tests) |
 | 1.0 | Feb 12, 2026 | Initial Project Manifest creation |

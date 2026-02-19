@@ -1,7 +1,7 @@
 # Project Constraints & Rules
 
-> **Version:** 1.1
-> **Last Updated:** February 10, 2026
+> **Version:** 1.3
+> **Last Updated:** February 19, 2026
 > **Purpose:** Non-negotiable rules, conventions, and coding standards
 
 ---
@@ -239,7 +239,7 @@ namespace Mistralys\X4\Mods\CargoSizesMod\Output\Physics;
 ```php
 class CargoSizeExtractor { }
 class ShipXMLFile { }
-class AdjustedDrag { }
+class AdjustedAccelerationFactors { }
 ```
 
 **Suffixes:**
@@ -306,7 +306,7 @@ $adjustedCargo = $cargo * $multiplier;
 ```
 CargoSizeExtractor.php
 ShipXMLFile.php
-AdjustedDrag.php
+AdjustedAccelerationFactors.php
 ```
 
 **Exception:** `functions.php` (global functions file)
@@ -399,7 +399,7 @@ $result = new ShipResult($label, $type, $shipXML, $cargoXML);
 
 **RULE:** Prefer composition over inheritance except for:
 - Abstract base classes with template methods (e.g., `BaseXMLFile`)
-- Value object hierarchies (e.g., `AdjustedDrag extends Drag`)
+- Value object hierarchies (e.g., `AdjustedAccelerationFactors extends AccelerationFactors`)
 - Interface implementations
 
 ✅ **Good use of inheritance:**
@@ -425,20 +425,20 @@ class ShipXMLFile extends BaseXMLFile { }
 
 ✅ **Required:**
 ```php
-class AdjustedDrag extends Drag implements AdjustedValuesInterface
+class AdjustedAccelerationFactors extends AccelerationFactors implements AdjustedValuesInterface
 {
     use AdjustedValuesTrait;
     
     public function isIncrease(): bool
     {
-        return false;  // Drag is reduced
+        return true;  // Acceleration increases proportionally with mass ratio
     }
     
     public function getPrecision(): int
     {
-        return 3;  // 3 decimal places
+        return 6;  // 6 decimal places
     }
-}
+}  
 ```
 
 **Required methods:**
@@ -523,11 +523,10 @@ public function getPositions(): array
 ```
 tests/
 ├── bootstrap.php
-├── X4Tests/
-│   ├── Suites/
-│   │   └── CargoSizeTests.php
-│   └── Helpers/
-│       └── TestCase.php
+└── CargoSizesModTests/
+    ├── AccelerationAdjustmentTest.php
+    ├── AccelerationOverrideTest.php
+    └── PhysicsCalculatorTest.php
 ```
 
 ---
@@ -938,4 +937,6 @@ Before committing new code, verify:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3 | Feb 19, 2026 | Updated Adjusted Values Pattern example to use AdjustedAccelerationFactors (AdjustedDrag removed in v4.0 refactoring) |
+| 1.2 | Feb 19, 2026 | Updated test directory example to reflect actual test suite (CargoSizesModTests/) after tier-based system removal |
 | 1.0 | Feb 9, 2026 | Initial constraints documentation |

@@ -9,6 +9,3 @@ parameters:
         -
             message: '#Comparison operation ">" between .* and 0 is always true\.#'
             path: tests/CargoSizesModTests/AccelerationAdjustmentTest.php
-        -
-            message: '#Call to method PHPUnit\\Framework\\Assert::assertIs(Bool|Float)\(\) with .* will always evaluate to true\.#'
-            path: tests/CargoSizesModTests/TierSystemTest.php

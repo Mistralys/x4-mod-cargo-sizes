@@ -1,7 +1,7 @@
 # Tech Stack & Architectural Patterns
 
-> **Version:** 1.1
-> **Last Updated:** February 10, 2026
+> **Version:** 1.3
+> **Last Updated:** February 19, 2026
 > **Purpose:** Defines runtime environment, dependencies, and architectural patterns
 
 ---
@@ -102,12 +102,11 @@ Mod files are created using override definitions that represent changes to game 
 ```
 OverrideDef - Base override (macro, path, value)
 ├── TagOverrideDef - XML tag-based overrides
-│   ├── PhysicsOverrideDef - Physics value overrides
-│   └── JerkOverrideDef - Jerk movement overrides
+│   └── AccelerationOverrideDef - Acceleration-only overrides
 └── ...
 ```
 
-**Philosophy:** Each override knows how to render itself to XML format.
+**Philosophy:** Each override knows how to render itself to XML format. `FlightMechanicsOverrideFile` uses `AccelerationOverrideDef` exclusively.
 
 **Example:**
 ```php
@@ -134,12 +133,12 @@ All adjusted values implement `AdjustedValuesInterface`:
 
 **Example:**
 ```php
-$originalDrag = $shipXML->getDrag();
-$adjustedDrag = new AdjustedDrag($originalDrag, $reductionMultiplier);
+$originalAccel = $shipXML->getAccelerationFactors();
+$adjusted = new AdjustedAccelerationFactors($originalAccel, $scalingFactor);
 
-// AdjustedDrag knows it's a decrease
-if ($adjustedDrag->isIncrease()) {
-    // Won't execute - drag is reduced
+// AdjustedAccelerationFactors knows it's an increase
+if ($adjusted->isIncrease()) {
+    // Will execute - cargo increases mass, so acceleration increases proportionally
 }
 ```
 
@@ -292,36 +291,13 @@ Heavy reliance on `mistralys/x4-core` for:
 
 ## Physics Calculations
 
-The mod adjusts ship flight mechanics to compensate for increased cargo mass using a **tier-based system**.
+The mod adjusts ship flight mechanics to compensate for increased cargo mass using an **acceleration-only approach** that preserves the original flight feel.
 
-### 11. Tier-Based Adjustment System
+### 11. Acceleration-Only Adjustment System
 
-**Purpose:** Provide uniform, predictable physics adjustments regardless of ship's cargo-to-mass ratio.
+**Purpose:** Preserve the original flight feel by only modifying acceleration factors when cargo increases. Drag, inertia, and jerk remain at original game values.
 
-**Problem Solved:** Mass ratio varies wildly by ship type (combat: 1.1x, cargo: 9x for same cargo multiplier). Formula-based adjustments would create extreme values for cargo-heavy ships (99% drag reduction = undriveable).
-
-**Structure:**
-- Configuration defines tiers by cargo multiplier threshold
-- Each tier has independent reduction percentage
-- Ships find appropriate tier, apply that tier's adjustment
-- Safety caps prevent extreme adjustments
-
-**Example:**
-```json
-"dragReductionTiers": [
-  { "maxMultiplier": 2.0, "reductionPercent": 0.10 },
-  { "maxMultiplier": 4.0, "reductionPercent": 0.30 },
-  { "maxMultiplier": 8.0, "reductionPercent": 0.50 },
-  { "maxMultiplier": 999, "reductionPercent": 0.70 }
-]
-```
-All ships with ≤4x cargo get 30% drag reduction (70% drag remains).
-
-**Benefits:**
-- Uniform behavior across all ship types
-- Independently tunable per cargo multiplier
-- Safety caps built in (max 70% drag reduction)
-- User-friendly configuration without formula understanding
+**Design Decision:** The previous approach (tier-based drag/jerk/inertia adjustments) created unpredictable behaviour that diverged from vanilla flight characteristics. The acceleration-only approach scales acceleration exactly with mass — the minimal change needed to keep the ship flyable.
 
 ### Core Concept: Mass Ratio
 ```php
@@ -343,55 +319,29 @@ Shuyaku Vanguard with 4x cargo:
 
 ### Applied Adjustments
 
-1. **Drag Reduction (Tier-Based)** - Compensates for fixed engine thrust
+1. **Acceleration Factors (Proportional)** — Only physics value modified
    ```php
-   tier = findDragTierForMultiplier(cargoMultiplier);
-   newDrag = originalDrag * (1.0 - tier.reductionPercent);
+   accelerationScalingFactor = massRatio * responsiveness;
+   newAccel = originalAccel * accelerationScalingFactor;
    ```
-   Example: 4x cargo → 30% reduction → 70% drag remains
+   At `responsiveness = 1.0`: acceleration scales exactly with mass ratio (physics-correct)
 
-2. **Jerk Reduction (Tier-Based)** - Heavier ships accelerate more gradually
-   ```php
-   tier = findJerkTierForMultiplier(cargoMultiplier);
-   newJerk = originalJerk * (1.0 - tier.reductionPercent);
-   ```
-   Example: 4x cargo → 15% reduction → 85% jerk remains
-
-3. **Inertia Increase (Dampened)** - More mass = more rotational resistance
-   ```php
-   massIncrease = massRatio - 1.0;
-   dampenedIncrease = massIncrease * impactFactor;
-   newInertia = originalInertia * (1.0 + dampenedIncrease);
-   ```
-   Example: 2.82x mass, 0.5 factor → 90.9% inertia increase (not 182%)
-
-4. **Acceleration Factors (Proportional)** - Maintains responsiveness
-   ```php
-   newAccel = originalAccel * massRatio * responsiveness;
-   ```
-   Maintains `AccelFactor/Mass` ratio (physics-correct)
+**Drag, inertia, and jerk are NOT modified.** Original game values are preserved.
 
 ### Configuration Parameters (from build-config.json)
 
-**Tier Definitions:**
-- `dragReductionTiers` - Arrays of `{ maxMultiplier, reductionPercent }`
-- `jerkReductionTiers` - Arrays of `{ maxMultiplier, reductionPercent }`
+**Acceleration Tuning:**
+- `accelerationResponsiveness: 1.0` - Acceleration scaling multiplier (default 1.0 = proportional)
+  - Range: 0.1–5.0 (values > 1.0 = more responsive than proportional)
 
-**Dampening Factors:**
-- `inertiaImpactFactor: 0.5` - Dampens inertia increase (0.0-2.0)
-- `steeringIncreaseFactor: 1.0` - Compensates steering for mass (0.1-5.0)
-- `accelerationResponsiveness: 1.0` - Maintains vanilla responsiveness (0.1-5.0)
-
-**Safety Controls:**
-- `useEffectiveRatioCap: true` - Prevents extreme cargo-heavy ships from breaking physics
-
-**Philosophy:** Tier-based system ensures predictable behavior for all ship types. A combat ship and cargo ship with the same cargo multiplier (e.g., 4x) get the same tier adjustments, preventing formula-based extremes.
+**Philosophy:** The single `accelerationResponsiveness` parameter gives users precise control without exposing complex tier configurations. At `1.0`, the mod preserves vanilla flight feel with the minimum required physics change.
 
 **Key Classes:**
 - `PhysicsCalculator` - Calculates mass ratios and derived values
-- `ReductionTier` - Represents a single tier configuration
-- `BuildConfig` - Manages tier lookups and configuration access
-- `AdjustedDrag`, `AdjustedJerk`, `AdjustedInertia`, `AdjustedAccelerationFactors` - Apply tier-based calculations
+- `BuildConfig` - Configuration access (`getAccelerationResponsiveness()`)
+- `AdjustedAccelerationFactors` - Applies acceleration scaling
+- `AccelerationOverrideDef` - Renders the acceleration XML override
+- `DiagnosticsLogger` - Records per-ship calculations to diagnostics report
 
 *See [data-flows.md](data-flows.md) for complete physics flow diagrams.*
 
@@ -488,4 +438,5 @@ mod-name-vX.X.X-for-vX.X/
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3 | Feb 19, 2026 | Removed PhysicsOverrideDef and JerkOverrideDef from Override Definition Pattern (deleted in v4.0 refactoring) |
 | 1.0 | Feb 9, 2026 | Initial tech stack documentation |

@@ -81,7 +81,7 @@ class AccelerationAdjustmentTest extends TestCase
     public function testAccelerationWithPhysicsCalculator(): void
     {
         // Combat ship: baseMass 650, cargo 1000 → 4000
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $originalAccel = 2.0;
         $responsiveness = 1.0;
         
@@ -97,7 +97,7 @@ class AccelerationAdjustmentTest extends TestCase
      */
     public function testAllAccelerationComponents(): void
     {
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $responsiveness = 1.0;
         
         $originalForward = 2.0;
@@ -198,18 +198,18 @@ class AccelerationAdjustmentTest extends TestCase
     }
 
     /**
-     * Test extreme cargo multiplier with effective ratio cap.
+     * Test extreme cargo multiplier produces near-proportional acceleration scaling.
      */
-    public function testExtremeCargoWithCap(): void
+    public function testExtremeCargoHighMassRatio(): void
     {
         // Cargo ship: baseMass 205, cargo 42000 → 420000
-        $calc = new PhysicsCalculator(205, 42000, 420000, 10.0, true);
+        $calc = new PhysicsCalculator(205, 42000, 420000, 10.0);
         $originalAccel = 2.0;
         $responsiveness = 1.0;
         
-        // Should use effective ratio (10.0), not actual mass ratio (~9.96)
-        $effectiveRatio = $calc->getEffectiveRatio();
-        $newAccel = $originalAccel * $effectiveRatio * $responsiveness;
+        // Mass ratio is ~9.956
+        $massRatio = $calc->getMassRatio();
+        $newAccel = $originalAccel * $massRatio * $responsiveness;
         
         $this->assertEqualsWithDelta(20.0, $newAccel, 0.5);
     }
@@ -241,7 +241,7 @@ class AccelerationAdjustmentTest extends TestCase
     public function testRealisticCombatShipAcceleration(): void
     {
         // Combat ship with moderate cargo increase
-        $calc = new PhysicsCalculator(106, 240, 2400, 10.0, true);
+        $calc = new PhysicsCalculator(106, 240, 2400, 10.0);
         $originalAccel = 2.0;
         $responsiveness = 1.0;
         
@@ -259,14 +259,14 @@ class AccelerationAdjustmentTest extends TestCase
     public function testRealisticCargoShipAcceleration(): void
     {
         // Cargo ship with massive cargo increase
-        $calc = new PhysicsCalculator(205, 42000, 420000, 10.0, true);
+        $calc = new PhysicsCalculator(205, 42000, 420000, 10.0);
         $originalAccel = 1.5;
         $responsiveness = 1.0;
         
-        $effectiveRatio = $calc->getEffectiveRatio();
-        $newAccel = $originalAccel * $effectiveRatio * $responsiveness;
+        $massRatio = $calc->getMassRatio();
+        $newAccel = $originalAccel * $massRatio * $responsiveness;
         
-        // With cap, should use 10.0
+        // With mass ratio ~9.956, should be ~14.93 ≈ 15.0
         $this->assertEqualsWithDelta(15.0, $newAccel, 0.5);
     }
 
@@ -315,9 +315,8 @@ class AccelerationAdjustmentTest extends TestCase
         $responsiveness = 0.8;
         
         // Manual calculation
-        $expected = $originalAccel * $massRatio * $responsiveness;
         $expected = 3.0 * 2.5 * 0.8;  // 6.0
-        
+
         // Formula
         $calculated = $originalAccel * $massRatio * $responsiveness;
         
@@ -330,7 +329,7 @@ class AccelerationAdjustmentTest extends TestCase
      */
     public function testConsistentScalingAcrossComponents(): void
     {
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $responsiveness = 1.0;
         $massRatio = $calc->getMassRatio();
         
@@ -398,7 +397,7 @@ class AccelerationAdjustmentTest extends TestCase
      */
     public function testVerySmallMassRatio(): void
     {
-        $calc = new PhysicsCalculator(1000, 10, 20, 2.0, true);
+        $calc = new PhysicsCalculator(1000, 10, 20, 2.0);
         $originalAccel = 2.0;
         $responsiveness = 1.0;
         

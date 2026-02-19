@@ -1,7 +1,7 @@
 # File Tree - Directory Structure
 
-> **Version:** 1.4  
-> **Last Updated:** February 18, 2026  
+> **Version:** 1.5  
+> **Last Updated:** February 19, 2026  
 > **Purpose:** Visual directory structure for quick file location
 
 ---
@@ -44,7 +44,7 @@ gui/
 │   │   ├── bootstrap.php               # Test autoloader
 │   │   ├── Unit/                       # Unit tests (fast, no external dependencies)
 │   │   │   ├── Utils/
-│   │   │   │   └── PhysicsCalculationHelperTest.php  # Trait unit tests
+│   │   │   │   # (PhysicsCalculationHelperTest.php removed in v1.5 refactoring)
 │   │   │   ├── Services/
 │   │   │   │   ├── ClassRangeServiceTest.php         # DI mocking demo
 │   │   │   │   ├── ConfigServiceTest.php             # Config service tests (NEW in v1.4)
@@ -82,16 +82,14 @@ gui/
 │   │   │   ├── ShipDataService.php     # Ship/engine data access
 │   │   │   └── ConfigService.php       # Configuration management
 │   │   │
-│   │   ├── Utils/                      # 🔧 Utilities (NEW in v1.2.0)
-│   │   │   └── PhysicsCalculationHelper.php   # Shared calculation trait
+│   │   ├── Utils/                      # 🔧 Utilities
+│   │   │   # (no shared utility files — PhysicsCalculationHelper.php removed in v1.5)
 │   │   │
 │   │   ├── DTOs/                       # 📦 Data Transfer Objects
 │   │   │   ├── PhysicsRequest.php      # Input contract for physics calc
 │   │   │   ├── PhysicsResponse.php     # Output contract for physics calc
 │   │   │   ├── EnginePerformance.php   # Engine performance data
-│   │   │   ├── PhysicsData.php         # Physics values (drag/inertia/jerk)
 │   │   │   ├── PhysicsResponseData.php # Parameter object (NEW in v1.3)
-│   │   │   ├── ReductionTiers.php      # Reduction tier configuration
 │   │   │   ├── ShipDetails.php         # Ship detail data
 │   │   │   ├── ClassRangeRequest.php   # Input contract for class-range calc
 │   │   │   ├── ClassRangeResponse.php  # Output contract for class-range calc
@@ -409,12 +407,8 @@ The GUI integrates with the parent mod's business logic:
 
 | Parent File | Used By | Purpose |
 |-------------|---------|---------|
-| `src/Mods/CargoSizesMod/Output/Physics/PhysicsCalculator.php` | `PhysicsService` | Core physics calculations |
-| `src/Mods/CargoSizesMod/Output/Physics/AdjustedDrag.php` | `PhysicsService` | Drag adjustments |
-| `src/Mods/CargoSizesMod/Output/Physics/AdjustedInertia.php` | `PhysicsService` | Inertia adjustments |
-| `src/Mods/CargoSizesMod/Output/Jerk/AdjustedJerk.php` | `PhysicsService` | Jerk adjustments |
-| `src/Mods/CargoSizesMod/Build/ReductionTier.php` | `PhysicsService` | Tier-based reductions |
-| `config/build-config.json` | `ConfigService` | Build configuration file |
+| `src/Mods/CargoSizesMod/Output/Physics/PhysicsCalculator.php` | `PhysicsService`, `ClassRangeService` | Mass ratio and physics calculations |
+| `config/build-config.json` | `ConfigService` | Build configuration file (cargo-multipliers, accelerationResponsiveness) |
 
 ---
 

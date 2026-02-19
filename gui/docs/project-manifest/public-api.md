@@ -1,7 +1,7 @@
 # Public API - Signatures Only
 
-> **Version:** 1.4  
-> **Last Updated:** February 18, 2026  
+> **Version:** 1.6  
+> **Last Updated:** February 19, 2026  
 > **Purpose:** Public method signatures and contracts (NO implementations)
 
 ---
@@ -28,94 +28,6 @@ Use this as a quick reference to understand what methods exist without reading s
 ---
 
 ## Backend Utilities
-
-### PhysicsCalculationHelper (Trait)
-
-**Location:** `gui/backend/src/Utils/PhysicsCalculationHelper.php`  
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\Utils`  
-**Since:** 1.2.0  
-**Usage:** Mixed into `PhysicsService` and `ClassRangeService`
-
-**Purpose:** Shared physics calculation utilities to eliminate code duplication.
-
-#### Methods
-
-##### calculatePercentChange()
-
-```php
-private function calculatePercentChange(float $original, float $modified): float
-```
-
-Calculate percentage change between original and modified values.
-
-**Parameters:**
-- `$original` — Original value
-- `$modified` — Modified value
-
-**Returns:** Percentage change (positive = increase, negative = decrease). Returns 0.0 if original is zero.
-
-**Formula:** `((modified - original) / original) * 100`
-
----
-
-##### calculateAverageDragChange()
-
-```php
-private function calculateAverageDragChange(
-    \Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Drag $original,
-    \Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedDrag $adjusted
-): float
-```
-
-Calculate average drag change percentage across all drag axes.
-
-**Parameters:**
-- `$original` — Original drag values (forward, reverse, horizontal, vertical, pitch, yaw, roll)
-- `$adjusted` — Adjusted drag values after modifications
-
-**Returns:** Average percentage change across all 7 drag axes.
-
----
-
-##### calculateAverageInertiaChange()
-
-```php
-private function calculateAverageInertiaChange(
-    \Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Inertia $original,
-    \Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedInertia $adjusted
-): float
-```
-
-Calculate average inertia change percentage across all inertia axes.
-
-**Parameters:**
-- `$original` — Original inertia values (pitch, yaw, roll)
-- `$adjusted` — Adjusted inertia values after modifications
-
-**Returns:** Average percentage change across all 3 inertia axes.
-
----
-
-##### findTierForMultiplier()
-
-```php
-private function findTierForMultiplier(
-    array $tiers,
-    float $multiplier
-): \Mistralys\X4\Mods\CargoSizesMod\Output\Physics\ReductionTier
-```
-
-Find the appropriate reduction tier for a given cargo multiplier.
-
-**Parameters:**
-- `$tiers` — Array of ReductionTier objects sorted by maxMultiplier
-- `$multiplier` — Cargo multiplier to match
-
-**Returns:** The matching ReductionTier (highest maxMultiplier that doesn't exceed multiplier).
-
-**Throws:** `GUIException` if no suitable tier found.
-
----
 
 ### ErrorResponseTrait
 
@@ -250,8 +162,6 @@ Returns true if a factory is registered for the given service ID, regardless of 
 
 **Purpose:** Physics calculation service wrapping PhysicsCalculator.
 
-**Uses:** `PhysicsCalculationHelper` trait (since 1.2.0) for shared calculation methods.
-
 ```php
 class PhysicsService
 {
@@ -350,8 +260,6 @@ class ShipDataService
 
 **Purpose:** Class-wide aggregation service for calculating min/max/median ranges across all ships of a type.
 
-**Uses:** `PhysicsCalculationHelper` trait (since 1.2.0) for shared calculation methods.
-
 ```php
 class ClassRangeService
 {
@@ -442,27 +350,17 @@ class PhysicsRequest
      * @param float $originalCargo Original cargo capacity
      * @param float $adjustedCargo Adjusted cargo capacity
      * @param float $cargoMultiplier Cargo multiplier (2x, 4x, 8x, etc.)
-     * @param bool $useEffectiveRatioCap Whether to cap effective ratio
-     * @param float $dragReductionFactor Drag reduction factor config
-     * @param float $inertiaImpactFactor Inertia impact factor config
-     * @param float $accelerationResponsiveness Acceleration responsiveness config
-     * @param array<array{maxMultiplier: float, reductionPercent: float}> $dragReductionTiers Drag reduction tiers
-     * @param array<array{maxMultiplier: float, reductionPercent: float}> $jerkReductionTiers Jerk reduction tiers
+     * @param float $accelerationResponsiveness Responsiveness factor (1.0 = preserve original feel, 0.7 = heavier)
      * @param string|null $engineId Optional engine ID for performance calculations
-     * @param string|null $shipId Optional ship ID for real per-ship data lookup
+     * @param string|null $shipId Optional ship ID to load real physics data from x4-core
      */
     public function __construct(
-        public readonly float $baseMass,
-        public readonly float $originalCargo,
-        public readonly float $adjustedCargo,
-        public readonly float $cargoMultiplier,
-        public readonly bool $useEffectiveRatioCap,
-        public readonly float $dragReductionFactor,
-        public readonly float $inertiaImpactFactor,
-        public readonly float $accelerationResponsiveness,
-        public readonly array $dragReductionTiers,
-        public readonly array $jerkReductionTiers,
-        public readonly ?string $engineId = null,
+        public float $baseMass,
+        public float $originalCargo,
+        public float $adjustedCargo,
+        public float $cargoMultiplier,
+        public float $accelerationResponsiveness,
+        public ?string $engineId = null,
         public readonly ?string $shipId = null
     );
     
@@ -491,43 +389,33 @@ class PhysicsResponse
      * Constructor.
      *
      * @param float $massRatio Mass ratio (adjustedFullMass / originalFullMass)
-     * @param float $effectiveRatio Effective ratio (capped if enabled)
      * @param float $originalFullMass Original full mass
      * @param float $adjustedFullMass Adjusted full mass
      * @param float $massIncrease Mass increase amount
-     * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float} $dragOriginal Original drag values
-     * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float} $dragAdjusted Adjusted drag values
-     * @param array{forward: float, reverse: float, horizontal: float, vertical: float, pitch: float, yaw: float, roll: float} $dragPercentChange Drag percentage changes
-     * @param array{pitch: float, yaw: float, roll: float} $inertiaOriginal Original inertia values
-     * @param array{pitch: float, yaw: float, roll: float} $inertiaAdjusted Adjusted inertia values
-     * @param array{pitch: float, yaw: float, roll: float} $inertiaPercentChange Inertia percentage changes
-     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float, decel: float}, travel: array{accel: float, decel: float}} $jerkOriginal Original jerk values
-     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float, decel: float}, travel: array{accel: float, decel: float}} $jerkAdjusted Adjusted jerk values
-     * @param array{forward: array{accel: float, decel: float}, boost: array{accel: float, decel: float}, travel: array{accel: float, decel: float}} $jerkPercentChange Jerk percentage changes
+     * @param float $originalCargo Original cargo capacity
+     * @param float $adjustedCargo Adjusted cargo capacity
+     * @param float $accelerationScalingFactor Computed scaling: massRatio × responsiveness
+     * @param float $accelerationResponsiveness Responsiveness input (1.0 = preserve feel)
      * @param EnginePerformance|null $enginePerformance Optional engine performance metrics
-     * @param string $activeTier Active tier description
-     * @param array{original: float, adjusted: float}|null $topSpeed Optional top speed in m/s (original and adjusted)
-     * @param array{original: float, adjusted: float}|null $acceleration Optional acceleration in m/s² (original and adjusted)
+     * @param float|null $topSpeedOriginal Original top speed in m/s (null if no engine)
+     * @param float|null $topSpeedAdjusted Adjusted top speed in m/s (null if no engine)
+     * @param float|null $accelerationOriginal Original acceleration in m/s² (null if no engine)
+     * @param float|null $accelerationAdjusted Adjusted acceleration in m/s² (null if no engine)
      */
     public function __construct(
-        public readonly float $massRatio,
-        public readonly float $effectiveRatio,
-        public readonly float $originalFullMass,
-        public readonly float $adjustedFullMass,
-        public readonly float $massIncrease,
-        public readonly array $dragOriginal,
-        public readonly array $dragAdjusted,
-        public readonly array $dragPercentChange,
-        public readonly array $inertiaOriginal,
-        public readonly array $inertiaAdjusted,
-        public readonly array $inertiaPercentChange,
-        public readonly array $jerkOriginal,
-        public readonly array $jerkAdjusted,
-        public readonly array $jerkPercentChange,
-        public readonly ?EnginePerformance $enginePerformance = null,
-        public readonly string $activeTier = '',
-        public readonly ?array $topSpeed = null,
-        public readonly ?array $acceleration = null
+        public float $massRatio,
+        public float $originalFullMass,
+        public float $adjustedFullMass,
+        public float $massIncrease,
+        public float $originalCargo,
+        public float $adjustedCargo,
+        public float $accelerationScalingFactor,
+        public float $accelerationResponsiveness,
+        public ?EnginePerformance $enginePerformance = null,
+        public readonly ?float $topSpeedOriginal = null,
+        public readonly ?float $topSpeedAdjusted = null,
+        public readonly ?float $accelerationOriginal = null,
+        public readonly ?float $accelerationAdjusted = null
     );
     
     /**
@@ -594,76 +482,6 @@ class EnginePerformance
 
 ---
 
-### PhysicsData
-
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs`
-
-**Purpose:** Encapsulates original and adjusted physics values for response building. Groups related physics data (drag, inertia, jerk) with their original and adjusted values to reduce parameter count in response builders.
-
-**Since:** 1.3.0
-
-```php
-final readonly class PhysicsData
-{
-    /**
-     * Constructor.
-     *
-     * @param Drag $originalDrag Original drag values from ship definition
-     * @param AdjustedDrag $adjustedDrag Adjusted drag values after cargo increase
-     * @param Inertia $originalInertia Original inertia values from ship definition
-     * @param AdjustedInertia $adjustedInertia Adjusted inertia values after cargo increase
-     * @param Jerk $originalJerk Original jerk values from ship definition
-     * @param AdjustedJerk $adjustedJerk Adjusted jerk values after cargo increase
-     */
-    public function __construct(
-        public Drag $originalDrag,
-        public AdjustedDrag $adjustedDrag,
-        public Inertia $originalInertia,
-        public AdjustedInertia $adjustedInertia,
-        public Jerk $originalJerk,
-        public AdjustedJerk $adjustedJerk
-    );
-}
-```
-
----
-
-### ReductionTiers
-
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs`
-
-**Purpose:** Encapsulates drag and jerk reduction tier configuration. Groups reduction tier values to reduce parameter count in response builders and provide convenient tier-level operations.
-
-**Since:** 1.3.0
-
-```php
-final readonly class ReductionTiers
-{
-    /**
-     * Constructor.
-     *
-     * @param ReductionTier $drag Drag reduction tier configuration
-     * @param ReductionTier $jerk Jerk reduction tier configuration
-     */
-    public function __construct(
-        public ReductionTier $drag,
-        public ReductionTier $jerk
-    );
-
-    /**
-     * Get formatted active tier label for display.
-     *
-     * Generates a human-readable label showing the reduction percentages
-     * for both drag and jerk tiers (e.g., "Drag: 25% reduction | Jerk: 33% reduction").
-     *
-     * @return string Formatted tier label with reduction percentages
-     */
-    public function getActiveTierLabel(): string;
-}
-```
-
----
-
 ### PhysicsResponseData
 
 **Namespace:** `Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs`
@@ -681,32 +499,15 @@ readonly class PhysicsResponseData
      * Constructor.
      *
      * @param PhysicsCalculator $calculator Physics calculator with mass calculations
-     * @param PhysicsData $physicsData Original and adjusted physics values (drag, inertia, jerk)
-     * @param ReductionTiers $tiers Active reduction tiers for drag and jerk
      * @param PhysicsRequest $request Original request data
      * @param EnginePerformance|null $enginePerformance Engine performance metrics (optional)
      */
     public function __construct(
         public PhysicsCalculator $calculator,
-        public PhysicsData $physicsData,
-        public ReductionTiers $tiers,
         public PhysicsRequest $request,
         public ?EnginePerformance $enginePerformance
     );
 }
-```
-
-**Usage Example:**
-```php
-$responseData = new PhysicsResponseData(
-    calculator: $calculator,
-    physicsData: $physicsData,
-    tiers: $tiers,
-    request: $request,
-    enginePerformance: $enginePerformance
-);
-
-return $this->buildPhysicsResponse($responseData);
 ```
 
 ---
@@ -776,22 +577,12 @@ class ClassRangeRequest
      *
      * @param string $shipType Ship type filter (transport, mining, auxiliary, carrier)
      * @param float $cargoMultiplier Cargo multiplier (2x, 4x, 8x, etc.)
-     * @param array<array{maxMultiplier: float, reductionPercent: float}> $dragReductionTiers Drag reduction tiers
-     * @param array<array{maxMultiplier: float, reductionPercent: float}> $jerkReductionTiers Jerk reduction tiers
-     * @param float $inertiaImpactFactor Inertia impact factor config
-     * @param bool $useEffectiveRatioCap Whether to cap effective ratio
-     * @param float $dragReductionFactor Drag reduction factor config
-     * @param float $accelerationResponsiveness Acceleration responsiveness config
+     * @param float $accelerationResponsiveness Responsiveness factor (1.0 = preserve original feel)
      * @param string|null $engineId Optional engine ID for engine-dependent metrics
      */
     public function __construct(
         public readonly string $shipType,
         public readonly float $cargoMultiplier,
-        public readonly array $dragReductionTiers,
-        public readonly array $jerkReductionTiers,
-        public readonly float $inertiaImpactFactor,
-        public readonly bool $useEffectiveRatioCap,
-        public readonly float $dragReductionFactor,
         public readonly float $accelerationResponsiveness,
         public readonly ?string $engineId = null
     );
@@ -863,7 +654,6 @@ class ShipMetricSummary
      * @param float $massRatio Mass ratio for this ship
      * @param array{original: float, adjusted: float}|null $topSpeed Top speed metrics (when engine selected)
      * @param array{original: float, adjusted: float}|null $acceleration Acceleration metrics (when engine selected)
-     * @param float $dragChangePercent Forward drag percent change (most impactful axis)
      */
     public function __construct(
         public readonly string $shipId,
@@ -871,8 +661,7 @@ class ShipMetricSummary
         public readonly string $size,
         public readonly float $massRatio,
         public readonly ?array $topSpeed,
-        public readonly ?array $acceleration,
-        public readonly float $dragChangePercent
+        public readonly ?array $acceleration
     );
     
     /**
@@ -899,7 +688,7 @@ class ClassRangeResponse
      * Constructor.
      *
      * @param int $shipCount Number of ships included in calculation
-     * @param array<string, RangeMetric> $metrics Map of metric name to range (massRatio, dragChange, inertiaChange, jerkChange, topSpeed, acceleration)
+     * @param array<string, RangeMetric> $metrics Map of metric name to range (massRatio, topSpeed, acceleration)
      * @param ShipMetricSummary $worstCase Worst-case ship (highest mass ratio)
      * @param ShipMetricSummary $bestCase Best-case ship (lowest mass ratio)
      */
@@ -1200,88 +989,22 @@ export function useConfig(): UseConfigResult;
 
 ```typescript
 /**
- * Tier definition for reductions.
- */
-export interface Tier {
-  maxMultiplier: number;
-  reductionPercent: number;
-}
-
-/**
  * Physics configuration parameters (matching PhysicsRequest DTO).
+ * Only acceleration-based parameters remain — drag/inertia/jerk/tier params removed.
  */
 export interface PhysicsConfig {
   baseMass: number;
   originalCargo: number;
   adjustedCargo: number;
   cargoMultiplier: number;
-  useEffectiveRatioCap: boolean;
-  dragReductionFactor: number;
-  inertiaImpactFactor: number;
   accelerationResponsiveness: number;
-  dragReductionTiers: Tier[];
-  jerkReductionTiers: Tier[];
   engineId?: string | null;
-}
-
-/**
- * Adjusted drag values for all axes.
- */
-export interface AdjustedDrag {
-  forward: number;
-  forwardPercent: number;
-  reverse: number;
-  reversePercent: number;
-  horizontal: number;
-  horizontalPercent: number;
-  vertical: number;
-  verticalPercent: number;
-  pitch: number;
-  pitchPercent: number;
-  yaw: number;
-  yawPercent: number;
-  roll: number;
-  rollPercent: number;
-}
-
-/**
- * Adjusted inertia values.
- */
-export interface AdjustedInertia {
-  pitch: number;
-  pitchPercent: number;
-  yaw: number;
-  yawPercent: number;
-  roll: number;
-  rollPercent: number;
-}
-
-/**
- * Adjusted jerk values.
- */
-export interface AdjustedJerk {
-  forward: {
-    accel: number;
-    accelPercent: number;
-    decel: number;
-    decelPercent: number;
-  };
-  boost: {
-    accel: number;
-    accelPercent: number;
-    decel: number;
-    decelPercent: number;
-  };
-  travel: {
-    accel: number;
-    accelPercent: number;
-    decel: number;
-    decelPercent: number;
-  };
+  shipId?: string | null;
 }
 
 /**
  * Engine performance metrics.
+ * Matches EnginePerformance DTO toArray() output.
  */
 export interface EnginePerformance {
   engineId: string;
@@ -1291,34 +1014,36 @@ export interface EnginePerformance {
   twrReductionPercent: number;
   originalAcceleration: number;
   adjustedAcceleration: number;
+  engineCount: number;
+  topSpeed: number | null;
+  topSpeedAdjusted: number | null;
+  topSpeedReverse: number | null;
+  topSpeedBoost: number | null;
+  topSpeedTravel: number | null;
 }
 
 /**
- * Complete physics calculation response (matching PhysicsResponse DTO).
+ * Complete physics response (matching PhysicsResponse DTO).
+ * Only acceleration-based metrics — drag/inertia/jerk removed.
  */
 export interface PhysicsResponse {
   massRatio: number;
-  effectiveRatio: number;
   originalFullMass: number;
   adjustedFullMass: number;
   massIncrease: number;
-  drag: {
-    original: Record<string, number>;
-    adjusted: AdjustedDrag;
-    percentChange: Record<string, number>;
-  };
-  inertia: {
-    original: Record<string, number>;
-    adjusted: AdjustedInertia;
-    percentChange: Record<string, number>;
-  };
-  jerk: {
-    original: Record<string, any>;
-    adjusted: AdjustedJerk;
-    percentChange: Record<string, any>;
-  };
+  originalCargo: number;
+  adjustedCargo: number;
+  accelerationScalingFactor: number;
+  accelerationResponsiveness: number;
   enginePerformance?: EnginePerformance | null;
-  activeTier: string;
+  topSpeed?: {
+    original: number;
+    adjusted: number;
+  } | null;
+  acceleration?: {
+    original: number;
+    adjusted: number;
+  } | null;
 }
 
 /**
@@ -1395,142 +1120,14 @@ export interface ShipDetails {
 
 ---
 
-### Physics Types - Absolute Metrics (physics.d.ts)
-
-```typescript
-/**
- * Physics configuration with optional shipId (matching PhysicsRequest DTO).
- */
-export interface PhysicsConfig {
-  baseMass: number;
-  originalCargo: number;
-  adjustedCargo: number;
-  cargoMultiplier: number;
-  useEffectiveRatioCap: boolean;
-  dragReductionFactor: number;
-  inertiaImpactFactor: number;
-  accelerationResponsiveness: number;
-  dragReductionTiers: Tier[];
-  jerkReductionTiers: Tier[];
-  engineId?: string | null;
-  shipId?: string;
-}
-
-/**
- * Physics response with absolute metrics (matching PhysicsResponse DTO).
- */
-export interface PhysicsResponse {
-  massRatio: number;
-  effectiveRatio: number;
-  originalFullMass: number;
-  adjustedFullMass: number;
-  massIncrease: number;
-  dragOriginal: DragValues;
-  dragAdjusted: DragValues;
-  dragPercentChange: DragValues;
-  inertiaOriginal: InertiaValues;
-  inertiaAdjusted: InertiaValues;
-  inertiaPercentChange: InertiaValues;
-  jerkOriginal: JerkValues;
-  jerkAdjusted: JerkValues;
-  jerkPercentChange: JerkValues;
-  enginePerformance?: EnginePerformance | null;
-  activeTier: string;
-  topSpeed?: { original: number; adjusted: number } | null;
-  acceleration?: { original: number; adjusted: number } | null;
-}
-
-/**
- * Engine performance with top speeds (matching EnginePerformance DTO).
- */
-export interface EnginePerformance {
-  engineId: string;
-  thrustForward: number;
-  originalTWR: number;
-  adjustedTWR: number;
-  twrReductionPercent: number;
-  originalAcceleration: number;
-  adjustedAcceleration: number;
-  engineCount?: number;
-  topSpeed?: number | null;
-  topSpeedAdjusted?: number | null;
-  topSpeedReverse?: number | null;
-  topSpeedBoost?: number | null;
-  topSpeedTravel?: number | null;
-}
-```
-
----
-
-### Class Range Types (physics.d.ts)
-
-```typescript
-/**
- * Class-wide range calculation request (matching ClassRangeRequest DTO).
- */
-export interface ClassRangeRequest {
-  shipType: string;
-  cargoMultiplier: number;
-  dragReductionTiers: Tier[];
-  jerkReductionTiers: Tier[];
-  inertiaImpactFactor: number;
-  useEffectiveRatioCap: boolean;
-  dragReductionFactor: number;
-  accelerationResponsiveness: number;
-  engineId?: string | null;
-}
-
-/**
- * Min/max/median range for a metric (matching RangeMetric DTO).
- */
-export interface RangeMetric {
-  min: number;
-  max: number;
-  median: number;
-  unit: string;
-  label: string;
-}
-
-/**
- * Worst/best case ship summary (matching ShipMetricSummary DTO).
- */
-export interface ShipMetricSummary {
-  shipId: string;
-  shipName: string;
-  size: string;
-  massRatio: number;
-  topSpeed?: { original: number; adjusted: number } | null;
-  acceleration?: { original: number; adjusted: number } | null;
-  dragChangePercent: number;
-}
-
-/**
- * Class-wide range response (matching ClassRangeResponse DTO).
- */
-export interface ClassRangeResponse {
-  shipCount: number;
-  metrics: Record<string, RangeMetric>;
-  worstCase: ShipMetricSummary;
-  bestCase: ShipMetricSummary;
-}
-```
-
----
-
 ### Config Types (config.d.ts)
 
 ```typescript
 /**
  * Flight mechanics configuration (subset of build-config.json).
+ * Only accelerationResponsiveness remains — drag/inertia/jerk/tier params removed.
  */
 export interface FlightMechanics {
-  dragReductionFactor: number;
-  steeringIncreaseFactor: number;
-  inertiaIncreaseFactor: number;
-  dragReductionTiers: Tier[];
-  jerkReductionTiers: Tier[];
-  inertiaImpactFactor: number;
-  useEffectiveRatioCap: boolean;
   accelerationResponsiveness: number;
 }
 

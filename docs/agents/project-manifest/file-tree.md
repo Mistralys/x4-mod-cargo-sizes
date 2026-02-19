@@ -1,7 +1,7 @@
 # Project File Tree
 
-> **Version:** 1.1  
-> **Last Updated:** February 11, 2026  
+> **Version:** 1.3  
+> **Last Updated:** February 19, 2026  
 > **Purpose:** Complete directory structure for navigation and file location
 
 ---
@@ -20,6 +20,7 @@ x4-mod-cargo-sizes/
 │   ├── functions.php               # Global helper functions
 │   └── Mods/                       # Mod namespace
 │       └── CargoSizesMod/          # Main mod code
+├── tests/                          # Unit tests (PHPUnit)
 ├── vendor/                         # Composer dependencies
 ├── changelog-builder.md            # Changelog building guide
 ├── changelog.md                    # Version history
@@ -68,22 +69,15 @@ CargoSizesMod/
 │   └── StepPluginImage.php         # Installer image manager
 │
 ├── Output/                         # Output file generation
-│   ├── Jerk/                       # Jerk movement adjustments
-│   │   ├── AdjustedJerk.php        # Main jerk adjustment
-│   │   ├── AdjustedJerkBoost.php   # Boost mode jerk
-│   │   ├── AdjustedJerkForward.php # Forward jerk
-│   │   ├── AdjustedJerkTravel.php  # Travel mode jerk
-│   │   └── JerkOverrideDef.php     # Jerk XML override definition
-│   │
 │   ├── Physics/                    # Physics value adjustments
-│   │   ├── AdjustedAccelerationFactors.php
-│   │   ├── AdjustedDrag.php        # Drag reduction
-│   │   ├── AdjustedInertia.php     # Inertia increase
-│   │   ├── AdjustedValuesInterface.php  # Adjustment contract
-│   │   ├── AdjustedValuesTrait.php      # Shared adjustment behavior
-│   │   └── PhysicsOverrideDef.php       # Physics XML override definition
+│   │   ├── AccelerationOverrideDef.php       # Acceleration-only XML override (thruster/acceleration)
+│   │   ├── AdjustedAccelerationFactors.php   # Acceleration factor value object
+│   │   └── PhysicsCalculator.php             # Mass ratio and physics calculations
 │   │
+│   ├── AdjustedValuesInterface.php # Adjustment contract
+│   ├── AdjustedValuesTrait.php     # Shared adjustment behavior
 │   ├── BaseOverrideFile.php        # Abstract override file base
+│   ├── DiagnosticsLogger.php       # Build diagnostics and logging
 │   ├── FlightMechanicsOverrideFile.php  # Flight mechanics override generator
 │   ├── MassAdjustment.php          # Mass multiplier calculator
 │   ├── OverrideDef.php             # Base XML override definition
@@ -227,6 +221,19 @@ batch/
 
 ---
 
+## 🧪 Tests (tests/)
+
+```
+tests/
+├── bootstrap.php                   # PHPUnit bootstrap
+└── CargoSizesModTests/             # CLI test suite
+    ├── AccelerationAdjustmentTest.php  # Tests for AdjustedAccelerationFactors scaling
+    ├── AccelerationOverrideTest.php    # Tests for AccelerationOverrideDef XML output
+    └── PhysicsCalculatorTest.php       # Tests for PhysicsCalculator mass ratio calculations
+```
+
+---
+
 ## 📦 Dependencies (vendor/ - Managed by Composer)
 
 Key dependencies:
@@ -283,18 +290,19 @@ See [tech-stack.md](tech-stack.md) for complete dependency list.
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Source Files** | 49 | All PHP files in src/ |
-| **Build System** | 8 | Main build orchestration |
+| **Source Files** | 40 | All PHP files in src/ (post-refactoring) |
+| **Build System** | 7 | Main build orchestration |
 | **XML Processing** | 14 | XML file wrappers and value objects |
-| **Output Generation** | 13 | Override files and definitions |
+| **Output Generation** | 12 | Override files and definitions |
 | **References** | 3 | Documentation generators |
 | **FOMOD** | 3 | Installer generation |
 | **Plugins** | 4 | Build plugin system |
 | **Config Files** | 3 | JSON configuration |
 | **Batch Scripts** | 9 | Game data extraction |
 | **Documentation** | 6+ | Markdown docs + this manifest |
+| **Test Files** | 3 | CLI PHPUnit test classes |
 
-**Total Source Classes:** 49 PHP files
+**Total Source Classes:** 40 PHP files (9 tier-based/adjusted-values files removed in v4.0 refactoring)
 
 ---
 
@@ -309,8 +317,7 @@ Mistralys\X4\                       # Global namespace
         │       └── Plugin\         # Concrete plugins
         ├── FOMOD\                  # FOMOD generation
         ├── Output\                 # Output file generation
-        │   ├── Jerk\               # Jerk adjustments
-        │   └── Physics\            # Physics adjustments
+        │   └── Physics\            # Physics adjustments (acceleration only)
         ├── References\             # Reference generators
         └── XML\                    # XML processing
             └── ShipXML\            # Ship XML value objects
@@ -344,4 +351,6 @@ Mistralys\X4\                       # Global namespace
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3 | Feb 19, 2026 | Added tests/ section; removed stale Jerk/ entries and obsolete Physics/ files (AdjustedDrag, AdjustedInertia, PhysicsOverrideDef); updated Output/ to reflect post-refactoring structure (DiagnosticsLogger, AdjustedValues* location, PhysicsCalculator); updated file count |
+| 1.2 | Feb 19, 2026 | Added AccelerationOverrideDef; updated Physics/ |
 | 1.0 | Feb 9, 2026 | Initial file tree documentation |

@@ -1,7 +1,7 @@
 # Constraints & Conventions
 
-> **Version:** 1.4  
-> **Last Updated:** February 18, 2026  
+> **Version:** 1.5  
+> **Last Updated:** February 19, 2026  
 > **Purpose:** Non-negotiable rules and established conventions
 
 ---
@@ -483,34 +483,28 @@ export function usePhysicsCalculation(): UsePhysicsCalculationResult {
 
 **Example:**
 ```php
-// ❌ Bad - too many parameters (11)
+// ❌ Bad - too many parameters (7)
 private function buildPhysicsResponse(
-    PhysicsCalculator $calculator,
-    Drag $originalDrag,
-    AdjustedDrag $adjustedDrag,
-    Inertia $originalInertia,
-    AdjustedInertia $adjustedInertia,
-    Jerk $originalJerk,
-    AdjustedJerk $adjustedJerk,
-    ReductionTier $dragTier,
-    ReductionTier $jerkTier,
-    PhysicsRequest $request,
+    float $massRatio,
+    float $originalFullMass,
+    float $adjustedFullMass,
+    float $massIncrease,
+    float $accelerationScalingFactor,
+    float $accelerationResponsiveness,
     ?EnginePerformance $enginePerformance
 ): PhysicsResponse
 
-// ✅ Good - parameter objects (5 parameters)
+// ✅ Good - parameter objects (3 parameters)
 private function buildPhysicsResponse(
-    PhysicsCalculator $calculator,
-    PhysicsData $physicsData,        // Groups 6 physics parameters
-    ReductionTiers $tiers,            // Groups 2 tier parameters
-    PhysicsRequest $request,
+    PhysicsCalculator $calculator,   // Encapsulates mass calculations
+    PhysicsRequest $request,          // Input parameters (responsiveness, engineId)
     ?EnginePerformance $enginePerformance
 ): PhysicsResponse
 ```
 
 **See Also:**
 - `tech-stack.md` → Pattern #12: Parameter Object Pattern
-- `public-api.md` → DTOs → PhysicsData, ReductionTiers
+- `public-api.md` → DTOs → PhysicsRequest, PhysicsResponse
 
 ---
 

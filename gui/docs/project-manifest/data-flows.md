@@ -1,7 +1,7 @@
 # Data Flows & System Interactions
 
-> **Version:** 1.1  
-> **Last Updated:** February 15, 2026  
+> **Version:** 1.2  
+> **Last Updated:** February 19, 2026  
 > **Purpose:** How data moves through the system
 
 ---
@@ -28,7 +28,7 @@ This document describes how data flows through the Physics Tuning GUI from user 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      User Interaction                        │
-│  (Adjust slider, select ship, change tier config)           │
+│  (Adjust slider, select ship, change cargo multiplier)      │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -96,11 +96,11 @@ This document describes how data flows through the Physics Tuning GUI from user 
 ### Flow Diagram
 
 ```
-User Adjusts Slider (Drag Reduction)
+User Adjusts Slider (Acceleration Responsiveness)
         ↓
 ConfigPanel Component
         ↓ onChange event
-Update React State (dragReductionFactor)
+Update React State (accelerationResponsiveness)
         ↓
 usePhysicsCalculation Hook
         ↓ calculate() called
@@ -119,9 +119,8 @@ Construct PhysicsConfig Object
           originalCargo: 30000.0,
           adjustedCargo: 120000.0,  // 4x multiplier
           cargoMultiplier: 4.0,
-          dragReductionFactor: 0.7,  // User adjusted this
-          inertiaImpactFactor: 0.5,
-          // ... all other parameters
+          accelerationResponsiveness: 1.0,  // User adjusted this
+          engineId: "engine_arg_m_travel_01_mk1"  // optional
         }
         ↓
 physicsApi.calculate(config)
@@ -143,28 +142,14 @@ Create PhysicsCalculator Instance
           baseMass,
           originalCargo,
           adjustedCargo,
-          cargoMultiplier,
-          useEffectiveRatioCap
+          cargoMultiplier
         )
         ↓
 Calculate Mass Ratio
         massRatio = adjustedFullMass / originalFullMass
-        effectiveRatio = cap if enabled
         ↓
-Find Appropriate Tiers
-        dragTier = findTierForMultiplier(dragReductionTiers, 4.0)
-        jerkTier = findTierForMultiplier(jerkReductionTiers, 4.0)
-        ↓
-Apply Drag Adjustments
-        adjustedDrag = new AdjustedDrag(originalDrag, dragTier.reductionPercent)
-        ↓
-Apply Inertia Adjustments
-        inertiaMultiplier = 1.0 + ((massRatio - 1.0) * inertiaImpactFactor)
-        adjustedInertia = new AdjustedInertia(originalInertia, inertiaMultiplier)
-        ↓
-Apply Jerk Adjustments
-        jerkMultiplier = inverseMassRatio * (1.0 - jerkTier.reductionPercent)
-        adjustedJerk = new AdjustedJerk(originalJerk, jerkMultiplier)
+Calculate Acceleration Scaling
+        accelerationScalingFactor = massRatio × accelerationResponsiveness
         ↓
 Calculate Engine Performance (if engineId provided)
         enginePerformance = calculateEnginePerformance(engineId, masses)
@@ -172,13 +157,14 @@ Calculate Engine Performance (if engineId provided)
 Construct PhysicsResponse DTO
         new PhysicsResponse(
           massRatio,
-          effectiveRatio,
-          dragOriginal,
-          dragAdjusted,
-          dragPercentChange,
-          inertiaOriginal,
-          inertiaAdjusted,
-          // ... all calculated values
+          originalFullMass,
+          adjustedFullMass,
+          massIncrease,
+          originalCargo,
+          adjustedCargo,
+          accelerationScalingFactor,
+          accelerationResponsiveness,
+          enginePerformance
         )
         ↓
 Serialize to JSON
@@ -186,14 +172,13 @@ Serialize to JSON
         ↓ HTTP 200 OK
         {
           "massRatio": 1.3,
-          "effectiveRatio": 1.3,
-          "drag": {
-            "original": { "forward": 100.0, ... },
-            "adjusted": { "forward": 85.0, "forwardPercent": -15.0, ... },
-            ...
-          },
-          "inertia": { ... },
-          "jerk": { ... },
+          "originalFullMass": 530000.0,
+          "adjustedFullMass": 620000.0,
+          "massIncrease": 90000.0,
+          "originalCargo": 30000.0,
+          "adjustedCargo": 120000.0,
+          "accelerationScalingFactor": 1.3,
+          "accelerationResponsiveness": 1.0,
           "enginePerformance": { ... }
         }
         ↓
@@ -210,8 +195,7 @@ React Re-renders
 ResultsPanel Component
         ↓ Displays results
 Show Mass Ratio Display
-Show Drag Comparison Chart (original vs adjusted)
-Show Inertia Comparison
+Show Acceleration Scaling Factor
 Show Engine Performance Card
         ↓
 User Sees Results (<500ms total)
@@ -265,10 +249,8 @@ Validate ClassRangeRequest DTO
         {
           "shipType": "transport",
           "cargoMultiplier": 4.0,
-          "engineId": "engine_arg_m_travel_01_mk1",
-          "dragReductionTiers": [...],
-          "jerkReductionTiers": [...],
-          // ... all physics config
+          "accelerationResponsiveness": 1.0,
+          "engineId": "engine_arg_m_travel_01_mk1"  // optional
         }
         ↓
 ClassRangeService::calculateClassRange()
@@ -278,15 +260,14 @@ Get All Ships of Type
         ↓ returns array of ShipDef objects
 Iterate All Ships (~80 for Transport)
         For each ShipDef:
-          ├─ Get real physics data (drag, inertia, jerk)
           ├─ Get cargo capacity
           ├─ Calculate mass ratio
           ├─ Apply PhysicsCalculator
-          ├─ Store metrics (massRatio, dragChange, topSpeed, etc.)
+          ├─ Store metrics (massRatio, topSpeed, acceleration)
           └─ Skip ships with zero cargo (avoid division-by-zero)
         ↓
 Aggregate Metrics
-        For each metric (massRatio, dragChange, topSpeed, acceleration):
+        For each metric (massRatio, topSpeed, acceleration):
           ├─ Sort values
           ├─ Calculate min = values[0]
           ├─ Calculate max = values[count-1]
@@ -302,7 +283,7 @@ Construct ClassRangeResponse DTO
           metrics: {
             "massRatio": RangeMetric(min: 1.2, max: 1.8, median: 1.5),
             "topSpeed": RangeMetric(min: 380.5, max: 520.3, median: 412.0),
-            // ... all metrics
+            "acceleration": RangeMetric(min: 28.5, max: 45.2, median: 35.0)
           },
           worstCase: ShipMetricSummary(
             shipId: "ship_arg_l_trans_container_01_a",
@@ -327,7 +308,7 @@ Serialize to JSON
               "label": "Mass Ratio"
             },
             "topSpeed": { "min": 380.5, "max": 520.3, "median": 412.0, "unit": "m/s", "label": "Top Speed" },
-            // ...
+            "acceleration": { "min": 28.5, "max": 45.2, "median": 35.0, "unit": "m/s\u00b2", "label": "Acceleration" }
           },
           "worstCase": { "shipId": "...", "shipName": "Colossus", ... },
           "bestCase": { ... }
@@ -529,9 +510,7 @@ Return Config Array
         {
           "cargo-multipliers": [2, 4, 8, 10],
           "flight-mechanics": {
-            "dragReductionFactor": 1.0,
-            "inertiaImpactFactor": 0.5,
-            "dragReductionTiers": [...]
+            "accelerationResponsiveness": 1.0
           }
         }
         ↓ JSON Response
@@ -544,9 +523,7 @@ React Re-renders
         ↓
 ConfigPanel Component
         ↓ Populates inputs with loaded values
-Drag Reduction Slider → 1.0
-Inertia Impact Slider → 0.5
-Tier Editor → Loads tier tables
+Acceleration Responsiveness Slider → 1.0
         ↓
 User Can Now Edit Configuration
 ```
@@ -576,18 +553,12 @@ Validate cargo-multipliers
         - All must be positive numbers
         ↓
 Validate flight-mechanics
-        - Check inertiaImpactFactor (0.0 - 2.0)
         - Check accelerationResponsiveness (0.1 - 5.0)
-        - Validate tier structures
-        ↓
-Validate Tiers
-        - Must be ascending order (maxMultiplier)
-        - reductionPercent must be 0.0 - 1.0
         ↓
 Return ValidationResult
         {valid: true, errors: []}
         OR
-        {valid: false, errors: ["inertiaImpactFactor must be between 0.0 and 2.0"]}
+        {valid: false, errors: ["accelerationResponsiveness must be between 0.1 and 5.0"]}
         ↓ JSON Response
 Frontend Receives ValidationResult
         ↓
@@ -628,10 +599,10 @@ User Can Now Run Composer Build
 
 ## User Interaction Patterns
 
-### Pattern 1: Tune Drag Reduction for Specific Multiplier
+### Pattern 1: Tune Acceleration Responsiveness for Specific Multiplier
 
 ```
-Goal: Find optimal drag reduction for 4x cargo multiplier
+Goal: Find optimal acceleration responsiveness for 4x cargo multiplier
 
 Step 1: Select Ship Type
         User → Ship Type Dropdown → "Transport"
@@ -646,8 +617,8 @@ Step 3: Set Cargo Multiplier
         User → Cargo Multiplier Dropdown → "4x"
         ↓ Sets adjustedCargo = 30000 * 4 = 120000
         
-Step 4: Adjust Drag Reduction
-        User → Drag Reduction Slider → Drag to 0.3 (30% reduction)
+Step 4: Adjust Acceleration Responsiveness
+        User → Responsiveness Slider → 1.0 (default: physics-correct)
         ↓ Debounce starts (300ms)
         ↓ After 300ms → API call
         ↓ Results displayed
@@ -655,11 +626,11 @@ Step 4: Adjust Drag Reduction
 Step 5: Compare Results
         User → Views ResultsPanel
         - Mass Ratio: 1.3
-        - Drag Forward: 100 → 70 (-30%)
+        - Acceleration Scaling Factor: 1.3 (equals mass ratio at 1.0 responsiveness)
         - TWR: 2.5 → 1.92 (-23%)
         
 Step 6: Iterate
-        User → Adjust slider again to 0.5 (50% reduction)
+        User → Adjust slider again to 0.8 (80% responsiveness, heavier feel)
         ↓ Repeat calculation
         ↓ Compare again
         
@@ -668,40 +639,42 @@ Step 7: Save Configuration
         ↓ Validates and saves to build-config.json
 ```
 
-### Pattern 2: Configure Tier System
+### Pattern 2: Compare Multiple Cargo Multipliers
 
 ```
-Goal: Set up custom reduction tiers for different multipliers
+Goal: Compare physics impact across 2x, 4x, 8x cargo multipliers
 
-Step 1: Open Tier Editor
-        User → ConfigPanel → "Edit Tiers" button
-        ↓ Opens TierEditor component
+Step 1: Select Ship
+        User → Ship Type Dropdown → "Transport"
+        User → Ship List → Click "Colossus Vanguard"
+        ↓ Fetches ship details: mass=500, cargo=30000
         
-Step 2: Edit Drag Reduction Tiers
-        User → Drag Tier Table
-        | Max Multiplier | Reduction % | Description          |
-        |----------------|-------------|----------------------|
-        | 2.0            | 10%         | Tier 1 (up to 2x)    |
-        | 4.0            | 30%         | Tier 2 (2x - 4x)     |
-        | 8.0            | 50%         | Tier 3 (4x - 8x)     |
-        | 999            | 70%         | Tier 4 (8x+)         |
-        ↓ User edits "Tier 2" reduction to 35%
+Step 2: Set Acceleration Responsiveness
+        User → Responsiveness Slider → 1.0
+        ↓ Ensures physics-correct baseline
         
-Step 3: Live Preview
-        ConfigPanel automatically recalculates physics
-        ↓ (because dragReductionTiers changed)
-        ↓ Shows new result with 35% reduction
+Step 3: Test 2x Multiplier
+        User → Cargo Multiplier → "2x"
+        ↓ adjustedCargo = 60000
+        ↓ API call → acceleration scaling = 1.1
         
-Step 4: Validate Tiers
-        Frontend validates:
-        - Ascending order
-        - Valid percentages
-        ↓ Shows inline validation errors if any
+Step 4: Test 4x Multiplier
+        User → Cargo Multiplier → "4x"
+        ↓ adjustedCargo = 120000
+        ↓ API call → acceleration scaling = 1.3
         
-Step 5: Save
+Step 5: Test 8x Multiplier
+        User → Cargo Multiplier → "8x"
+        ↓ adjustedCargo = 240000
+        ↓ API call → acceleration scaling = 1.5
+        
+Step 6: Decide on Responsiveness
+        If 8x feels too sluggish → increase responsiveness to 1.3
+        ↓ Recalculate all multipliers
+        
+Step 7: Save Configuration
         User → "Save Configuration"
-        ↓ Backend validates tier structure
-        ↓ Saves to build-config.json
+        ↓ Backend validates and saves to build-config.json
 ```
 
 ---
