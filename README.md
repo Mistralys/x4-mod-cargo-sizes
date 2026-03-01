@@ -12,6 +12,10 @@ A separate FOMOD installer ZIP lets you choose cargo increases by ship
 type and size. For example, L-sized transport ships with 10x cargo size, 
 and M-sized mining ships with 2x cargo size.
 
+Each installer option shows a real example ship from the game with its
+vanilla and adjusted cargo values, so you can see the impact before
+choosing a multiplier.
+
 ## Downloads
 
 ### Nexusmods
@@ -168,6 +172,7 @@ During each build, a `release-notes-v{VERSION}.md` file is generated in the `bui
 - Release heading with version and title from the main changelog
 - All changes from the latest mod version
 - Builder section with build system changes (if builder changelog exists)
+- **Cargo Multiplier Comparison** table — a randomly selected transport ship shown across all supported multipliers (e.g., 2x through 10x), with vanilla and adjusted cargo values side-by-side
 - Installation instructions footer (AIO vs FOMOD)
 
 The generated file is ready for use in GitHub Releases and mod platform updates.

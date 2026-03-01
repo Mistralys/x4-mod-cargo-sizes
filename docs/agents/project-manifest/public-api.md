@@ -1,7 +1,7 @@
 # Public API Reference
 
-> **Version:** 1.4
-> **Last Updated:** February 19, 2026
+> **Version:** 1.6
+> **Last Updated:** March 1, 2026
 > **Purpose:** Complete public API signatures (NO implementations)
 
 ---
@@ -145,6 +145,7 @@ public static function getConfig(): BuildConfig
 public const string KEY_ACCELERATION_RESPONSIVENESS = 'accelerationResponsiveness';
 public const string KEY_MULTIPLIERS = 'cargo-multipliers';
 public const string KEY_FLIGHT_MECHANICS = 'flight-mechanics';
+public const string KEY_EXAMPLE_SHIPS = 'example-ships';
 ```
 
 #### Properties
@@ -165,6 +166,14 @@ public function getMultipliers(): array // Returns float[]
 
 ```php
 public function getAccelerationResponsiveness(): float // Default 1.0, valid range 0.1–5.0
+```
+
+```php
+/**
+ * Returns the configured example ship label for the given type+size combination.
+ * Returns '' if the key is absent from the 'example-ships' config.
+ */
+public function getExampleShip(string $shipType, string $shipSize): string
 ```
 
 ---
@@ -193,7 +202,7 @@ public const string SHIP_TYPES = array(...);
 #### Public Methods
 
 ```php
-public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder)
+public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder, BuildConfig $buildConfig)
 ```
 
 ```php
@@ -1270,12 +1279,17 @@ public private(set) string $shipType;
 public private(set) string $shipSize;
 public private(set) int|float $multiplier;
 public private(set) string $id;
+private static ?BuildConfig $buildConfig = null;
 ```
 
 #### Public Methods
 
 ```php
-public static function reset(): void
+public static function reset(): void // Resets all static state (instances + buildConfig)
+```
+
+```php
+public static function setConfig(BuildConfig $config): void
 ```
 
 ```php
@@ -1303,7 +1317,7 @@ public function getPluginLabel(): string
 ```
 
 ```php
-public function getPluginDescription(): string
+public function getPluginDescription(): string // Now includes example ship with cargo values
 ```
 
 ```php
@@ -1457,7 +1471,13 @@ Generates release notes from changelog files during the build process. Parses `c
 #### Public Methods
 
 ```php
-public function __construct(FolderInfo $buildFolder)
+/**
+ * @param FolderInfo $buildFolder
+ * @param float[]|int[] $multipliers
+ * @param ShipResult[] $shipResults
+ * @param BuildConfig $buildConfig
+ */
+public function __construct(FolderInfo $buildFolder, array $multipliers, array $shipResults, BuildConfig $buildConfig)
 ```
 
 ```php
@@ -1480,6 +1500,8 @@ public function generate(): void
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.6 | Mar 1, 2026 | Deterministic example ship selection: added BuildConfig::KEY_EXAMPLE_SHIPS + getExampleShip(); added BuildConfig parameter to CargoSizeExtractor and ReleaseNotesGenerator constructors; added FileCollection::setConfig() and $buildConfig static property; extended FileCollection::reset() to clear $buildConfig; changed ReleaseNotesGenerator::formatComparisonTable() from private to protected. Added 9 PHPUnit unit tests (ExampleShipSelectionTest). |
+| 1.5 | Mar 1, 2026 | Updated FileCollection::getPluginDescription() to include example ship cargo values; updated ReleaseNotesGenerator constructor to accept multipliers and ship results, added formatComparisonTable() for AIO comparison table in release notes. |
 | 1.4 | Feb 19, 2026 | Removed ReductionTier, AdjustedDrag, AdjustedInertia, PhysicsOverrideDef, and Jerk Adjustments section (deleted in v4.0 refactoring); updated PhysicsCalculator constructor (removed useEffectiveRatioCap); updated PhysicsCalculator methods |
 | 1.3 | Feb 19, 2026 | Added AccelerationOverrideDef and diagnostic DiagnosticsLogger with simplified acceleration-only approach |
 | 1.2 | Feb 11, 2026 | Added ReleaseNotesGenerator class, three new CargoSizeException error constants (ERROR_MISSING_CHANGELOG, ERROR_CHANGELOG_PARSE, ERROR_FILE_WRITE). |

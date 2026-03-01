@@ -25,6 +25,7 @@ use Mistralys\X4\Mods\CargoSizesMod\CargoSizeException;
 class BuildConfig
 {
     public const string KEY_ACCELERATION_RESPONSIVENESS = 'accelerationResponsiveness';
+    public const string KEY_EXAMPLE_SHIPS = 'example-ships';
     public const string KEY_MULTIPLIERS = 'cargo-multipliers';
     public const string KEY_FLIGHT_MECHANICS = 'flight-mechanics';
 
@@ -34,6 +35,11 @@ class BuildConfig
     public private(set) array $multipliers = array();
 
     private float $accelerationResponsiveness = 1.0;
+
+    /**
+     * @var array<string, string>
+     */
+    private array $exampleShips = [];
 
     /**
      * @throws CargoSizeException
@@ -53,6 +59,14 @@ class BuildConfig
         $flightMechanics = $config->getArray(self::KEY_FLIGHT_MECHANICS);
         if (isset($flightMechanics[self::KEY_ACCELERATION_RESPONSIVENESS]) && is_numeric($flightMechanics[self::KEY_ACCELERATION_RESPONSIVENESS])) {
             $this->accelerationResponsiveness = (float)$flightMechanics[self::KEY_ACCELERATION_RESPONSIVENESS];
+        }
+
+        // Load example ships (optional key)
+        $exampleShips = $config->getArray(self::KEY_EXAMPLE_SHIPS);
+        foreach ($exampleShips as $key => $label) {
+            if (is_string($key) && is_string($label)) {
+                $this->exampleShips[$key] = $label;
+            }
         }
 
         $this->validate();
@@ -104,6 +118,22 @@ class BuildConfig
     public function getAccelerationResponsiveness(): float
     {
         return $this->accelerationResponsiveness;
+    }
+
+    /**
+     * Gets the configured example ship label for the given ship type and size.
+     *
+     * Builds the lookup key as `{shipType}-{shipSize}` (lowercase) and returns
+     * the configured ship label, or an empty string if not configured.
+     *
+     * @param string $shipType Normalised ship type (e.g. 'trans', 'miner').
+     * @param string $shipSize Ship size (e.g. 's', 'm', 'l', 'xl').
+     * @return string The configured ship label, or '' if not set.
+     */
+    public function getExampleShip(string $shipType, string $shipSize): string
+    {
+        $key = strtolower($shipType) . '-' . strtolower($shipSize);
+        return $this->exampleShips[$key] ?? '';
     }
 }
 

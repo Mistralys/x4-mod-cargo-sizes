@@ -33,7 +33,8 @@ class CargoSizeBuildTools
         {
             $extractor = new CargoSizeExtractor(
                 FolderInfo::factory(X4_EXTRACTED_CAT_FILES_FOLDER),
-                FolderInfo::factory(__DIR__.'/../../../../build')
+                FolderInfo::factory(__DIR__.'/../../../../build'),
+                self::getConfig()
             );
 
             $extractor->extract(self::getConfig()->getMultipliers());

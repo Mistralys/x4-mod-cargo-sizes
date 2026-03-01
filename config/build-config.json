@@ -8,6 +8,16 @@
   ],
   "flight-mechanics": {
     "accelerationResponsiveness": 1.0
+  },
+  "example-ships": {
+    "trans-s":       "Courier Sentinel",
+    "trans-m":       "Demeter Sentinel",
+    "trans-l":       "Shuyaku Sentinel",
+    "miner-s":       "Magpie",
+    "miner-m":       "Manorina Sentinel",
+    "miner-l":       "Magnetar Sentinel",
+    "carrier-xl":    "Nomad Sentinel",
+    "resupplier-xl": "Condor Sentinel"
   }
 }
 

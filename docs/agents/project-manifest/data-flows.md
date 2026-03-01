@@ -1,7 +1,7 @@
 # Data Flows & Interactions
 
-> **Version:** 1.3  
-> **Last Updated:** February 19, 2026  
+> **Version:** 1.4  
+> **Last Updated:** March 1, 2026  
 > **Purpose:** Describes how data flows through the system from input to output
 
 ---
@@ -332,6 +332,16 @@ For each ship type (Transport, Miner, Auxiliary, Carrier):
       • 8x cargo
       • 10x cargo
     ↓
+    Each plugin description includes an example ship:
+      FileCollection::getPluginDescription()
+        → Filters StorageOverrideFile instances from collection
+        → Deterministic selection (if BuildConfig::$buildConfig is set):
+            Call getExampleShip($shipType, $shipSize)
+            If non-empty label → search collection for matching StorageOverrideFile
+            If match found → use it as the example
+        → Fallback: array_rand() when config absent or ship not found in build data
+        → Appends: "Example: {ship} cargo changes from {original} to {adjusted}."
+    ↓
 Generate ModuleConfig.xml with:
   • Installation steps (one per ship type)
   • Plugin options (size + multiplier combinations)
@@ -394,7 +404,7 @@ Write to:
 ```
 CargoSizeExtractor::writeReleaseNotes()
     ↓
-Create ReleaseNotesGenerator with build folder
+Create ReleaseNotesGenerator with build folder, multipliers, and ship results
     ↓
 ReleaseNotesGenerator::generate()
     ↓
@@ -416,6 +426,22 @@ Format main changelog:
 Format builder changelog (if present):
   ## Builder v{VERSION} - {LABEL}
   - Builder change 1
+    ↓
+Format comparison table:
+  formatComparisonTable()
+    → Filter ship results to transport ships (SHIP_TYPE_TRANSPORT, SHIP_TYPE_STORAGE)
+    → Deterministic selection (iterates type×size combinations in order):
+        For each of: trans-s, trans-m, trans-l, storage-s, storage-m, storage-l
+          Call BuildConfig::getExampleShip($type, $size)
+          If non-empty label → search transport ships for matching ShipResult
+          If match found → use as example ship (break)
+    → Fallback: array_rand() when config absent or ship not found in build data
+    → Generate Markdown table with one row per multiplier:
+      ## Cargo Multiplier Comparison
+      | Variant | Example Ship | Vanilla Cargo | Adjusted Cargo |
+      | AIO x2  | {ship}       | {cargo} m³    | {adjusted} m³  |
+      | AIO x4  | {ship}       | {cargo} m³    | {adjusted} m³  |
+      ...
     ↓
 Format footer:
   ----

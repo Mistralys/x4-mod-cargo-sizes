@@ -20,6 +20,7 @@ use Mistralys\X4\ExtractedData\DataFolder;
 use Mistralys\X4\ExtractedData\DataFolders;
 use Mistralys\X4\ExtractedData\X4GameInfo;
 use Mistralys\X4\Game\X4Game;
+use Mistralys\X4\Mods\CargoSizesMod\Build\BuildConfig;
 use Mistralys\X4\Mods\CargoSizesMod\FOMOD\FomodWriter;
 use Mistralys\X4\Mods\CargoSizesMod\Output\DiagnosticsLogger;
 use Mistralys\X4\Mods\CargoSizesMod\Output\FlightMechanicsOverrideFile;
@@ -121,9 +122,12 @@ class CargoSizeExtractor
 
     private ?DiagnosticsLogger $diagnosticsLogger = null;
 
-    public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder)
+    private BuildConfig $buildConfig;
+
+    public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder, BuildConfig $buildConfig)
     {
         $this->outputFolder = $outputFolder;
+        $this->buildConfig = $buildConfig;
         $this->gameVersion = X4Game::create(X4_GAME_FOLDER)->getVersion();
 
         // Use X4GameInfo from x4-data-extractor package (vendored version)
@@ -154,6 +158,7 @@ class CargoSizeExtractor
         $this->multipliers = $multipliers;
 
         FileCollection::reset();
+        FileCollection::setConfig($this->buildConfig);
 
         // Create diagnostics logger for physics calculations
         $this->diagnosticsLogger = new DiagnosticsLogger();
@@ -277,10 +282,15 @@ class CargoSizeExtractor
     private function writeReleaseNotes(): void
     {
         Console::header('Writing release notes');
-        
-        $generator = new ReleaseNotesGenerator($this->outputFolder);
+
+        $generator = new ReleaseNotesGenerator(
+            $this->outputFolder,
+            $this->multipliers,
+            $this->results,
+            $this->buildConfig
+        );
         $generator->generate();
-        
+
         Console::line1('Release notes generated successfully.');
     }
 

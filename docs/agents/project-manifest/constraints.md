@@ -1,7 +1,7 @@
 # Project Constraints & Rules
 
-> **Version:** 1.3
-> **Last Updated:** February 19, 2026
+> **Version:** 1.4
+> **Last Updated:** March 1, 2026
 > **Purpose:** Non-negotiable rules, conventions, and coding standards
 
 ---
@@ -788,6 +788,24 @@ composer build  # Run 2 - same output
 ```
 
 ---
+
+### 4. Build Configuration Keys
+
+The file `config/build-config.json` contains the following top-level keys:
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `"cargo-multipliers"` | `number[]` | Yes | List of cargo multipliers to build (e.g. `[2, 4, 8, 10]`). |
+| `"flight-mechanics"` | `object` | No | Per-key acceleration responsiveness overrides. |
+| `"example-ships"` | `object` | No | Maps `{shipType}-{size}` keys to ship label strings for deterministic example selection. |
+
+**`"example-ships"` details:**
+
+- **Optional key.** If absent, `FileCollection::getExampleShipDescription()` and `ReleaseNotesGenerator::formatComparisonTable()` fall back to `array_rand()` (random selection).
+- **Key format:** `{normalizedShipType}-{size}` (lowercase). Examples: `"trans-s"`, `"trans-m"`, `"trans-l"`, `"miner-m"`, `"carrier-xl"`, `"resupplier-xl"`.
+- **Value:** Must exactly match `ShipResult::getShipLabel()` output — values are **case-sensitive**.
+- **Silent fallback:** If the configured ship label is not found in the current build data, both consumers fall back to `array_rand()` without error.
+- **Accessed via:** `BuildConfig::getExampleShip(string $shipType, string $shipSize): string`.
 
 ## 🚀 Performance Constraints
 
