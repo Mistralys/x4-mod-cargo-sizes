@@ -29,7 +29,7 @@ class PhysicsCalculatorTest extends TestCase
     public function testMassRatioIsGreaterThanOne(): void
     {
         // When cargo increases, mass ratio should be > 1.0
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $this->assertGreaterThan(1.0, $calc->getMassRatio());
     }
 
@@ -41,30 +41,8 @@ class PhysicsCalculatorTest extends TestCase
         // baseMass: 650, originalCargo: 1000, adjustedCargo: 4000
         // originalFullMass: 1650, adjustedFullMass: 4650
         // massRatio: 4650 / 1650 = 2.818...
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $this->assertEqualsWithDelta(2.818, $calc->getMassRatio(), 0.001);
-    }
-
-    /**
-     * Test that effective ratio cap works for extreme cargo-heavy ships.
-     */
-    public function testEffectiveRatioCap(): void
-    {
-        // Extreme cargo-heavy ship: base 205, cargo 42000 → 420000
-        // Mass ratio would be ~9.96, but capped at cargoMultiplier (10.0)
-        $calc = new PhysicsCalculator(205, 42000, 420000, 10.0, true);
-        $this->assertEqualsWithDelta(10.0, $calc->getEffectiveRatio(), 0.1);
-    }
-
-    /**
-     * Test that effective ratio is NOT capped when cap is disabled.
-     */
-    public function testEffectiveRatioNoCap(): void
-    {
-        // Same scenario but cap disabled
-        $calc = new PhysicsCalculator(205, 42000, 420000, 10.0, false);
-        $this->assertGreaterThan(9.0, $calc->getEffectiveRatio());
-        $this->assertLessThan(10.0, $calc->getEffectiveRatio());
     }
 
     /**
@@ -73,7 +51,7 @@ class PhysicsCalculatorTest extends TestCase
     public function testInverseMassRatio(): void
     {
         // Mass ratio 2.0 → inverse should be 0.5
-        $calc = new PhysicsCalculator(100, 100, 300, 3.0, true);
+        $calc = new PhysicsCalculator(100, 100, 300, 3.0);
         // originalFull: 200, adjustedFull: 400, ratio: 2.0
         $this->assertEqualsWithDelta(0.5, $calc->getInverseMassRatio(), 0.01);
     }
@@ -84,7 +62,7 @@ class PhysicsCalculatorTest extends TestCase
     public function testMassRatioSquared(): void
     {
         // Mass ratio 2.0 → squared should be 4.0
-        $calc = new PhysicsCalculator(100, 100, 300, 3.0, true);
+        $calc = new PhysicsCalculator(100, 100, 300, 3.0);
         $this->assertEqualsWithDelta(4.0, $calc->getMassRatioSquared(), 0.01);
     }
 
@@ -94,7 +72,7 @@ class PhysicsCalculatorTest extends TestCase
     public function testMassIncreasePercent(): void
     {
         // Mass ratio 2.0 → 100% increase
-        $calc = new PhysicsCalculator(100, 100, 300, 3.0, true);
+        $calc = new PhysicsCalculator(100, 100, 300, 3.0);
         $this->assertEqualsWithDelta(100.0, $calc->getMassIncreasePercent(), 1.0);
     }
 
@@ -105,7 +83,7 @@ class PhysicsCalculatorTest extends TestCase
     {
         $this->expectException(CargoSizeException::class);
         $this->expectExceptionMessage('Base mass must be greater than zero');
-        new PhysicsCalculator(0, 1000, 4000, 4.0, true);
+        new PhysicsCalculator(0, 1000, 4000, 4.0);
     }
 
     /**
@@ -114,7 +92,7 @@ class PhysicsCalculatorTest extends TestCase
     public function testValidationThrowsForNegativeBaseMass(): void
     {
         $this->expectException(CargoSizeException::class);
-        new PhysicsCalculator(-100, 1000, 4000, 4.0, true);
+        new PhysicsCalculator(-100, 1000, 4000, 4.0);
     }
 
     /**
@@ -123,7 +101,7 @@ class PhysicsCalculatorTest extends TestCase
     public function testValidationThrowsForNegativeCargo(): void
     {
         $this->expectException(CargoSizeException::class);
-        new PhysicsCalculator(100, -1000, 4000, 4.0, true);
+        new PhysicsCalculator(100, -1000, 4000, 4.0);
     }
 
     /**
@@ -132,7 +110,7 @@ class PhysicsCalculatorTest extends TestCase
     public function testValidationThrowsForNegativeMultiplier(): void
     {
         $this->expectException(CargoSizeException::class);
-        new PhysicsCalculator(100, 1000, 4000, -4.0, true);
+        new PhysicsCalculator(100, 1000, 4000, -4.0);
     }
 
     /**
@@ -140,7 +118,7 @@ class PhysicsCalculatorTest extends TestCase
      */
     public function testOriginalFullMassCalculation(): void
     {
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $this->assertEquals(1650, $calc->getOriginalFullMass());
     }
 
@@ -149,7 +127,7 @@ class PhysicsCalculatorTest extends TestCase
      */
     public function testAdjustedFullMassCalculation(): void
     {
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $this->assertEquals(4650, $calc->getAdjustedFullMass());
     }
 
@@ -158,7 +136,7 @@ class PhysicsCalculatorTest extends TestCase
      */
     public function testMassIncrease(): void
     {
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $this->assertEquals(3000, $calc->getMassIncrease());
     }
 
@@ -167,7 +145,7 @@ class PhysicsCalculatorTest extends TestCase
      */
     public function testCargoMultiplierGetter(): void
     {
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $this->assertEquals(4.0, $calc->getCargoMultiplier());
     }
 
@@ -176,7 +154,7 @@ class PhysicsCalculatorTest extends TestCase
      */
     public function testBaseMassGetter(): void
     {
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $this->assertEquals(650, $calc->getBaseMass());
     }
 
@@ -186,7 +164,7 @@ class PhysicsCalculatorTest extends TestCase
     public function testValidationWarningsForExtremeMassRatio(): void
     {
         // Extreme case: massRatio > 10.0
-        $calc = new PhysicsCalculator(10, 1000, 12000, 12.0, false);
+        $calc = new PhysicsCalculator(10, 1000, 12000, 12.0);
         $warnings = $calc->getValidationWarnings();
         
         $this->assertNotEmpty($warnings);
@@ -194,42 +172,14 @@ class PhysicsCalculatorTest extends TestCase
     }
 
     /**
-     * Test validation warnings when effective ratio is capped.
+     * Test formatMassRatio returns expected decimal string format.
      */
-    public function testValidationWarningsForCappedRatio(): void
+    public function testFormatMassRatio(): void
     {
-        // Extreme cargo-heavy ship with cap enabled
-        $calc = new PhysicsCalculator(205, 42000, 420000, 10.0, true);
-        $warnings = $calc->getValidationWarnings();
-        
-        // Should not have cap warning because mass ratio (~9.96) is less than cargo multiplier (10.0)
-        // Cap only triggers when actual mass ratio > cargo multiplier
-        // This test case doesn't trigger the cap, so we check it doesn't incorrectly report one
-        $hasCapWarning = false;
-        foreach ($warnings as $warning) {
-            if (strpos($warning, 'Effective ratio capped') !== false) {
-                $hasCapWarning = true;
-                break;
-            }
-        }
-        
-        // For this specific case, mass ratio is ~9.96, cargo multiplier is 10.0
-        // So no capping occurs, therefore no warning expected
-        $this->assertFalse($hasCapWarning, 'Cap warning should not be present for this case');
-    }
-
-    /**
-     * Test formatting methods return expected string format.
-     */
-    public function testFormatMethods(): void
-    {
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         
         $formattedRatio = $calc->formatMassRatio(2);
         $this->assertMatchesRegularExpression('/^\d+\.\d{2}$/', $formattedRatio);
-        
-        $formattedEffective = $calc->formatEffectiveRatio(2);
-        $this->assertMatchesRegularExpression('/^\d+\.\d{2}$/', $formattedEffective);
     }
 
     /**
@@ -237,7 +187,7 @@ class PhysicsCalculatorTest extends TestCase
      */
     public function testDebugInfo(): void
     {
-        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0, true);
+        $calc = new PhysicsCalculator(650, 1000, 4000, 4.0);
         $debugInfo = $calc->getDebugInfo();
         
         $this->assertStringContainsString('Base Mass: 650', $debugInfo);
@@ -252,7 +202,7 @@ class PhysicsCalculatorTest extends TestCase
      */
     public function testZeroOriginalCargo(): void
     {
-        $calc = new PhysicsCalculator(100, 0, 1000, 10.0, true);
+        $calc = new PhysicsCalculator(100, 0, 1000, 10.0);
         
         // Mass ratio should be calculable (baseMass + 0) / (baseMass + 1000)
         $this->assertGreaterThan(1.0, $calc->getMassRatio());
@@ -261,7 +211,7 @@ class PhysicsCalculatorTest extends TestCase
         $warnings = $calc->getValidationWarnings();
         $hasZeroCargoWarning = false;
         foreach ($warnings as $warning) {
-            if (strpos($warning, 'zero cargo capacity') !== false) {
+            if (str_contains($warning, 'zero cargo capacity')) {
                 $hasZeroCargoWarning = true;
                 break;
             }
@@ -276,7 +226,7 @@ class PhysicsCalculatorTest extends TestCase
     {
         // Combat ship: high base mass, low cargo
         // baseMass: 106, originalCargo: 240, adjustedCargo: 2400 (10x)
-        $calc = new PhysicsCalculator(106, 240, 2400, 10.0, true);
+        $calc = new PhysicsCalculator(106, 240, 2400, 10.0);
         
         // Mass ratio should be close to 7.2x  
         // originalFull: 346, adjustedFull: 2506, ratio: ~7.24
@@ -291,14 +241,11 @@ class PhysicsCalculatorTest extends TestCase
     {
         // Cargo ship: low base mass, massive cargo
         // baseMass: 205, originalCargo: 42000, adjustedCargo: 420000 (10x)
-        $calc = new PhysicsCalculator(205, 42000, 420000, 10.0, true);
+        $calc = new PhysicsCalculator(205, 42000, 420000, 10.0);
         
         // Actual mass ratio: (205 + 420000) / (205 + 42000) = 420205 / 42205 = ~9.956
-        // Cargo multiplier: 10.0
-        // With cap enabled, effective ratio = min(9.956, 10.0) = 9.956 (no capping needed)
-        $this->assertEqualsWithDelta(9.956, $calc->getEffectiveRatio(), 0.01);
+        $this->assertEqualsWithDelta(9.956, $calc->getMassRatio(), 0.01);
         
-        // Actual mass ratio should also be ~9.96
         $this->assertGreaterThan(9.0, $calc->getMassRatio());
         $this->assertLessThan(10.0, $calc->getMassRatio());
     }

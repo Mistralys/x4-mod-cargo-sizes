@@ -20,6 +20,7 @@ use Mistralys\X4\ExtractedData\DataFolder;
 use Mistralys\X4\ExtractedData\DataFolders;
 use Mistralys\X4\ExtractedData\X4GameInfo;
 use Mistralys\X4\Game\X4Game;
+use Mistralys\X4\Mods\CargoSizesMod\Build\BuildConfig;
 use Mistralys\X4\Mods\CargoSizesMod\FOMOD\FomodWriter;
 use Mistralys\X4\Mods\CargoSizesMod\Output\DiagnosticsLogger;
 use Mistralys\X4\Mods\CargoSizesMod\Output\FlightMechanicsOverrideFile;
@@ -119,9 +120,14 @@ class CargoSizeExtractor
 
     private DataFolders $dataFolders;
 
-    public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder)
+    private ?DiagnosticsLogger $diagnosticsLogger = null;
+
+    private BuildConfig $buildConfig;
+
+    public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder, BuildConfig $buildConfig)
     {
         $this->outputFolder = $outputFolder;
+        $this->buildConfig = $buildConfig;
         $this->gameVersion = X4Game::create(X4_GAME_FOLDER)->getVersion();
 
         // Use X4GameInfo from x4-data-extractor package (vendored version)
@@ -152,10 +158,10 @@ class CargoSizeExtractor
         $this->multipliers = $multipliers;
 
         FileCollection::reset();
+        FileCollection::setConfig($this->buildConfig);
 
         // Create diagnostics logger for physics calculations
-        $diagnosticsLogger = new DiagnosticsLogger();
-        FlightMechanicsOverrideFile::setDiagnosticsLogger($diagnosticsLogger);
+        $this->diagnosticsLogger = new DiagnosticsLogger();
 
         $this->analyzeCargoMacros();
         $this->analyzeShipMacros();
@@ -166,19 +172,19 @@ class CargoSizeExtractor
         
         // Write diagnostics report to build folder
         Console::header('Writing diagnostics report');
-        Console::line1('Total ships logged to diagnostics: %d', $diagnosticsLogger->getShipCount());
+        Console::line1('Total ships logged to diagnostics: %d', $this->diagnosticsLogger->getShipCount());
         $diagnosticsPath = $this->outputFolder->getPath() . '/physics-diagnostics.txt';
-        $diagnosticsLogger->writeToFile($diagnosticsPath);
+        $this->diagnosticsLogger->writeToFile($diagnosticsPath);
         Console::line1('Diagnostics written to: [%s]', $diagnosticsPath);
         
         // Display warnings summary
-        $warnings = $diagnosticsLogger->getWarnings();
+        $warnings = $this->diagnosticsLogger->getWarnings();
         if (!empty($warnings)) {
             Console::line1('Physics warnings generated: %d (see physics-diagnostics.txt for details)', count($warnings));
         }
 
         // Clear logger
-        FlightMechanicsOverrideFile::clearDiagnosticsLogger();
+        $this->diagnosticsLogger = null;
     }
 
     /**
@@ -276,10 +282,15 @@ class CargoSizeExtractor
     private function writeReleaseNotes(): void
     {
         Console::header('Writing release notes');
-        
-        $generator = new ReleaseNotesGenerator($this->outputFolder);
+
+        $generator = new ReleaseNotesGenerator(
+            $this->outputFolder,
+            $this->multipliers,
+            $this->results,
+            $this->buildConfig
+        );
         $generator->generate();
-        
+
         Console::line1('Release notes generated successfully.');
     }
 
@@ -418,15 +429,15 @@ class CargoSizeExtractor
             )
         );
 
-        $this->registerOverrideFile(
-            $typeKey,
+        $flightFile = new FlightMechanicsOverrideFile(
+            $baseFolder,
             $multiplier,
-            new FlightMechanicsOverrideFile(
-                $baseFolder,
-                $multiplier,
-                $result
-            )
+            $result
         );
+        if ($this->diagnosticsLogger !== null) {
+            $flightFile->setDiagnosticsLogger($this->diagnosticsLogger);
+        }
+        $this->registerOverrideFile($typeKey, $multiplier, $flightFile);
     }
 
     private function registerOverrideFile(string $typeKey, int|float $multiplier, BaseOverrideFile $file) : void

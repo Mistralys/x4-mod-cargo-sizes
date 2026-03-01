@@ -156,7 +156,7 @@ export function ResultsPanel({
       />
 
       {/* Diagnostics */}
-      <DiagnosticsPanel activeTier={data.activeTier} config={config} />
+      <DiagnosticsPanel config={config} />
     </div>
   );
 }

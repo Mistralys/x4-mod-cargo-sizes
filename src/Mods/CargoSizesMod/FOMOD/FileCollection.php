@@ -6,6 +6,7 @@ namespace Misc\Mods\CargoSizesMod\FOMOD;
 
 use AppUtils\ZIPHelper;
 use Mistralys\X4\Mods\CargoSizesMod\BaseOverrideFile;
+use Mistralys\X4\Mods\CargoSizesMod\Build\BuildConfig;
 use Mistralys\X4\Mods\CargoSizesMod\CargoSizeExtractor;
 use Mistralys\X4\Mods\CargoSizesMod\Console;
 use Mistralys\X4\Mods\CargoSizesMod\StorageOverrideFile;
@@ -28,6 +29,12 @@ class FileCollection
     public static function reset() : void
     {
         self::$instances = array();
+        self::$buildConfig = null;
+    }
+
+    public static function setConfig(BuildConfig $config): void
+    {
+        self::$buildConfig = $config;
     }
 
     /**
@@ -46,6 +53,8 @@ class FileCollection
      * @var array<string,FileCollection>
      */
     private static array $instances = array();
+
+    private static ?BuildConfig $buildConfig = null;
 
     public static function create(string $shipType, string $size, float|int $multiplier) : self
     {
@@ -100,11 +109,70 @@ class FileCollection
 
     public function getPluginDescription() : string
     {
-        return sprintf(
+        $description = sprintf(
             'Increases the cargo size for %1$s-sized %2$s by x%3$s.',
             strtoupper($this->getShipSize()),
             $this->getShipTypeLabel(),
             $this->getMultiplier()
+        );
+
+        $example = $this->getExampleShipDescription();
+        if ($example !== '') {
+            $description .= "\n\n" . $example;
+        }
+
+        return $description;
+    }
+
+    /**
+     * Returns a description line with an example ship's cargo change for this collection.
+     * Picks a random StorageOverrideFile from the collection to use as the example.
+     *
+     * @return string Example text, or empty string if no suitable file found
+     */
+    private function getExampleShipDescription(): string
+    {
+        $storageFiles = array_filter(
+            $this->files,
+            static fn(BaseOverrideFile $file): bool => $file instanceof StorageOverrideFile && $file->getShipName() !== ''
+        );
+
+        // The "Unchanged" plugin option for each FOMOD step contains no StorageOverrideFile
+        // entries — it is a no-op that does not modify any game files. This means the
+        // empty($storageFiles) guard naturally produces an empty string for those options.
+        // This invariant must be preserved: if an "Unchanged" option were ever to gain
+        // StorageOverrideFile entries, it would incorrectly show example ship text in the
+        // FOMOD installer description.
+        if (empty($storageFiles)) {
+            return '';
+        }
+
+        $storageFiles = array_values($storageFiles);
+
+        // Prefer the deterministically configured ship if available.
+        $example = null;
+        if (self::$buildConfig !== null) {
+            $label = self::$buildConfig->getExampleShip($this->shipType, $this->shipSize);
+            if ($label !== '') {
+                foreach ($storageFiles as $file) {
+                    if ($file->getShipName() === $label) {
+                        $example = $file;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Fall back to random selection when not configured or ship not found in build data.
+        if ($example === null) {
+            $example = $storageFiles[array_rand($storageFiles)];
+        }
+
+        return sprintf(
+            'Example: %s cargo changes from %s m³ to %s m³.',
+            $example->getShipName(),
+            number_format($example->getCargo(), 0, '.', ','),
+            number_format($example->getAdjustedCargo(), 0, '.', ',')
         );
     }
 

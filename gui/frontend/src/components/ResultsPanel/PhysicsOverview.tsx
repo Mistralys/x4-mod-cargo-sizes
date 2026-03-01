@@ -28,10 +28,10 @@ export function PhysicsOverview({ data, shipSize = 'M' }: PhysicsOverviewProps) 
           variant="neutral"
         />
         <MetricCard
-          label="Effective Ratio"
-          value={data.effectiveRatio.toFixed(2)}
+          label="Acceleration Scaling"
+          value={data.accelerationScalingFactor.toFixed(2)}
           unit="x"
-          variant={data.effectiveRatio < data.massRatio ? 'positive' : 'neutral'}
+          variant={data.accelerationScalingFactor > 1 ? 'negative' : 'positive'}
         />
         <MetricCard
           label="Original Cargo"

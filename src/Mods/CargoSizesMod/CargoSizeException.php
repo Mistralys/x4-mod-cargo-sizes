@@ -15,4 +15,6 @@ class CargoSizeException extends X4Exception
     public const ERROR_MISSING_CHANGELOG = 178005;
     public const ERROR_CHANGELOG_PARSE = 178006;
     public const ERROR_FILE_WRITE = 178007;
+    public const ERROR_INVALID_CONFIG = 178008;
+    public const ERROR_INVALID_CALCULATOR_PARAMS = 178009;
 }

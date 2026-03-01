@@ -19,7 +19,6 @@ use Mistralys\X4\Mods\CargoSizesMod\CargoSizeException;
  * **Key Concepts:**
  * - **massRatio**: adjustedFullMass / originalFullMass (>1.0 when cargo increases)
  * - **cargoMultiplier**: user's chosen cargo multiplier (2x, 4x, 10x)
- * - **effectiveRatio**: capped ratio to prevent extreme physics calculations
  *
  * @package X4 Cargo Sizes Mod
  * @subpackage Physics Calculations
@@ -30,22 +29,19 @@ class PhysicsCalculator
     private float $adjustedFullMass;
     private float $massIncrease;
     private float $massRatio;
-    private float $effectiveRatio;
 
     /**
      * @param float $baseMass Ship mass without cargo
      * @param float $originalCargo Original cargo capacity
      * @param float $adjustedCargo Adjusted cargo capacity (after multiplier)
      * @param float $cargoMultiplier User's chosen multiplier (2x, 4x, 10x, etc.)
-     * @param bool $useEffectiveRatioCap Whether to cap effective ratio at cargoMultiplier
      * @throws CargoSizeException
      */
     public function __construct(
         private float $baseMass,
         private float $originalCargo,
         private float $adjustedCargo,
-        private float $cargoMultiplier,
-        private bool $useEffectiveRatioCap
+        private float $cargoMultiplier
     )
     {
         $this->validate();
@@ -63,7 +59,7 @@ class PhysicsCalculator
             throw new CargoSizeException(
                 sprintf('Base mass must be greater than zero. Received: %f', $this->baseMass),
                 '',
-                CargoSizeException::ERROR_UNHANDLED_SHIP_TYPE
+                CargoSizeException::ERROR_INVALID_CALCULATOR_PARAMS
             );
         }
 
@@ -71,7 +67,7 @@ class PhysicsCalculator
             throw new CargoSizeException(
                 sprintf('Original cargo cannot be negative. Received: %f', $this->originalCargo),
                 '',
-                CargoSizeException::ERROR_UNHANDLED_SHIP_TYPE
+                CargoSizeException::ERROR_INVALID_CALCULATOR_PARAMS
             );
         }
 
@@ -79,7 +75,7 @@ class PhysicsCalculator
             throw new CargoSizeException(
                 sprintf('Adjusted cargo cannot be negative. Received: %f', $this->adjustedCargo),
                 '',
-                CargoSizeException::ERROR_UNHANDLED_SHIP_TYPE
+                CargoSizeException::ERROR_INVALID_CALCULATOR_PARAMS
             );
         }
 
@@ -87,7 +83,7 @@ class PhysicsCalculator
             throw new CargoSizeException(
                 sprintf('Cargo multiplier must be greater than zero. Received: %f', $this->cargoMultiplier),
                 '',
-                CargoSizeException::ERROR_UNHANDLED_SHIP_TYPE
+                CargoSizeException::ERROR_INVALID_CALCULATOR_PARAMS
             );
         }
     }
@@ -106,13 +102,6 @@ class PhysicsCalculator
             $this->massRatio = 1.0;
         } else {
             $this->massRatio = $this->adjustedFullMass / $this->originalFullMass;
-        }
-
-        // Apply cap if enabled
-        if ($this->useEffectiveRatioCap) {
-            $this->effectiveRatio = min($this->massRatio, $this->cargoMultiplier);
-        } else {
-            $this->effectiveRatio = $this->massRatio;
         }
     }
 
@@ -137,19 +126,6 @@ class PhysicsCalculator
     public function getCargoMultiplier(): float
     {
         return $this->cargoMultiplier;
-    }
-
-    /**
-     * Gets the effective ratio used for physics calculations.
-     *
-     * If useEffectiveRatioCap is true, this is min(massRatio, cargoMultiplier).
-     * This prevents extreme physics adjustments for ships with very high cargo-to-mass ratios.
-     *
-     * @return float Effective ratio for calculations
-     */
-    public function getEffectiveRatio(): float
-    {
-        return $this->effectiveRatio;
     }
 
     /**
@@ -243,14 +219,6 @@ class PhysicsCalculator
             );
         }
 
-        if ($this->effectiveRatio < $this->massRatio) {
-            $warnings[] = sprintf(
-                'Effective ratio capped at %.2fx (actual mass ratio: %.2fx)',
-                $this->effectiveRatio,
-                $this->massRatio
-            );
-        }
-
         if ($this->originalCargo === 0.0 && $this->adjustedCargo > 0.0) {
             $warnings[] = 'Ship originally had zero cargo capacity but now has cargo';
         }
@@ -270,17 +238,6 @@ class PhysicsCalculator
     }
 
     /**
-     * Formats the effective ratio for display.
-     *
-     * @param int $decimals Number of decimal places
-     * @return string Formatted ratio (e.g., "2.45")
-     */
-    public function formatEffectiveRatio(int $decimals = 2): string
-    {
-        return number_format($this->effectiveRatio, $decimals, '.', '');
-    }
-
-    /**
      * Gets a debug string representation of the calculator.
      *
      * @return string Debug information
@@ -296,9 +253,7 @@ class PhysicsCalculator
             "  Adjusted Full Mass: %.2f kg\n" .
             "  Mass Increase: %.2f kg (%.1f%%)\n" .
             "  Mass Ratio: %.2fx\n" .
-            "  Cargo Multiplier: %.2fx\n" .
-            "  Effective Ratio: %.2fx\n" .
-            "  Cap Applied: %s",
+            "  Cargo Multiplier: %.2fx",
             $this->baseMass,
             $this->originalCargo,
             $this->adjustedCargo,
@@ -307,9 +262,7 @@ class PhysicsCalculator
             $this->massIncrease,
             $this->getMassIncreasePercent(),
             $this->massRatio,
-            $this->cargoMultiplier,
-            $this->effectiveRatio,
-            $this->useEffectiveRatioCap ? 'yes' : 'no'
+            $this->cargoMultiplier
         );
     }
 }

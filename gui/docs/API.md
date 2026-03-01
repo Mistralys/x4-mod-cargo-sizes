@@ -3,8 +3,8 @@
 > **REST API for physics calculations, ship data, and configuration management**
 
 **Base URL**: `http://localhost:8080/api`  
-**Version**: 1.1  
-**Last Updated**: February 15, 2026
+**Version**: 1.2  
+**Last Updated**: February 19, 2026
 
 ---
 
@@ -94,22 +94,7 @@ Calculate physics adjustments for a ship with given parameters.
   "originalCargo": 5000,
   "adjustedCargo": 20000,
   "cargoMultiplier": 4.0,
-  "useEffectiveRatioCap": true,
-  "dragReductionFactor": 1.0,
-  "inertiaImpactFactor": 0.5,
   "accelerationResponsiveness": 1.0,
-  "dragReductionTiers": [
-    { "maxMultiplier": 2.0, "reductionPercent": 0.1 },
-    { "maxMultiplier": 4.0, "reductionPercent": 0.3 },
-    { "maxMultiplier": 8.0, "reductionPercent": 0.5 },
-    { "maxMultiplier": 999, "reductionPercent": 0.7 }
-  ],
-  "jerkReductionTiers": [
-    { "maxMultiplier": 2.0, "reductionPercent": 0.05 },
-    { "maxMultiplier": 4.0, "reductionPercent": 0.15 },
-    { "maxMultiplier": 8.0, "reductionPercent": 0.25 },
-    { "maxMultiplier": 999, "reductionPercent": 0.35 }
-  ],
   "engineId": "engine_arg_s_travel_01_mk1"
 }
 ```
@@ -118,80 +103,20 @@ Calculate physics adjustments for a ship with given parameters.
 ```json
 {
   "massRatio": 1.3,
-  "effectiveRatio": 1.3,
   "originalFullMass": 55000,
   "adjustedFullMass": 70000,
-  "dragOriginal": {
-    "forward": 100.0,
-    "reverse": 120.0,
-    "horizontal": 80.0,
-    "vertical": 90.0,
-    "pitch": 50.0,
-    "yaw": 50.0,
-    "roll": 45.0
-  },
-  "dragAdjusted": {
-    "forward": 85.0,
-    "forwardPercent": -15.0,
-    "reverse": 102.0,
-    "reversePercent": -15.0,
-    "horizontal": 68.0,
-    "horizontalPercent": -15.0,
-    "vertical": 76.5,
-    "verticalPercent": -15.0,
-    "pitch": 42.5,
-    "pitchPercent": -15.0,
-    "yaw": 42.5,
-    "yawPercent": -15.0,
-    "roll": 38.25,
-    "rollPercent": -15.0
-  },
-  "inertiaOriginal": {
-    "pitch": 1000.0,
-    "yaw": 1000.0,
-    "roll": 900.0
-  },
-  "inertiaAdjusted": {
-    "pitch": 1150.0,
-    "pitchPercent": 15.0,
-    "yaw": 1150.0,
-    "yawPercent": 15.0,
-    "roll": 1035.0,
-    "rollPercent": 15.0
-  },
-  "jerkOriginal": {
-    "forward": { "accel": 100.0, "decel": 100.0 },
-    "boost": { "accel": 200.0, "decel": 200.0 },
-    "travel": { "accel": 300.0, "decel": 300.0 }
-  },
-  "jerkAdjusted": {
-    "forward": {
-      "accel": 95.0,
-      "accelPercent": -5.0,
-      "decel": 95.0,
-      "decelPercent": -5.0
-    },
-    "boost": {
-      "accel": 190.0,
-      "accelPercent": -5.0,
-      "decel": 190.0,
-      "decelPercent": -5.0
-    },
-    "travel": {
-      "accel": 285.0,
-      "accelPercent": -5.0,
-      "decel": 285.0,
-      "decelPercent": -5.0
-    }
-  },
+  "massIncrease": 15000,
+  "originalCargo": 5000,
+  "adjustedCargo": 20000,
+  "accelerationScalingFactor": 1.3,
+  "accelerationResponsiveness": 1.0,
   "enginePerformance": {
     "originalTWR": 2.5,
     "adjustedTWR": 1.96,
     "reductionPercent": -21.6,
     "originalAcceleration": 10.5,
     "adjustedAcceleration": 8.23
-  },
-  "activeTier": "Tier for multipliers up to 4.0x"
+  }
 }
 ```
 
@@ -217,19 +142,14 @@ Calculate physics for multiple configurations at once.
       "originalCargo": 5000,
       "adjustedCargo": 10000,
       "cargoMultiplier": 2.0,
-      "useEffectiveRatioCap": true,
-      "dragReductionFactor": 1.0,
-      "inertiaImpactFactor": 0.5,
-      "accelerationResponsiveness": 1.0,
-      "dragReductionTiers": [...],
-      "jerkReductionTiers": [...]
+      "accelerationResponsiveness": 1.0
     },
     {
       "baseMass": 50000,
       "originalCargo": 5000,
       "adjustedCargo": 20000,
       "cargoMultiplier": 4.0,
-      ...
+      "accelerationResponsiveness": 1.0
     }
   ]
 }
@@ -262,23 +182,8 @@ Calculate aggregated min/max/median ranges across all ships of a type to identif
 {
   "shipType": "transport",
   "cargoMultiplier": 4.0,
-  "dragReductionTiers": [
-    { "maxMultiplier": 2, "reductionPercent": 5 },
-    { "maxMultiplier": 4, "reductionPercent": 10 },
-    { "maxMultiplier": 6, "reductionPercent": 15 },
-    { "maxMultiplier": 8, "reductionPercent": 20 }
-  ],
-  "jerkReductionTiers": [
-    { "maxMultiplier": 2, "reductionPercent": 5 },
-    { "maxMultiplier": 4, "reductionPercent": 10 },
-    { "maxMultiplier": 6, "reductionPercent": 15 },
-    { "maxMultiplier": 8, "reductionPercent": 20 }
-  ],
-  "inertiaImpactFactor": 0.5,
-  "useEffectiveRatioCap": true,
-  "dragReductionFactor": 1.0,
   "accelerationResponsiveness": 1.0,
-  "engineId": "engine_arg_m_travel_01_mk1" // optional
+  "engineId": "engine_arg_m_travel_01_mk1"
 }
 ```
 
@@ -293,13 +198,6 @@ Calculate aggregated min/max/median ranges across all ships of a type to identif
       "median": 1.5,
       "unit": "ratio",
       "label": "Mass Ratio"
-    },
-    "dragChange": {
-      "min": -20.5,
-      "max": -10.2,
-      "median": -15.0,
-      "unit": "%",
-      "label": "Drag Change"
     },
     "topSpeed": {
       "min": 380.5,
@@ -328,8 +226,7 @@ Calculate aggregated min/max/median ranges across all ships of a type to identif
     "acceleration": {
       "original": 35.0,
       "adjusted": 28.5
-    },
-    "dragChangePercent": -15.5
+    }
   },
   "bestCase": {
     "shipId": "ship_tel_m_trans_container_01_a",
@@ -343,8 +240,7 @@ Calculate aggregated min/max/median ranges across all ships of a type to identif
     "acceleration": {
       "original": 50.0,
       "adjusted": 45.2
-    },
-    "dragChangePercent": -5.2
+    }
   }
 }
 ```
@@ -355,12 +251,7 @@ Calculate aggregated min/max/median ranges across all ships of a type to identif
 |-----------|------|----------|-------------|
 | `shipType` | string | Yes | Ship type filter: `transport`, `mining`, `auxiliary`, `carrier` |
 | `cargoMultiplier` | number | Yes | Cargo capacity multiplier (e.g., 2.0, 4.0, 8.0) |
-| `dragReductionTiers` | array | Yes | Drag reduction tier configuration |
-| `jerkReductionTiers` | array | Yes | Jerk reduction tier configuration |
-| `inertiaImpactFactor` | number | Yes | Inertia impact factor (0.0 - 1.0) |
-| `useEffectiveRatioCap` | boolean | Yes | Whether to cap effective mass ratio |
-| `dragReductionFactor` | number | Yes | Global drag reduction factor |
-| `accelerationResponsiveness` | number | Yes | Acceleration responsiveness factor |
+| `accelerationResponsiveness` | number | Yes | Acceleration responsiveness factor (0.1–5.0) |
 | `engineId` | string | No | Engine ID for top speed/acceleration metrics (omit to skip engine-dependent metrics) |
 
 **Response Fields**:
@@ -557,9 +448,6 @@ Retrieve detailed information for a specific engine.
 ---
 
 ### 9. Get All Engines
----
-
-### 9. Get All Engines
 
 Retrieve all available engines.
 
@@ -604,23 +492,6 @@ Retrieve current build configuration.
 {
   "cargo-multipliers": [2, 4, 6, 8, 10],
   "flight-mechanics": {
-    "dragReductionFactor": 1.0,
-    "steeringIncreaseFactor": 1.0,
-    "inertiaIncreaseFactor": 1.0,
-    "dragReductionTiers": [
-      { "maxMultiplier": 2.0, "reductionPercent": 0.1 },
-      { "maxMultiplier": 4.0, "reductionPercent": 0.3 },
-      { "maxMultiplier": 8.0, "reductionPercent": 0.5 },
-      { "maxMultiplier": 999, "reductionPercent": 0.7 }
-    ],
-    "jerkReductionTiers": [
-      { "maxMultiplier": 2.0, "reductionPercent": 0.05 },
-      { "maxMultiplier": 4.0, "reductionPercent": 0.15 },
-      { "maxMultiplier": 8.0, "reductionPercent": 0.25 },
-      { "maxMultiplier": 999, "reductionPercent": 0.35 }
-    ],
-    "inertiaImpactFactor": 0.5,
-    "useEffectiveRatioCap": true,
     "accelerationResponsiveness": 1.0
   }
 }
@@ -643,21 +514,6 @@ Save updated build configuration.
 {
   "cargo-multipliers": [2, 4, 8, 10],
   "flight-mechanics": {
-    "dragReductionFactor": 1.2,
-    "steeringIncreaseFactor": 1.0,
-    "inertiaIncreaseFactor": 1.0,
-    "dragReductionTiers": [
-      { "maxMultiplier": 4.0, "reductionPercent": 0.2 },
-      { "maxMultiplier": 8.0, "reductionPercent": 0.4 },
-      { "maxMultiplier": 999, "reductionPercent": 0.6 }
-    ],
-    "jerkReductionTiers": [
-      { "maxMultiplier": 4.0, "reductionPercent": 0.1 },
-      { "maxMultiplier": 8.0, "reductionPercent": 0.2 },
-      { "maxMultiplier": 999, "reductionPercent": 0.3 }
-    ],
-    "inertiaImpactFactor": 0.6,
-    "useEffectiveRatioCap": true,
     "accelerationResponsiveness": 1.1
   }
 }
@@ -674,16 +530,12 @@ Save updated build configuration.
 **Error**: `400 Bad Request` (validation failure)
 ```json
 {
-  "error": "Invalid configuration: dragReductionFactor must be between 0.5 and 2.0"
+  "error": "Invalid configuration: accelerationResponsiveness must be between 0.1 and 5.0"
 }
 ```
 
 **Validation Rules**:
-- `dragReductionFactor`: 0.5–2.0
-- `inertiaImpactFactor`: 0.0–1.0
-- `accelerationResponsiveness`: 0.5–2.0
-- `tier.reductionPercent`: 0.0–1.0
-- `tier.maxMultiplier`: > 0, ascending order
+- `accelerationResponsiveness`: 0.1–5.0
 
 **Notes**:
 - Writes to `config/build-config.json`
@@ -757,7 +609,7 @@ curl http://localhost:8080/api/config
 # Calculate physics
 curl -X POST http://localhost:8080/api/calculate/physics \
   -H "Content-Type: application/json" \
-  -d '{"baseMass": 50000, "originalCargo": 5000, ...}'
+  -d '{"baseMass": 50000, "originalCargo": 5000, "adjustedCargo": 20000, "cargoMultiplier": 4.0, "accelerationResponsiveness": 1.0}'
 
 # Get ship types
 curl http://localhost:8080/api/ships/types
@@ -826,6 +678,6 @@ See `gui/frontend/src/services/api.ts` for implementation.
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: February 12, 2026  
+**Version**: 1.2  
+**Last Updated**: February 19, 2026  
 **Maintainer**: Lead Implementation Engineer

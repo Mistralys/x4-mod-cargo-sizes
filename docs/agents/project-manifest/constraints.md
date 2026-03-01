@@ -1,7 +1,7 @@
 # Project Constraints & Rules
 
-> **Version:** 1.1
-> **Last Updated:** February 10, 2026
+> **Version:** 1.4
+> **Last Updated:** March 1, 2026
 > **Purpose:** Non-negotiable rules, conventions, and coding standards
 
 ---
@@ -239,7 +239,7 @@ namespace Mistralys\X4\Mods\CargoSizesMod\Output\Physics;
 ```php
 class CargoSizeExtractor { }
 class ShipXMLFile { }
-class AdjustedDrag { }
+class AdjustedAccelerationFactors { }
 ```
 
 **Suffixes:**
@@ -306,7 +306,7 @@ $adjustedCargo = $cargo * $multiplier;
 ```
 CargoSizeExtractor.php
 ShipXMLFile.php
-AdjustedDrag.php
+AdjustedAccelerationFactors.php
 ```
 
 **Exception:** `functions.php` (global functions file)
@@ -399,7 +399,7 @@ $result = new ShipResult($label, $type, $shipXML, $cargoXML);
 
 **RULE:** Prefer composition over inheritance except for:
 - Abstract base classes with template methods (e.g., `BaseXMLFile`)
-- Value object hierarchies (e.g., `AdjustedDrag extends Drag`)
+- Value object hierarchies (e.g., `AdjustedAccelerationFactors extends AccelerationFactors`)
 - Interface implementations
 
 ✅ **Good use of inheritance:**
@@ -425,20 +425,20 @@ class ShipXMLFile extends BaseXMLFile { }
 
 ✅ **Required:**
 ```php
-class AdjustedDrag extends Drag implements AdjustedValuesInterface
+class AdjustedAccelerationFactors extends AccelerationFactors implements AdjustedValuesInterface
 {
     use AdjustedValuesTrait;
     
     public function isIncrease(): bool
     {
-        return false;  // Drag is reduced
+        return true;  // Acceleration increases proportionally with mass ratio
     }
     
     public function getPrecision(): int
     {
-        return 3;  // 3 decimal places
+        return 6;  // 6 decimal places
     }
-}
+}  
 ```
 
 **Required methods:**
@@ -523,11 +523,10 @@ public function getPositions(): array
 ```
 tests/
 ├── bootstrap.php
-├── X4Tests/
-│   ├── Suites/
-│   │   └── CargoSizeTests.php
-│   └── Helpers/
-│       └── TestCase.php
+└── CargoSizesModTests/
+    ├── AccelerationAdjustmentTest.php
+    ├── AccelerationOverrideTest.php
+    └── PhysicsCalculatorTest.php
 ```
 
 ---
@@ -790,6 +789,24 @@ composer build  # Run 2 - same output
 
 ---
 
+### 4. Build Configuration Keys
+
+The file `config/build-config.json` contains the following top-level keys:
+
+| Key | Type | Required | Description |
+|-----|------|----------|-------------|
+| `"cargo-multipliers"` | `number[]` | Yes | List of cargo multipliers to build (e.g. `[2, 4, 8, 10]`). |
+| `"flight-mechanics"` | `object` | No | Per-key acceleration responsiveness overrides. |
+| `"example-ships"` | `object` | No | Maps `{shipType}-{size}` keys to ship label strings for deterministic example selection. |
+
+**`"example-ships"` details:**
+
+- **Optional key.** If absent, `FileCollection::getExampleShipDescription()` and `ReleaseNotesGenerator::formatComparisonTable()` fall back to `array_rand()` (random selection).
+- **Key format:** `{normalizedShipType}-{size}` (lowercase). Examples: `"trans-s"`, `"trans-m"`, `"trans-l"`, `"miner-m"`, `"carrier-xl"`, `"resupplier-xl"`.
+- **Value:** Must exactly match `ShipResult::getShipLabel()` output — values are **case-sensitive**.
+- **Silent fallback:** If the configured ship label is not found in the current build data, both consumers fall back to `array_rand()` without error.
+- **Accessed via:** `BuildConfig::getExampleShip(string $shipType, string $shipSize): string`.
+
 ## 🚀 Performance Constraints
 
 ### 1. No Premature Optimization
@@ -938,4 +955,6 @@ Before committing new code, verify:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.3 | Feb 19, 2026 | Updated Adjusted Values Pattern example to use AdjustedAccelerationFactors (AdjustedDrag removed in v4.0 refactoring) |
+| 1.2 | Feb 19, 2026 | Updated test directory example to reflect actual test suite (CargoSizesModTests/) after tier-based system removal |
 | 1.0 | Feb 9, 2026 | Initial constraints documentation |

@@ -16,27 +16,17 @@ class PhysicsRequest
      * @param float $originalCargo Original cargo capacity
      * @param float $adjustedCargo Adjusted cargo capacity
      * @param float $cargoMultiplier Cargo multiplier (2x, 4x, 8x, etc.)
-     * @param bool $useEffectiveRatioCap Whether to cap effective ratio
-     * @param float $dragReductionFactor Drag reduction factor config
-     * @param float $inertiaImpactFactor Inertia impact factor config
-     * @param float $accelerationResponsiveness Acceleration responsiveness config
-     * @param array<array{maxMultiplier: float, reductionPercent: float}> $dragReductionTiers Drag reduction tiers
-     * @param array<array{maxMultiplier: float, reductionPercent: float}> $jerkReductionTiers Jerk reduction tiers
+     * @param float $accelerationResponsiveness Responsiveness factor (1.0 = preserve original feel, 0.7 = heavier)
      * @param string|null $engineId Optional engine ID for performance calculations
      * @param string|null $shipId Optional ship ID to load real physics data from x4-core
      */
     public function __construct(
-        public float $baseMass,
-        public float $originalCargo,
-        public float $adjustedCargo,
-        public float $cargoMultiplier,
-        public bool $useEffectiveRatioCap,
-        public float $dragReductionFactor,
-        public float $inertiaImpactFactor,
-        public float $accelerationResponsiveness,
-        public array $dragReductionTiers,
-        public array $jerkReductionTiers,
-        public ?string $engineId = null,
+        public readonly float $baseMass,
+        public readonly float $originalCargo,
+        public readonly float $adjustedCargo,
+        public readonly float $cargoMultiplier,
+        public readonly float $accelerationResponsiveness,
+        public readonly ?string $engineId = null,
         public readonly ?string $shipId = null
     ) {}
 
@@ -53,12 +43,7 @@ class PhysicsRequest
             (float)($data['originalCargo'] ?? 0.0),
             (float)($data['adjustedCargo'] ?? 0.0),
             (float)($data['cargoMultiplier'] ?? 1.0),
-            (bool)($data['useEffectiveRatioCap'] ?? true),
-            (float)($data['dragReductionFactor'] ?? 1.0),
-            (float)($data['inertiaImpactFactor'] ?? 0.5),
             (float)($data['accelerationResponsiveness'] ?? 1.0),
-            $data['dragReductionTiers'] ?? [],
-            $data['jerkReductionTiers'] ?? [],
             $data['engineId'] ?? null,
             $data['shipId'] ?? null
         );

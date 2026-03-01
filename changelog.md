@@ -1,10 +1,14 @@
 # Cargo Sizes Mod - Changelog
 
 ## v3.0.0 for X4 v8.0 - Physics Fix
+- FOMOD: Added example cargo sizes.
 - Core: Fixed physics calculations preventing player-piloted ships from using travel drive.
+- Core: Physics calculations now focus solely on the acceleration profile of ships.
+- Core: Ships will now stick much more closely to their original handling.
 - Core: Upgraded project to target PHP 8.4.
 - Core: Added release note generation.
 - Docs: Added agentic coding support.
+- Docs: Auto-generating example cargo sizes release note table.
 
 ## v2.1.1 for X4 v7.6 - Fomod installer improvements
 - Fomod: Added images for each ship type and cargo size multiplier.

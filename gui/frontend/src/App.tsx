@@ -53,14 +53,9 @@ function App() {
       originalCargo: shipDetails.cargo,
       adjustedCargo,
       cargoMultiplier: selectedMultiplier,
-      useEffectiveRatioCap: flightMechanics.useEffectiveRatioCap,
-      dragReductionFactor: flightMechanics.dragReductionFactor,
-      inertiaImpactFactor: flightMechanics.inertiaImpactFactor,
       accelerationResponsiveness: flightMechanics.accelerationResponsiveness,
-      dragReductionTiers: flightMechanics.dragReductionTiers,
-      jerkReductionTiers: flightMechanics.jerkReductionTiers,
       engineId: selectedEngineId,
-      shipId: shipDetails.id, // Add shipId to enable real per-ship data lookup
+      shipId: shipDetails.id,
     };
 
     calculate(physicsConfig);
@@ -77,12 +72,7 @@ function App() {
     const classRangeRequest: ClassRangeRequest = {
       shipType,
       cargoMultiplier: selectedMultiplier,
-      useEffectiveRatioCap: flightMechanics.useEffectiveRatioCap,
-      dragReductionFactor: flightMechanics.dragReductionFactor,
-      inertiaImpactFactor: flightMechanics.inertiaImpactFactor,
       accelerationResponsiveness: flightMechanics.accelerationResponsiveness,
-      dragReductionTiers: flightMechanics.dragReductionTiers,
-      jerkReductionTiers: flightMechanics.jerkReductionTiers,
       engineId: selectedEngineId,
     };
 
@@ -141,13 +131,8 @@ function App() {
               originalCargo: shipDetails?.cargo || 0,
               adjustedCargo: (shipDetails?.cargo || 0) * selectedMultiplier,
               cargoMultiplier: selectedMultiplier,
-              useEffectiveRatioCap: currentConfig['flight-mechanics'].useEffectiveRatioCap,
-              dragReductionFactor: currentConfig['flight-mechanics'].dragReductionFactor,
-              inertiaImpactFactor: currentConfig['flight-mechanics'].inertiaImpactFactor,
               accelerationResponsiveness:
                 currentConfig['flight-mechanics'].accelerationResponsiveness,
-              dragReductionTiers: currentConfig['flight-mechanics'].dragReductionTiers,
-              jerkReductionTiers: currentConfig['flight-mechanics'].jerkReductionTiers,
               engineId: selectedEngineId,
               shipId: shipId,
             }

@@ -1,7 +1,7 @@
 # Data Flows & Interactions
 
-> **Version:** 1.1  
-> **Last Updated:** February 11, 2026  
+> **Version:** 1.4  
+> **Last Updated:** March 1, 2026  
 > **Purpose:** Describes how data flows through the system from input to output
 
 ---
@@ -83,13 +83,11 @@ Read config/build-config.json
 Parse:
   • cargo-multipliers: [2, 4, 8, 10]
   • flight-mechanics:
-      - dragReductionFactor: 0.20
-      - steeringIncreaseFactor: 0.24
-      - inertiaIncreaseFactor: 0.40
+      - accelerationResponsiveness: 1.0
 ```
 
 **Outputs:**
-- `BuildConfig` instance with multipliers and factors
+- `BuildConfig` instance with multipliers and acceleration responsiveness
 - Available globally via `CargoSizeBuildTools::getConfig()`
 
 ---
@@ -183,40 +181,29 @@ ShipResult
 Extract original values:
   • mass = ShipXMLFile::getMass()
   • cargo = CargoXMLFile::getCargoValue()
-  • drag = ShipXMLFile::getDrag()
-  • inertia = ShipXMLFile::getInertia()
   • accelerationFactors = ShipXMLFile::getAccelerationFactors()
-  • jerk = ShipXMLFile::getJerk()
     ↓
 Calculate adjusted cargo:
   adjustedCargo = cargo * multiplier
     ↓
-Calculate mass adjustment:
+Calculate mass ratio:
   new MassAdjustment(mass, cargo, adjustedCargo)
-    ↓
-MassAdjustment calculates mass multiplier:
   originalFullMass = mass + cargo
   adjustedFullMass = mass + adjustedCargo
-  massMultiplier = originalFullMass / adjustedFullMass
+  massRatio = adjustedFullMass / originalFullMass (> 1.0)
     ↓
-Calculate physics adjustments using massMultiplier:
-  
-  • AdjustedDrag:
-      dragMultiplier = massMultiplier * config.dragReductionFactor
-      newDrag = originalDrag * (1 - dragMultiplier)
-  
-  • AdjustedInertia:
-      inertiaMultiplier = massMultiplier * config.inertiaIncreaseFactor
-      newInertia = originalInertia * (1 + inertiaMultiplier)
-  
-  • AdjustedAccelerationFactors:
-      newAccel = originalAccel * massMultiplier
-  
-  • AdjustedJerk:
-      newJerk = originalJerk * (1 + (massMultiplier * steeringFactor))
+Calculate acceleration scaling:
+  responsiveness = BuildConfig::getAccelerationResponsiveness()
+  accelerationScalingFactor = massRatio * responsiveness
+    ↓
+Create AdjustedAccelerationFactors:
+  newAccel = originalAccel * accelerationScalingFactor
+  • Applied to: forward, reverse, horizontal, vertical
+    ↓
+Drag, inertia, and jerk are NOT modified.
 ```
 
-**Key concept:** All adjustments are proportional to the `massMultiplier`, which represents how much heavier the ship becomes with full cargo.
+**Key concept:** Only acceleration factors are adjusted, scaled exactly with mass ratio (modulated by `accelerationResponsiveness`). The original flight feel is preserved with the minimum required physics change.
 
 ---
 
@@ -249,20 +236,22 @@ Write to file:
 ```
 new FlightMechanicsOverrideFile($outputFolder, $multiplier, $shipResult)
     ↓
-Create PhysicsOverrideDef:
+Calculate mass ratio:
+  massRatio = (baseMass + adjustedCargo) / (baseMass + originalCargo)
+    ↓
+Calculate acceleration scaling:
+  accelerationScalingFactor = massRatio × responsiveness
+    ↓
+Create AdjustedAccelerationFactors:
+  • Original acceleration values × accelerationScalingFactor
+  • Applied to: forward, reverse, horizontal, vertical
+    ↓
+Create AccelerationOverrideDef:
   • Macro: ship_macro_name
-  • Mass: adjustedFullMass
-  • AdjustedInertia (pitch, yaw, roll)
-  • AdjustedDrag (forward, reverse, horizontal, vertical, pitch, yaw, roll)
   • AdjustedAccelerationFactors
+  • XML comments (ship size, mass ratio, scaling factor, original values)
     ↓
-Create JerkOverrideDef:
-  • AdjustedJerk (strafe, angular)
-  • AdjustedJerkForward
-  • AdjustedJerkBoost
-  • AdjustedJerkTravel
-    ↓
-Render all overrides to XML with comments
+Render override to XML
     ↓
 Write to file:
   output/v7.6/trans/l/4x/flight-mechanics/ship_macro.xml
@@ -343,6 +332,16 @@ For each ship type (Transport, Miner, Auxiliary, Carrier):
       • 8x cargo
       • 10x cargo
     ↓
+    Each plugin description includes an example ship:
+      FileCollection::getPluginDescription()
+        → Filters StorageOverrideFile instances from collection
+        → Deterministic selection (if BuildConfig::$buildConfig is set):
+            Call getExampleShip($shipType, $shipSize)
+            If non-empty label → search collection for matching StorageOverrideFile
+            If match found → use it as the example
+        → Fallback: array_rand() when config absent or ship not found in build data
+        → Appends: "Example: {ship} cargo changes from {original} to {adjusted}."
+    ↓
 Generate ModuleConfig.xml with:
   • Installation steps (one per ship type)
   • Plugin options (size + multiplier combinations)
@@ -405,7 +404,7 @@ Write to:
 ```
 CargoSizeExtractor::writeReleaseNotes()
     ↓
-Create ReleaseNotesGenerator with build folder
+Create ReleaseNotesGenerator with build folder, multipliers, and ship results
     ↓
 ReleaseNotesGenerator::generate()
     ↓
@@ -427,6 +426,22 @@ Format main changelog:
 Format builder changelog (if present):
   ## Builder v{VERSION} - {LABEL}
   - Builder change 1
+    ↓
+Format comparison table:
+  formatComparisonTable()
+    → Filter ship results to transport ships (SHIP_TYPE_TRANSPORT, SHIP_TYPE_STORAGE)
+    → Deterministic selection (iterates type×size combinations in order):
+        For each of: trans-s, trans-m, trans-l, storage-s, storage-m, storage-l
+          Call BuildConfig::getExampleShip($type, $size)
+          If non-empty label → search transport ships for matching ShipResult
+          If match found → use as example ship (break)
+    → Fallback: array_rand() when config absent or ship not found in build data
+    → Generate Markdown table with one row per multiplier:
+      ## Cargo Multiplier Comparison
+      | Variant | Example Ship | Vanilla Cargo | Adjusted Cargo |
+      | AIO x2  | {ship}       | {cargo} m³    | {adjusted} m³  |
+      | AIO x4  | {ship}       | {cargo} m³    | {adjusted} m³  |
+      ...
     ↓
 Format footer:
   ----
@@ -507,41 +522,39 @@ Value Objects:
 
 ---
 
-### 2. Original → Adjusted Values
+### 2. Original → Adjusted Values (Acceleration)
 
 ```
-Original Value Object (e.g., Drag)
-    ↓ + MassMultiplier + Config Factor
-AdjustedDrag (extends Drag, implements AdjustedValuesInterface)
+AccelerationFactors (original from ShipXMLFile)
+    ↓ + accelerationScalingFactor (massRatio × responsiveness)
+AdjustedAccelerationFactors (extends AccelerationFactors, implements AdjustedValuesInterface)
     ↓ Includes:
-    • New calculated values
+    • New calculated values (forward, reverse, h, v)
     • Multiplier used
     • Whether it's an increase or decrease
     • Precision for rendering
     • Comments explaining the adjustment
 ```
 
-**Purpose:** Encapsulates both the adjusted value AND the metadata about the adjustment.
+**Purpose:** Encapsulates both the adjusted acceleration values AND metadata about the adjustment. Only acceleration is modified for flight mechanics; drag, inertia, and jerk retain their original values.
 
 ---
 
 ### 3. Adjusted Values → XML Overrides
 
 ```
-AdjustedDrag
+AdjustedAccelerationFactors
     ↓
-TagOverrideDef or PhysicsOverrideDef
+AccelerationOverrideDef
     ↓ Includes:
-    • XPath selector
-    • XML tag name and attributes
-    • New value
+    • XPath selector (properties/thruster/acceleration)
+    • Adjusted forward, reverse, horizontal, vertical values
     • XML comments
     ↓
 Render to XML string:
-<replace sel="...[@id='ship_macro']/physics/drag" value="161.467">
-  <!-- Drag reduction: 170.083 → 161.467 (0.05 multiplier) -->
-  <!-- Original: 170.083 -->
-  <!-- Adjusted: 161.467 -->
+<replace sel="...[@id='ship_macro']/properties/thruster" ...>
+  <!-- Acceleration scaling: massRatio=3.95, responsiveness=1.0, factor=3.95 -->
+  <!-- Ship size: L -->
 </replace>
 ```
 
@@ -660,17 +673,14 @@ Embed in content.xml:
 
 ### Overview
 
-The physics calculation system uses a **tier-based approach** to adjust ship flight mechanics when cargo increases. This ensures predictable, safe adjustments regardless of ship cargo-to-mass ratio variations.
+The physics calculation system uses an **acceleration-only approach** to adjust ship flight mechanics when cargo increases. Only acceleration factors are modified; drag, inertia, and jerk are left at their original game values, preserving the original flight feel while compensating for mass increase.
 
 ### Complete Physics Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                  EXTRACT SHIP DATA                           │
-│  • Mass (base ship mass without cargo)                      │
-│  • Drag (7 components: forward, reverse, h, v, pitch, yaw, roll) │
-│  • Inertia (3 components: pitch, yaw, roll)                 │
-│  • Jerk (strafe, angular, forward, boost, travel)           │
+│  • Mass (base ship mass without cargo)                       │
 │  • Acceleration factors (forward, reverse, h, v)            │
 └────────────────────────┬────────────────────────────────────┘
                          ↓
@@ -681,99 +691,49 @@ The physics calculation system uses a **tier-based approach** to adjust ship fli
 └────────────────────────┬────────────────────────────────────┘
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
-│              CALCULATE MASS PHYSICS                          │
-│  PhysicsCalculator created with:                             │
-│    • baseMass = ship mass                                    │
-│    • originalCargo = base cargo capacity                     │
-│    • adjustedCargo = multiplied cargo capacity               │
-│    • cargoMultiplier = user's chosen multiplier (2x, 4x, etc.)│
-│                                                              │
-│  Calculations:                                               │
+│              CALCULATE MASS RATIO                            │
 │    • originalFullMass = baseMass + originalCargo             │
 │    • adjustedFullMass = baseMass + adjustedCargo             │
 │    • massRatio = adjustedFullMass / originalFullMass (> 1.0) │
-│    • effectiveRatio = min(massRatio, cargoMultiplier) if capped│
+│                                                              │
+│  Example: Shuyaku Vanguard with 4x cargo:                    │
+│    baseMass=650, original=37,000, adjusted=148,000           │
+│    massRatio = (650+148,000) / (650+37,000) = 3.95x          │
 └────────────────────────┬────────────────────────────────────┘
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
-│              FIND APPROPRIATE TIERS                          │
-│  BuildConfig tier lookup:                                    │
-│    • dragTier = findDragTierForMultiplier(cargoMultiplier)   │
-│    • jerkTier = findJerkTierForMultiplier(cargoMultiplier)   │
+│           CALCULATE ACCELERATION SCALING                     │
+│    accelerationScalingFactor = massRatio × responsiveness    │
 │                                                              │
-│  Example: 4x cargo finds tier with maxMultiplier >= 4.0      │
-│    • Drag tier: 30% reduction (70% drag remains)            │
-│    • Jerk tier: 15% reduction (85% jerk remains)            │
-└────────────────────────┬────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────────┐
-│          CALCULATE TIER-BASED ADJUSTMENTS                    │
+│  responsiveness from build-config.json (default: 1.0)        │
+│  At 1.0: scales exactly with mass ratio (proportional)       │
 │                                                              │
-│  1. DRAG (AdjustedDrag)                                      │
-│     newDrag = originalDrag * (1.0 - dragTier.reductionPercent)│
-│     Applied to all 7 drag components                         │
-│     Example: 4x cargo → 30% reduction → 70% drag remains     │
-│                                                              │
-│  2. JERK (AdjustedJerk classes)                              │
-│     newJerk = originalJerk * (1.0 - jerkTier.reductionPercent)│
-│     Applied to: strafe, angular, forward, boost, travel      │
-│     Example: 4x cargo → 15% reduction → 85% jerk remains     │
-│                                                              │
-│  3. INERTIA (AdjustedInertia)                                │
-│     massIncrease = massRatio - 1.0                           │
-│     dampenedIncrease = massIncrease * impactFactor           │
-│     newInertia = originalInertia * (1.0 + dampenedIncrease)  │
-│     Example: 2.82x mass, 0.5 factor → 90.9% inertia increase │
-│                                                              │
-│  4. ACCELERATION (AdjustedAccelerationFactors)               │
-│     newAccel = originalAccel * massRatio * responsiveness    │
-│     Maintains AccelFactor/Mass ratio (physics-correct)       │
-│     Example: 2.82x mass, 1.0 responsiveness → 2.82x accel    │
+│  Create AdjustedAccelerationFactors:                         │
+│    newAccel = originalAccel × accelerationScalingFactor      │
+│    Applied to: forward, reverse, horizontal, vertical        │
 └────────────────────────┬────────────────────────────────────┘
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │              GENERATE XML OVERRIDES                          │
 │  FlightMechanicsOverrideFile creates:                        │
-│    • <physics> section with adjusted drag, inertia, accel    │
-│    • <jerk> section with adjusted strafe, angular, forward   │
-│    • Comprehensive XML comments explaining calculations:     │
-│      - Ship identification                                   │
-│      - Mass calculations (base, full, ratio)                 │
-│      - Tiers applied (drag %, jerk %)                        │
-│      - Original vs adjusted values                           │
-│      - Physics formulas used                                 │
+│    • Single AccelerationOverrideDef per ship                 │
+│    • Targets properties/thruster/acceleration                │
+│    • XML comments: ship size, mass ratio, scaling factor     │
+│    • Drag, inertia, and jerk are NOT modified                │
 └────────────────────────┬────────────────────────────────────┘
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                 LOG DIAGNOSTICS                              │
-│  DiagnosticsLogger records:                                  │
-│    • Ship name, class, macro ID                              │
-│    • Mass calculations                                       │
-│    • Tiers applied                                           │
-│    • Configuration used                                      │
-│    • Warnings for extreme cases (mass ratio > 5.0)          │
+│  DiagnosticsLogger records per ship:                         │
+│    • Ship name, size, type                                   │
+│    • massRatio                                               │
+│    • accelerationScalingFactor                               │
+│    • responsiveness                                          │
+│    • Warnings for extreme mass ratios (> 5.0 or > 10.0)     │
 │                                                              │
 │  Output: build/physics-diagnostics.txt                       │
 └─────────────────────────────────────────────────────────────┘
 ```
-
-### Tier System Rationale
-
-**Problem:** Ships vary wildly in cargo-to-mass ratios:
-- **Combat ships**: Small cargo (100-2000) vs heavy hull (100-600 mass)  
-  → 10x cargo = 1.1x heavier
-- **Cargo ships**: Massive cargo (15,000-50,000) vs light hull (200-650 mass)  
-  → 10x cargo = 200x heavier!
-
-**Formula-based approach would fail:**
-- Combat ship: 99% drag reduction = undriveable
-- Cargo ship: Needs 99.9% drag reduction = also undriveable
-
-**Tier-based solution:**
-- All ships with 10x cargo get **70% drag reduction** (safety cap)
-- Predictable behavior regardless of ship type
-- User-tunable per multiplier tier
-- Safe from extreme edge cases
 
 ### Physics Formulas Reference
 
@@ -782,44 +742,29 @@ Mass Ratio:
   massRatio = (baseMass + adjustedCargo) / (baseMass + originalCargo)
   Always > 1.0 when cargo increases
 
-Tier-Based Drag Reduction:
-  tier = findDragTierForMultiplier(cargoMultiplier)
-  newDrag = originalDrag × (1.0 - tier.reductionPercent)
-
-Tier-Based Jerk Reduction:
-  tier = findJerkTierForMultiplier(cargoMultiplier)
-  newJerk = originalJerk × (1.0 - tier.reductionPercent)
-
-Dampened Inertia Increase:
-  massIncrease = massRatio - 1.0
-  dampenedIncrease = massIncrease × impactFactor
-  newInertia = originalInertia × (1.0 + dampenedIncrease)
-
-Proportional Acceleration Scaling:
-  newAccel = originalAccel × massRatio × responsiveness
+Acceleration-Only Scaling:
+  accelerationScalingFactor = massRatio × responsiveness
+  newAccel = originalAccel × accelerationScalingFactor
   Maintains AccelFactor/Mass ratio (physics-correct)
+  Drag, inertia, and jerk are NOT modified.
 ```
 
 ### Configuration Impact on Physics
 
-Changes to `build-config.json` tier definitions affect all generated physics:
+The single tunable parameter controlling flight mechanics is `accelerationResponsiveness` in `build-config.json`:
 
 ```json
-// Example: More aggressive drag reduction for travel mode fix
-"dragReductionTiers": [
-  { "maxMultiplier": 2.0, "reductionPercent": 0.10 },
-  { "maxMultiplier": 4.0, "reductionPercent": 0.35 },  // Was 0.30
-  { "maxMultiplier": 8.0, "reductionPercent": 0.60 },  // Was 0.50
-  { "maxMultiplier": 999, "reductionPercent": 0.80 }   // Was 0.70 (careful!)
-]
+"flight-mechanics": {
+  "accelerationResponsiveness": 1.0
+}
 ```
 
 Impact:
-1. BuildConfig loads new tiers
-2. All ships recalculated with new percentages
-3. XML regenerated with new drag values
-4. Diagnostics show new reduction percentages
-5. Users get faster ships at same cargo multiplier
+1. `BuildConfig::getAccelerationResponsiveness()` returns the configured value
+2. `FlightMechanicsOverrideFile` applies it: `accelerationScalingFactor = massRatio × responsiveness`
+3. Higher values = more responsive acceleration (above proportional baseline)
+4. Lower values = less responsive acceleration (below proportional baseline)
+5. At `1.0` (default): acceleration scales exactly with mass ratio, preserving vanilla handling feel
 
 *See [physics-tuning-guide.md](../../physics-tuning-guide.md) for detailed configuration tuning.*
 
@@ -846,19 +791,19 @@ Output files created:
 FOMOD installer includes 16x options
 ```
 
-### Change: Adjust Flight Mechanics Factor
+### Change: Adjust Acceleration Responsiveness
 
 ```
 build-config.json:
-  "dragReductionFactor": 0.30  ← Change from 0.20
+  "accelerationResponsiveness": 1.2  ← Change from 1.0
     ↓
-BuildConfig::getDragReductionFactor() returns 0.30
+BuildConfig::getAccelerationResponsiveness() returns 1.2
     ↓
-AdjustedDrag calculations use new factor:
-  dragMultiplier = massMultiplier * 0.30  ← Larger reduction
-  newDrag = originalDrag * (1 - dragMultiplier)
+FlightMechanicsOverrideFile uses new value:
+  accelerationScalingFactor = massRatio * 1.2  ← 20% more responsive
+  newAccel = originalAccel * accelerationScalingFactor
     ↓
-All flight mechanics files regenerated with new values
+All flight mechanics files regenerated with new acceleration values
 ```
 
 ---
@@ -906,3 +851,4 @@ All flight mechanics files regenerated with new values
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | Feb 9, 2026 | Initial data flows documentation |
+| 1.3 | Feb 19, 2026 | Replace tier-based physics flow with acceleration-only approach (WP-003) |

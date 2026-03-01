@@ -1,8 +1,8 @@
 # Architecture Documentation
 
 > **X4 Cargo Sizes Mod - Physics Tuning GUI**  
-> **Version:** 1.4  
-> **Last Updated:** February 18, 2026
+> **Version:** 1.6  
+> **Last Updated:** February 19, 2026
 
 ---
 
@@ -66,8 +66,8 @@ The GUI uses a **client-server architecture** with a stateless REST API backend 
 ┌─────────────────────────────────────────────────────────────┐
 │                    Business Logic Layer                      │
 │  • PhysicsCalculator (core physics calculations)            │
-│  • AdjustedDrag, AdjustedInertia, AdjustedJerk             │
-│  • ReductionTier (tier-based reduction system)              │
+│  • AdjustedAccelerationFactors (acceleration scaling)       │
+│  • AccelerationOverrideDef (mod XML generation)            │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -232,16 +232,6 @@ class PhysicsRequest {
 
 Common functionality is extracted into traits to eliminate duplication:
 
-**PhysicsCalculationHelper Trait:**
-```php
-// Used by PhysicsService and ClassRangeService
-trait PhysicsCalculationHelper {
-    private function calculatePercentChange(float $original, float $modified): float;
-    private function calculateAverageDragChange(Drag $original, AdjustedDrag $adjusted): float;
-    private function findTierForMultiplier(array $tiers, float $multiplier): ReductionTier;
-}
-```
-
 **ErrorResponseTrait (NEW in v1.3):**
 ```php
 // Used by all 4 endpoint classes
@@ -402,8 +392,8 @@ export interface PhysicsConfig {
   originalCargo: number;
   adjustedCargo: number;
   cargoMultiplier: number;
-  useEffectiveRatioCap: boolean;
-  dragReductionFactor: number;
+  accelerationResponsiveness: number;
+  engineId?: string;
   // ... matches PhysicsRequest.php
 }
 ```

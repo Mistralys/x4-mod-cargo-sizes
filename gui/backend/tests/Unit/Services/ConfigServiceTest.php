@@ -14,11 +14,11 @@ declare(strict_types=1);
  * 1. **File Isolation:** Each test creates its own temporary config file
  *    via setUp() and cleans it up via tearDown(). No shared state.
  *
- * 2. **Validation Coverage:** Tests cover all validation rules:
+ * 2. **Validation Coverage:** Tests cover all validation rules for the
+ *    simplified acceleration-only schema:
  *    - Required keys (cargo-multipliers, flight-mechanics)
- *    - Type constraints (arrays, objects, booleans, numbers)
- *    - Value ranges (positive multipliers, 0.0-2.0 inertia, etc.)
- *    - Complex validation (ascending tiers, non-empty arrays)
+ *    - Type constraints (arrays, objects, numbers)
+ *    - Value ranges (positive multipliers, 0.1–5.0 accelerationResponsiveness)
  *
  * 3. **CRUD Operations:** Tests verify both read (getConfig) and write
  *    (updateConfig) operations work correctly with real file I/O.
@@ -66,7 +66,7 @@ class ConfigServiceTest extends TestCase
     }
 
     /**
-     * Helper to create a valid test configuration.
+     * Helper to create a valid test configuration (simplified acceleration-only schema).
      *
      * @return array<string, mixed>
      */
@@ -75,19 +75,8 @@ class ConfigServiceTest extends TestCase
         return [
             'cargo-multipliers' => [2, 4, 8],
             'flight-mechanics' => [
-                'inertiaImpactFactor' => 1.0,
-                'accelerationResponsiveness' => 0.5,
-                'useEffectiveRatioCap' => true,
-                'dragReductionTiers' => [
-                    ['maxMultiplier' => 2.0, 'reductionPercent' => 0.10],
-                    ['maxMultiplier' => 4.0, 'reductionPercent' => 0.30],
-                    ['maxMultiplier' => 8.0, 'reductionPercent' => 0.50]
-                ],
-                'jerkReductionTiers' => [
-                    ['maxMultiplier' => 2.0, 'reductionPercent' => 0.05],
-                    ['maxMultiplier' => 4.0, 'reductionPercent' => 0.15]
-                ]
-            ]
+                'accelerationResponsiveness' => 1.0,
+            ],
         ];
     }
 
@@ -111,6 +100,8 @@ class ConfigServiceTest extends TestCase
         $this->assertIsArray($actualConfig['cargo-multipliers']);
         $this->assertCount(3, $actualConfig['cargo-multipliers']);
         $this->assertEquals([2, 4, 8], $actualConfig['cargo-multipliers']);
+        $this->assertArrayHasKey('flight-mechanics', $actualConfig);
+        $this->assertArrayHasKey('accelerationResponsiveness', $actualConfig['flight-mechanics']);
     }
 
     /**
@@ -185,8 +176,8 @@ class ConfigServiceTest extends TestCase
         // Arrange: Prepare invalid config (missing cargo-multipliers)
         $invalidConfig = [
             'flight-mechanics' => [
-                'inertiaImpactFactor' => 1.0
-            ]
+                'accelerationResponsiveness' => 1.0,
+            ],
         ];
 
         // Assert: Exception is thrown
@@ -227,8 +218,8 @@ class ConfigServiceTest extends TestCase
         // Arrange: Config without cargo-multipliers
         $config = [
             'flight-mechanics' => [
-                'inertiaImpactFactor' => 1.0
-            ]
+                'accelerationResponsiveness' => 1.0,
+            ],
         ];
 
         // Act: Validate
@@ -251,8 +242,8 @@ class ConfigServiceTest extends TestCase
         $config = [
             'cargo-multipliers' => [],
             'flight-mechanics' => [
-                'inertiaImpactFactor' => 1.0
-            ]
+                'accelerationResponsiveness' => 1.0,
+            ],
         ];
 
         // Act: Validate
@@ -275,8 +266,8 @@ class ConfigServiceTest extends TestCase
         $config = [
             'cargo-multipliers' => [2, -4, 8],
             'flight-mechanics' => [
-                'inertiaImpactFactor' => 1.0
-            ]
+                'accelerationResponsiveness' => 1.0,
+            ],
         ];
 
         // Act: Validate
@@ -286,86 +277,6 @@ class ConfigServiceTest extends TestCase
         $this->assertFalse($result->isValid(), 'Config with negative multipliers should fail');
         $this->assertNotEmpty($result->getErrors());
         $this->assertStringContainsString('positive', implode(' ', $result->getErrors()));
-    }
-
-    /**
-     * Test validateConfig fails when flight mechanics values are out of range.
-     *
-     * Validates that numeric range constraints are enforced.
-     */
-    public function testValidateConfigInvalidFlightMechanics(): void
-    {
-        // Arrange: Config with out-of-range inertiaImpactFactor
-        $config = [
-            'cargo-multipliers' => [2, 4],
-            'flight-mechanics' => [
-                'inertiaImpactFactor' => 5.0  // Max is 2.0
-            ]
-        ];
-
-        // Act: Validate
-        $result = $this->service->validateConfig($config);
-
-        // Assert: Validation fails
-        $this->assertFalse($result->isValid(), 'Config with out-of-range inertiaImpactFactor should fail');
-        $this->assertNotEmpty($result->getErrors());
-        $this->assertStringContainsString('inertiaImpactFactor', implode(' ', $result->getErrors()));
-        $this->assertStringContainsString('between', implode(' ', $result->getErrors()));
-    }
-
-    /**
-     * Test validateConfig fails when tiers are not in ascending order.
-     *
-     * Validates that tier ordering constraints are enforced.
-     */
-    public function testValidateConfigNonAscendingTiers(): void
-    {
-        // Arrange: Config with non-ascending tier maxMultipliers
-        $config = [
-            'cargo-multipliers' => [2, 4],
-            'flight-mechanics' => [
-                'inertiaImpactFactor' => 1.0,
-                'dragReductionTiers' => [
-                    ['maxMultiplier' => 4.0, 'reductionPercent' => 0.10],  // Out of order
-                    ['maxMultiplier' => 2.0, 'reductionPercent' => 0.30]
-                ]
-            ]
-        ];
-
-        // Act: Validate
-        $result = $this->service->validateConfig($config);
-
-        // Assert: Validation fails
-        $this->assertFalse($result->isValid(), 'Config with non-ascending tiers should fail');
-        $this->assertNotEmpty($result->getErrors());
-        $this->assertStringContainsString('ascending', implode(' ', $result->getErrors()));
-    }
-
-    /**
-     * Test validateConfig fails when tier values are out of range.
-     *
-     * Validates that tier value constraints are enforced.
-     */
-    public function testValidateConfigOutOfRangeTierValues(): void
-    {
-        // Arrange: Config with out-of-range reductionPercent (must be < 1.0)
-        $config = [
-            'cargo-multipliers' => [2, 4],
-            'flight-mechanics' => [
-                'inertiaImpactFactor' => 1.0,
-                'dragReductionTiers' => [
-                    ['maxMultiplier' => 2.0, 'reductionPercent' => 1.5]  // Must be < 1.0
-                ]
-            ]
-        ];
-
-        // Act: Validate
-        $result = $this->service->validateConfig($config);
-
-        // Assert: Validation fails
-        $this->assertFalse($result->isValid(), 'Config with out-of-range tier values should fail');
-        $this->assertNotEmpty($result->getErrors());
-        $this->assertStringContainsString('reductionPercent', implode(' ', $result->getErrors()));
     }
 
     /**
@@ -390,52 +301,59 @@ class ConfigServiceTest extends TestCase
     }
 
     /**
-     * Test validateConfig handles empty tier arrays.
+     * Test validateConfig passes with minimal valid flight-mechanics.
      *
-     * Validates that tier arrays cannot be empty.
+     * Flight mechanics may contain unrecognised keys — these are simply ignored.
+     * Validates that the config passes when flight-mechanics is present and valid.
      */
-    public function testValidateConfigEmptyTierArrays(): void
+    public function testValidateConfigMinimalFlightMechanics(): void
     {
-        // Arrange: Config with empty dragReductionTiers
+        // Arrange: Config with flight-mechanics containing only accelerationResponsiveness
         $config = [
             'cargo-multipliers' => [2, 4],
             'flight-mechanics' => [
-                'inertiaImpactFactor' => 1.0,
-                'dragReductionTiers' => []  // Empty
+                'accelerationResponsiveness' => 1.0,
             ]
         ];
 
         // Act: Validate
         $result = $this->service->validateConfig($config);
 
-        // Assert: Validation fails
-        $this->assertFalse($result->isValid(), 'Config with empty tier arrays should fail');
-        $this->assertNotEmpty($result->getErrors());
-        $this->assertStringContainsString('empty', implode(' ', $result->getErrors()));
+        // Assert: Validation passes — simplification removed tier checks
+        $this->assertTrue($result->isValid(), 'Config with valid flight-mechanics should pass');
+        $this->assertEmpty($result->getErrors());
     }
 
     /**
      * Test validateConfig with accelerationResponsiveness bounds.
      *
-     * Validates that accelerationResponsiveness range is enforced (0.0 to 1.0).
+     * Validates that accelerationResponsiveness range is enforced (0.1 to 5.0).
      */
     public function testValidateConfigAccelerationResponsivenessOutOfRange(): void
     {
-        // Arrange: Config with out-of-range accelerationResponsiveness
-        $config = [
+        // Arrange: Config with value above maximum
+        $configAbove = [
             'cargo-multipliers' => [2, 4],
             'flight-mechanics' => [
-                'accelerationResponsiveness' => 2.0  // Max is 1.0
+                'accelerationResponsiveness' => 5.1  // Max is 5.0
             ]
         ];
 
-        // Act: Validate
-        $result = $this->service->validateConfig($config);
+        $resultAbove = $this->service->validateConfig($configAbove);
+        $this->assertFalse($resultAbove->isValid());
+        $this->assertStringContainsString('accelerationResponsiveness', implode(' ', $resultAbove->getErrors()));
 
-        // Assert: Validation fails
-        $this->assertFalse($result->isValid());
-        $this->assertNotEmpty($result->getErrors());
-        $this->assertStringContainsString('accelerationResponsiveness', implode(' ', $result->getErrors()));
+        // Arrange: Config with value below minimum
+        $configBelow = [
+            'cargo-multipliers' => [2, 4],
+            'flight-mechanics' => [
+                'accelerationResponsiveness' => 0.05  // Min is 0.1
+            ]
+        ];
+
+        $resultBelow = $this->service->validateConfig($configBelow);
+        $this->assertFalse($resultBelow->isValid());
+        $this->assertStringContainsString('accelerationResponsiveness', implode(' ', $resultBelow->getErrors()));
     }
 
     /**

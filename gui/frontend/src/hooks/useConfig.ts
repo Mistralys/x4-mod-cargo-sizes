@@ -21,28 +21,12 @@ interface UseConfigResult {
 
 /**
  * Default configuration values (fallback if API fails).
+ * Simplified to cargo multipliers and acceleration responsiveness only.
  */
 const DEFAULT_CONFIG: BuildConfig = {
   'cargo-multipliers': [2, 4, 6, 8, 10],
   'flight-mechanics': {
-    dragReductionFactor: 1.0,
-    steeringIncreaseFactor: 1.0,
-    inertiaIncreaseFactor: 1.0,
-    dragReductionTiers: [
-      { maxMultiplier: 2.0, reductionPercent: 0.1 },
-      { maxMultiplier: 4.0, reductionPercent: 0.3 },
-      { maxMultiplier: 8.0, reductionPercent: 0.5 },
-      { maxMultiplier: 999, reductionPercent: 0.7 },
-    ],
-    jerkReductionTiers: [
-      { maxMultiplier: 2.0, reductionPercent: 0.05 },
-      { maxMultiplier: 4.0, reductionPercent: 0.15 },
-      { maxMultiplier: 8.0, reductionPercent: 0.25 },
-      { maxMultiplier: 999, reductionPercent: 0.35 },
-    ],
-    inertiaImpactFactor: 0.5,
-    useEffectiveRatioCap: true,
-    accelerationResponsiveness: 0.5,
+    accelerationResponsiveness: 1.0,
   },
 };
 

@@ -12,6 +12,10 @@ A separate FOMOD installer ZIP lets you choose cargo increases by ship
 type and size. For example, L-sized transport ships with 10x cargo size, 
 and M-sized mining ships with 2x cargo size.
 
+Each installer option shows a real example ship from the game with its
+vanilla and adjusted cargo values, so you can see the impact before
+choosing a multiplier.
+
 ## Downloads
 
 ### Nexusmods
@@ -103,7 +107,7 @@ whenever raw resources are needed.
 
 An interactive web-based GUI is available for real-time physics tuning and visualization. The GUI allows you to:
 
-- **Adjust physics parameters** (drag reduction, inertia, jerk) and see results instantly
+- **Adjust physics parameters** (acceleration responsiveness) and see results instantly
 - **Select specific ships and engines** from extracted game data
 - **Compare original vs. adjusted values** with visual color-coded changes
 - **Save configurations** directly to `build-config.json` for use with `composer build`
@@ -155,7 +159,7 @@ Please refer to the tool's instructions to unpack the game data files.
 2. Copy `dev-config.php.dist` to `dev-config.php`.
 3. Edit the file to set the correct paths.
 4. Run `composer install` to install the dependencies.
-5. Run `composer build-mod` to build the mod.
+5. Run `composer build` to build the mod.
 
 ### Automatic Release Notes Generation
 
@@ -168,6 +172,7 @@ During each build, a `release-notes-v{VERSION}.md` file is generated in the `bui
 - Release heading with version and title from the main changelog
 - All changes from the latest mod version
 - Builder section with build system changes (if builder changelog exists)
+- **Cargo Multiplier Comparison** table — a randomly selected transport ship shown across all supported multipliers (e.g., 2x through 10x), with vanilla and adjusted cargo values side-by-side
 - Installation instructions footer (AIO vs FOMOD)
 
 The generated file is ready for use in GitHub Releases and mod platform updates.
@@ -192,62 +197,46 @@ Because the amount of cargo a ship carries in its hold affects how
 it flies, the mod will automatically adjust the flight model to 
 compensate for the increased cargo size.
 
-### How It Works - Tier-Based Physics
+### How It Works - Acceleration Scaling
 
-#### Why Tier-Based?
+#### The Core Problem
 
-Ships vary wildly in cargo-to-mass ratios:
-- **Combat ships**: Small cargo (100-2000) vs heavy hull (100-600 mass) → Low impact
-- **Cargo ships**: Massive cargo (15,000-50,000) vs light hull (200-650 mass) → **Extreme impact**
-
-Formula-based adjustments would make cargo ships undriveable (99% drag reduction). Tier-based system treats all ships with same cargo multiplier equally (predictable, safe, tunable).
+When cargo capacity increases, the ship mass increases. Heavier ships accelerate more slowly — they feel like freight trains. The mod compensates for this by scaling the ship's acceleration factors proportionally to the mass increase.
 
 #### Configuration
 
-Adjustments organized into **tiers** by cargo multiplier:
+The flight mechanics section in `config/build-config.json` has a single tuning parameter:
 
 ```json
-"dragReductionTiers": [
-  { "maxMultiplier": 2.0, "reductionPercent": 0.10 },  // 2x cargo: 10% reduction
-  { "maxMultiplier": 4.0, "reductionPercent": 0.30 },  // 4x cargo: 30% reduction
-  { "maxMultiplier": 8.0, "reductionPercent": 0.50 },  // 8x cargo: 50% reduction
-  { "maxMultiplier": 999, "reductionPercent": 0.70 }   // 10x+: 70% reduction (safety cap)
-]
+"flight-mechanics": {
+  "accelerationResponsiveness": 1.0
+}
 ```
-
-All ships with 4x cargo get **30% drag reduction** regardless of their mass ratio.
 
 #### What Gets Adjusted
 
-1. **Mass** - Directly increased by cargo difference
-2. **Drag** (tier-based) - Reduced to compensate for fixed engine thrust
-3. **Jerk** (tier-based) - Reduced for heavier feel
-4. **Inertia** (dampened) - Increased proportionally to mass
-5. **Acceleration** (scaled) - Maintains responsiveness despite mass increase
+1. **Mass** - Directly increased by the added cargo weight
+2. **Acceleration factors** - Scaled to maintain the original `AccelFactor/Mass` ratio
 
-#### Physics Formulas
+#### Physics Formula
 
-- **Drag reduction:** `newDrag = originalDrag × (1 - tierPercent)`
-- **Jerk reduction:** `newJerk = originalJerk × (1 - tierPercent)`
-- **Inertia increase:** `newInertia = originalInertia × (1 + (massRatio-1) × dampFactor)`
-- **Accel scaling:** `newAccel = originalAccel × massRatio × responsiveness`
+```
+accelerationScalingFactor = massRatio × accelerationResponsiveness
+newAccel = originalAccel × accelerationScalingFactor
+```
+
+- `massRatio` — how many times heavier the ship became (e.g. `2.0` for 2x cargo)
+- `accelerationResponsiveness` — tuning multiplier (default `1.0` = vanilla feel)
+- `1.0` = ship accelerates at the same rate as vanilla despite the extra mass
+- Values below `1.0` make ships feel heavier; above `1.0` make them feel snappier
 
 #### Tuning Your Experience
 
 See [Physics Tuning Guide](docs/physics-tuning-guide.md) for:
 - Detailed parameter explanations
-- Common tuning scenarios (travel mode issues, too sluggish, etc.)
+- Common tuning scenarios (too sluggish, AI flight issues, etc.)
 - Testing workflow
-- Value ranges and safety limits
-
-#### Travel Mode
-
-Travel mode works by:
-1. **Aggressive drag reduction** (70% for high-tier cargo) enables reaching speed
-2. **Jerk reduction** (35% for high-tier) smooths acceleration ramp
-3. **Acceleration scaling** maintains responsiveness
-
-**Note:** Travel speed depends on engine thrust (player-chosen equipment). Ships with weak engines may need upgrades for high cargo multipliers.
+- Value ranges
 
 ## X4 Tools and libraries
 

@@ -4,19 +4,11 @@
  * @package X4 Cargo Sizes Mod - Physics Tuning GUI
  */
 
-import { Tier } from './physics';
-
 /**
  * Flight mechanics configuration (subset of build-config.json).
+ * Only accelerationResponsiveness remains — drag/inertia/jerk/tier params removed.
  */
 export interface FlightMechanics {
-  dragReductionFactor: number;
-  steeringIncreaseFactor: number;
-  inertiaIncreaseFactor: number;
-  dragReductionTiers: Tier[];
-  jerkReductionTiers: Tier[];
-  inertiaImpactFactor: number;
-  useEffectiveRatioCap: boolean;
   accelerationResponsiveness: number;
 }
 

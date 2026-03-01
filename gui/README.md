@@ -4,7 +4,7 @@
 
 > 🤖 **For AI Agents & Developers:** See the [Project Manifest](docs/project-manifest/README.md) for a structured overview of architecture, constraints, and data flows.
 
-This GUI provides a visual interface for configuring and testing the X4 Cargo Sizes Mod's physics adjustments. You can adjust drag reduction, inertia, acceleration parameters, and instantly see how they affect ship performance with different cargo multipliers.
+This GUI provides a visual interface for configuring and testing the X4 Cargo Sizes Mod's physics adjustments. You can adjust acceleration responsiveness and instantly see how it affects ship performance with different cargo multipliers.
 
 ## Features
 
@@ -12,7 +12,6 @@ This GUI provides a visual interface for configuring and testing the X4 Cargo Si
 - **Ship & Engine Selection**: Browse extracted game data, select specific ships and engines, view detailed thrust data
 - **Visual Comparisons**: Side-by-side original vs. adjusted values with color-coded percentage changes
 - **Configuration Management**: Save tuned configurations to `build-config.json` for use with `composer build`
-- **Tier-Based System**: Edit drag and jerk reduction tiers for fine-grained control across cargo multiplier ranges
 - **Responsive UI**: Modern React + TypeScript frontend with TailwindCSS styling
 
 ## Architecture Overview
@@ -176,11 +175,7 @@ Navigate to `http://localhost:5173` in your browser.
 **Left Panel: Configuration**
 
 - **Cargo Multiplier**: Select preset (2x, 4x, 6x, 8x, 10x) or enter custom value
-- **Drag Reduction Factor**: Adjust base drag reduction (0.5–2.0)
-- **Inertia Impact Factor**: Control rotational inertia effect (0.0–1.0)
-- **Acceleration Responsiveness**: Tune jerk adjustments (0.5–2.0)
-- **Effective Ratio Cap**: Toggle capping for extreme multipliers
-- **Tier Editors**: Add/remove/edit drag and jerk reduction tiers
+- **Acceleration Responsiveness**: Tune how engine response scales with increased cargo mass (0.1–5.0)
 
 **Ship Selection**
 
@@ -193,13 +188,10 @@ Navigate to `http://localhost:5173` in your browser.
 
 **Right Panel: Physics Results**
 
-- **Overview**: Mass ratio, effective ratio, original/adjusted mass
-- **Comparisons** (tabs):
-  - **Engine**: TWR, acceleration (when engine selected)
-  - **Drag**: All axes (forward, reverse, horizontal, vertical, pitch, yaw, roll)
-  - **Inertia**: Rotational values (pitch, yaw, roll)
-  - **Jerk**: Acceleration rates (forward, boost, travel)
-- **Diagnostics**: Active tier, configuration impact, tier breakdown
+- **Overview**: Mass ratio, acceleration scaling factor, original/adjusted mass
+- **Engine Performance** (when engine selected): TWR, top speed, and acceleration values
+- **Class Ranges**: Mass ratio range and acceleration scaling range compared across ship classes
+- **Diagnostics**: Cargo multiplier, acceleration responsiveness, original/adjusted cargo values
 
 ### 5. Save Configuration
 
@@ -389,7 +381,7 @@ curl http://localhost:8080/api/config
 
 **Backend** (PHPUnit 12.5+):
 
-The GUI backend has a comprehensive PHPUnit test suite with 61 tests and 1,028 assertions covering Services, Utils, DTOs, and API layers.
+The GUI backend has a comprehensive PHPUnit test suite with 49 tests and 986 assertions covering Services, Utils, DTOs, and API layers.
 
 ```bash
 # Run all tests (Unit + Integration)
@@ -411,10 +403,12 @@ composer test:coverage
 **Test Structure:**
 - **Unit Tests:** `tests/Unit/` - Fast, isolated tests with mocked dependencies
   - **ShipDataService:** 12 tests with 870 assertions covering all public methods and cache isolation
-  - **ConfigService:** 16 tests with 46 assertions covering CRUD operations and comprehensive validation
-  - **PhysicsService:** 8 tests covering core business logic with determinism verification
+  - **ConfigService:** Tests covering CRUD operations and acceleration-only schema validation
+  - **PhysicsService:** Tests covering core business logic with determinism verification
+  - **ClassRangeService:** Tests covering mass-ratio-based acceleration range calculations
+  - **DTOs:** Tests for PhysicsResponseData and related data transfer objects
 - **Integration Tests:** `tests/Integration/` - Full workflow tests (future endpoint tests)
-- **Execution Time:** All 61 tests run in <0.6 seconds with 1,028 assertions
+- **Execution Time:** All 49 tests run in <0.6 seconds with 986 assertions
 - **Coverage:** HTML reports generated in `coverage/` directory
 
 See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#testing) for detailed testing guidelines.
@@ -503,9 +497,7 @@ The GUI is production-ready for its intended use as a local development tool. Th
 
 1. **Sample Ship Data**: Ship selection currently uses hardcoded sample ships. Future versions will support full ship catalog from extracted game files.
 
-2. **Sample Physics Values**: Initial calculations use sample drag/inertia/jerk values. The API supports real values; future frontend versions will enable loading actual ship physics from XML files.
-
-3. **Engine Compatibility**: Engine list is filtered by ship size but doesn't reflect actual ship-engine compatibility. Future versions will implement full compatibility matrix.
+2. **Engine Compatibility**: Engine list is filtered by ship size but doesn't reflect actual ship-engine compatibility. Future versions will implement full compatibility matrix.
 
 ### Potential Enhancements
 
@@ -550,5 +542,5 @@ For issues, bugs, or questions:
 
 ---
 
-**Version**: 1.4  
-**Last Updated**: February 18, 2026
+**Version**: 1.5  
+**Last Updated**: February 19, 2026

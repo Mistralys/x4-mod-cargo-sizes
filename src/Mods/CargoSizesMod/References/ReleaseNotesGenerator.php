@@ -7,16 +7,36 @@ use AppUtils\FileHelper;
 use AppUtils\FileHelper\FolderInfo;
 use Mistralys\ChangelogParser\ChangelogParser;
 use Mistralys\ChangelogParser\ChangelogVersion;
+use Mistralys\X4\Mods\CargoSizesMod\Build\BuildConfig;
 use Mistralys\X4\Mods\CargoSizesMod\CargoSizeException;
+use Mistralys\X4\Mods\CargoSizesMod\CargoSizeExtractor;
+use Mistralys\X4\Mods\CargoSizesMod\ShipResult;
 use Mistralys\X4\UI\Console;
 
 class ReleaseNotesGenerator
 {
     private FolderInfo $buildFolder;
-    
-    public function __construct(FolderInfo $buildFolder)
+
+    /** @var float[]|int[] */
+    private array $multipliers;
+
+    /** @var ShipResult[] */
+    private array $shipResults;
+
+    private BuildConfig $buildConfig;
+
+    /**
+     * @param FolderInfo $buildFolder
+     * @param float[]|int[] $multipliers
+     * @param ShipResult[] $shipResults
+     * @param BuildConfig $buildConfig
+     */
+    public function __construct(FolderInfo $buildFolder, array $multipliers, array $shipResults, BuildConfig $buildConfig)
     {
         $this->buildFolder = $buildFolder;
+        $this->multipliers = $multipliers;
+        $this->shipResults = $shipResults;
+        $this->buildConfig = $buildConfig;
     }
     
     /**
@@ -60,7 +80,12 @@ class ReleaseNotesGenerator
         if ($builderVersion !== null) {
             $content .= "\n\n" . $this->formatBuilderChangelog($builderVersion);
         }
-        
+
+        $comparisonTable = $this->formatComparisonTable();
+        if ($comparisonTable !== '') {
+            $content .= "\n\n" . $comparisonTable;
+        }
+
         $content .= "\n\n" . $this->formatFooter();
         
         // Write file
@@ -153,6 +178,76 @@ class ReleaseNotesGenerator
         return implode("\n", $lines);
     }
     
+    /**
+     * Generates a Markdown comparison table showing cargo changes
+     * for a randomly-selected transport ship across all multipliers.
+     *
+     * @return string Markdown table section, or empty string if no transport ships found
+     */
+    protected function formatComparisonTable(): string
+    {
+        $transportShips = array_filter(
+            $this->shipResults,
+            static fn(ShipResult $ship): bool => in_array(
+                $ship->getShipType(),
+                [CargoSizeExtractor::SHIP_TYPE_TRANSPORT, CargoSizeExtractor::SHIP_TYPE_STORAGE],
+                true
+            )
+        );
+
+        if (empty($transportShips)) {
+            return '';
+        }
+
+        $transportShips = array_values($transportShips);
+
+        // Prefer the deterministically configured ship if available.
+        $exampleShip = null;
+        $typeSizeCombinations = [
+            [CargoSizeExtractor::SHIP_TYPE_TRANSPORT, 's'],
+            [CargoSizeExtractor::SHIP_TYPE_TRANSPORT, 'm'],
+            [CargoSizeExtractor::SHIP_TYPE_TRANSPORT, 'l'],
+            [CargoSizeExtractor::SHIP_TYPE_STORAGE, 's'],
+            [CargoSizeExtractor::SHIP_TYPE_STORAGE, 'm'],
+            [CargoSizeExtractor::SHIP_TYPE_STORAGE, 'l'],
+        ];
+        foreach ($typeSizeCombinations as [$type, $size]) {
+            $label = $this->buildConfig->getExampleShip($type, $size);
+            if ($label === '') {
+                continue;
+            }
+            foreach ($transportShips as $ship) {
+                if ($ship->getShipLabel() === $label) {
+                    $exampleShip = $ship;
+                    break 2;
+                }
+            }
+        }
+
+        // Fall back to random selection when not configured or ship not found in build data.
+        if ($exampleShip === null) {
+            $exampleShip = $transportShips[array_rand($transportShips)];
+        }
+
+        $lines = [];
+        $lines[] = '## Cargo Multiplier Comparison';
+        $lines[] = '';
+        $lines[] = '| Variant | Example Ship | Vanilla Cargo | Adjusted Cargo |';
+        $lines[] = '|---------|-------------|---------------|----------------|';
+
+        foreach ($this->multipliers as $multiplier) {
+            $lines[] = sprintf(
+                '| AIO x%s | %s | %s m³ | %s m³ |',
+                $multiplier,
+                $exampleShip->getShipLabel(),
+                number_format($exampleShip->getCargoValue(), 0, '.', ','),
+                number_format($exampleShip->calculateCargoValue($multiplier), 0, '.', ',')
+            );
+        }
+
+        return implode("\n", $lines);
+    }
+
     /**
      * Get output file path with version number
      */

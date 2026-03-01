@@ -1,7 +1,7 @@
 # Public API Reference
 
-> **Version:** 1.1
-> **Last Updated:** February 10, 2026
+> **Version:** 1.6
+> **Last Updated:** March 1, 2026
 > **Purpose:** Complete public API signatures (NO implementations)
 
 ---
@@ -137,28 +137,21 @@ public static function getConfig(): BuildConfig
 **Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Build`
 **File:** [src/Mods/CargoSizesMod/Build/BuildConfig.php](../../../src/Mods/CargoSizesMod/Build/BuildConfig.php)
 
+**Purpose:** Reads two settings from `config/build-config.json`: cargo multipliers and a single acceleration responsiveness knob. All tier-based flight-mechanics keys have been removed.
+
 #### Constants
 
 ```php
-public const string KEY_DRAG_REDUCTION_FACTOR = 'dragReductionFactor';
-public const string KEY_STEERING_INCREASE_FACTOR = 'steeringIncreaseFactor';
-public const string KEY_INERTIA_INCREASE_FACTOR = 'inertiaIncreaseFactor';
-public const string KEY_DRAG_REDUCTION_TIERS = 'dragReductionTiers';
-public const string KEY_JERK_REDUCTION_TIERS = 'jerkReductionTiers';
-public const string KEY_INERTIA_IMPACT_FACTOR = 'inertiaImpactFactor';
-public const string KEY_USE_EFFECTIVE_RATIO_CAP = 'useEffectiveRatioCap';
 public const string KEY_ACCELERATION_RESPONSIVENESS = 'accelerationResponsiveness';
 public const string KEY_MULTIPLIERS = 'cargo-multipliers';
 public const string KEY_FLIGHT_MECHANICS = 'flight-mechanics';
+public const string KEY_EXAMPLE_SHIPS = 'example-ships';
 ```
 
 #### Properties
 
 ```php
 public private(set) array $multipliers = array(); // float[]
-public private(set) array $flightMechanics = array(...);
-public private(set) array $dragReductionTiers = []; // ReductionTier[]
-public private(set) array $jerkReductionTiers = []; // ReductionTier[]
 ```
 
 #### Public Methods
@@ -172,68 +165,15 @@ public function getMultipliers(): array // Returns float[]
 ```
 
 ```php
-public function getDragReductionFactor(): float // Legacy - still supported
+public function getAccelerationResponsiveness(): float // Default 1.0, valid range 0.1–5.0
 ```
 
 ```php
-public function getSteeringIncreaseFactor(): float
-```
-
-```php
-public function getInertiaIncreaseFactor(): float // Legacy - still supported
-```
-
-```php
-public function getDragReductionTiers(): array // Returns ReductionTier[]
-```
-
-```php
-public function getJerkReductionTiers(): array // Returns ReductionTier[]
-```
-
-```php
-public function findDragTierForMultiplier(float $multiplier): ReductionTier
-```
-
-```php
-public function findJerkTierForMultiplier(float $multiplier): ReductionTier
-```
-
-```php
-public function getInertiaImpactFactor(): float // Default 0.5
-```
-
-```php
-public function getUseEffectiveRatioCap(): bool // Default true
-```
-
-```php
-public function getAccelerationResponsiveness(): float // Default 1.0
-```
-
----
-
-### ReductionTier
-
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Build`  
-**File:** [src/Mods/CargoSizesMod/Build/ReductionTier.php](../../../src/Mods/CargoSizesMod/Build/ReductionTier.php)
-
-#### Public Methods
-
-```php
-public function __construct(float $maxMultiplier, float $reductionPercent)
-```
-
-```php
-public function getMaxMultiplier(): float
-```
-
-```php
-public function getReductionPercent(): float
-```
-
-```php
-public function appliesToMultiplier(float $multiplier): bool
+/**
+ * Returns the configured example ship label for the given type+size combination.
+ * Returns '' if the key is absent from the 'example-ships' config.
+ */
+public function getExampleShip(string $shipType, string $shipSize): string
 ```
 
 ---
@@ -262,7 +202,7 @@ public const string SHIP_TYPES = array(...);
 #### Public Methods
 
 ```php
-public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder)
+public function __construct(FolderInfo $extractedDataFolder, FolderInfo $outputFolder, BuildConfig $buildConfig)
 ```
 
 ```php
@@ -950,6 +890,18 @@ public function getXMLFile(): BaseXMLFile
 **File:** [src/Mods/CargoSizesMod/Output/FlightMechanicsOverrideFile.php](../../../src/Mods/CargoSizesMod/Output/FlightMechanicsOverrideFile.php)  
 **Extends:** `BaseOverrideFile`
 
+**Purpose:** Generates the flight mechanics XML override for a ship, applying the acceleration-only approach: calculates mass ratio and responsiveness, creates `AdjustedAccelerationFactors`, and adds a single `AccelerationOverrideDef`.
+
+#### Public Static Methods
+
+```php
+public static function setDiagnosticsLogger(DiagnosticsLogger $logger): void
+```
+
+```php
+public static function clearDiagnosticsLogger(): void
+```
+
 #### Public Methods
 
 ```php
@@ -958,6 +910,54 @@ public function getName(): string
 
 ```php
 public function getXMLFile(): BaseXMLFile
+```
+
+---
+
+### DiagnosticsLogger
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output`  
+**File:** [src/Mods/CargoSizesMod/Output/DiagnosticsLogger.php](../../../src/Mods/CargoSizesMod/Output/DiagnosticsLogger.php)
+
+**Purpose:** Records per-ship physics calculations (mass ratio, acceleration scaling factor, responsiveness) and generates a human-readable diagnostics report. Used for transparency and debugging.
+
+#### Public Methods
+
+```php
+public function __construct()
+```
+
+```php
+public function getShipCount(): int
+```
+
+```php
+public function logShip(
+    ShipResult $ship,
+    float $massRatio,
+    float $accelerationScalingFactor,
+    float $responsiveness
+): void
+```
+
+```php
+public function addWarning(string $shipID, string $warning): void
+```
+
+```php
+public function getWarnings(): array // Returns array<string,string[]>
+```
+
+```php
+public function getShipName(string $shipID): string
+```
+
+```php
+public function generateReport(): string
+```
+
+```php
+public function writeToFile(string $filePath): void
 ```
 
 ---
@@ -1169,8 +1169,7 @@ public function __construct(
     float $baseMass,
     float $originalCargo,
     float $adjustedCargo,
-    float $cargoMultiplier,
-    bool $useEffectiveRatioCap
+    float $cargoMultiplier
 )
 ```
 
@@ -1182,10 +1181,6 @@ public function getMassRatio(): float // adjustedFullMass / originalFullMass (>1
 
 ```php
 public function getCargoMultiplier(): float // User's chosen multiplier (2x, 4x, etc.)
-```
-
-```php
-public function getEffectiveRatio(): float // min(massRatio, cargoMultiplier) if capped
 ```
 
 ```php
@@ -1218,10 +1213,18 @@ public function getInverseMassRatio(): float // 1.0 / massRatio (for jerk)
 public function getMassRatioSquared(): float // massRatio² (for squared drag mode)
 ```
 
-##### Validation
+##### Validation and Diagnostics
 
 ```php
-public function validate(): array // Returns warning strings if any (e.g., extreme ratios)
+public function getValidationWarnings(): array // Returns warning strings[] for extreme ratios
+```
+
+```php
+public function formatMassRatio(int $decimals = 2): string // Formatted ratio (e.g., "2.45")
+```
+
+```php
+public function getDebugInfo(): string // Human-readable debug string for logging
 ```
 
 ---
@@ -1248,178 +1251,16 @@ public function getPrecision(): int
 
 ---
 
-#### AdjustedDrag
+#### AccelerationOverrideDef
 
 **Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output\Physics`  
-**File:** [src/Mods/CargoSizesMod/Output/Physics/AdjustedDrag.php](../../../src/Mods/CargoSizesMod/Output/Physics/AdjustedDrag.php)  
-**Extends:** `Drag`  
-**Implements:** `AdjustedValuesInterface`  
-**Uses:** `AdjustedValuesTrait`
-
-```php
-public function __construct(Drag $drag, float $reductionMultiplier)
-```
-
-```php
-public function isIncrease(): bool
-```
-
-```php
-public function getPrecision(): int
-```
-
----
-
-#### AdjustedInertia
-
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output\Physics`  
-**File:** [src/Mods/CargoSizesMod/Output/Physics/AdjustedInertia.php](../../../src/Mods/CargoSizesMod/Output/Physics/AdjustedInertia.php)  
-**Extends:** `Inertia`  
-**Implements:** `AdjustedValuesInterface`  
-**Uses:** `AdjustedValuesTrait`
-
-```php
-public function __construct(Inertia $original, float $multiplier)
-```
-
-```php
-public function isIncrease(): bool
-```
-
-```php
-public function getPrecision(): int
-```
-
----
-
-#### PhysicsOverrideDef
-
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output\Physics`  
-**File:** [src/Mods/CargoSizesMod/Output/Physics/PhysicsOverrideDef.php](../../../src/Mods/CargoSizesMod/Output/Physics/PhysicsOverrideDef.php)  
+**File:** [src/Mods/CargoSizesMod/Output/Physics/AccelerationOverrideDef.php](../../../src/Mods/CargoSizesMod/Output/Physics/AccelerationOverrideDef.php)  
 **Extends:** `TagOverrideDef`
 
-```php
-public function __construct(
-    string $macroName, 
-    float $mass, 
-    AdjustedInertia $inertia, 
-    AdjustedDrag $drag, 
-    AdjustedAccelerationFactors $accelerationFactors
-)
-```
-
----
-
-### Jerk Adjustments
-
-#### AdjustedJerk
-
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output\Jerk`  
-**File:** [src/Mods/CargoSizesMod/Output/Jerk/AdjustedJerk.php](../../../src/Mods/CargoSizesMod/Output/Jerk/AdjustedJerk.php)  
-**Extends:** `Jerk`  
-**Implements:** `AdjustedValuesInterface`  
-**Uses:** `AdjustedValuesTrait`
+**Purpose:** Targets only `properties/thruster/acceleration`; renders forward/reverse/horizontal/vertical axes with XML comments showing the combined scaling factor and original values. Replaces the broader `PhysicsOverrideDef` approach.
 
 ```php
-public function __construct(Jerk $original, float $multiplier)
-```
-
-```php
-public function isIncrease(): bool
-```
-
-```php
-public function getPrecision(): int
-```
-
-```php
-public function getBoost(): AdjustedJerkBoost
-```
-
-```php
-public function getForward(): AdjustedJerkForward
-```
-
-```php
-public function getTravel(): AdjustedJerkTravel
-```
-
----
-
-#### AdjustedJerkBoost
-
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output\Jerk`  
-**File:** [src/Mods/CargoSizesMod/Output/Jerk/AdjustedJerkBoost.php](../../../src/Mods/CargoSizesMod/Output/Jerk/AdjustedJerkBoost.php)  
-**Extends:** `JerkBoost`  
-**Implements:** `AdjustedValuesInterface`  
-**Uses:** `AdjustedValuesTrait`
-
-```php
-public function __construct(JerkBoost $original, float $multiplier)
-```
-
-```php
-public function isIncrease(): bool
-```
-
-```php
-public function getPrecision(): int
-```
-
----
-
-#### AdjustedJerkForward
-
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output\Jerk`  
-**File:** [src/Mods/CargoSizesMod/Output/Jerk/AdjustedJerkForward.php](../../../src/Mods/CargoSizesMod/Output/Jerk/AdjustedJerkForward.php)  
-**Extends:** `JerkForward`  
-**Implements:** `AdjustedValuesInterface`  
-**Uses:** `AdjustedValuesTrait`
-
-```php
-public function __construct(JerkForward $original, float $multiplier)
-```
-
-```php
-public function isIncrease(): bool
-```
-
-```php
-public function getPrecision(): int
-```
-
----
-
-#### AdjustedJerkTravel
-
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output\Jerk`  
-**File:** [src/Mods/CargoSizesMod/Output/Jerk/AdjustedJerkTravel.php](../../../src/Mods/CargoSizesMod/Output/Jerk/AdjustedJerkTravel.php)  
-**Extends:** `JerkTravel`  
-**Implements:** `AdjustedValuesInterface`  
-**Uses:** `AdjustedValuesTrait`
-
-```php
-public function __construct(JerkTravel $original, float $multiplier)
-```
-
-```php
-public function isIncrease(): bool
-```
-
-```php
-public function getPrecision(): int
-```
-
----
-
-#### JerkOverrideDef
-
-**Namespace:** `Mistralys\X4\Mods\CargoSizesMod\Output\Jerk`  
-**File:** [src/Mods/CargoSizesMod/Output/Jerk/JerkOverrideDef.php](../../../src/Mods/CargoSizesMod/Output/Jerk/JerkOverrideDef.php)  
-**Extends:** `TagOverrideDef`
-
-```php
-public function __construct(string $macroName, AdjustedJerk $jerk)
+public function __construct(string $macroName, AdjustedAccelerationFactors $accelerationFactors)
 ```
 
 ---
@@ -1438,12 +1279,17 @@ public private(set) string $shipType;
 public private(set) string $shipSize;
 public private(set) int|float $multiplier;
 public private(set) string $id;
+private static ?BuildConfig $buildConfig = null;
 ```
 
 #### Public Methods
 
 ```php
-public static function reset(): void
+public static function reset(): void // Resets all static state (instances + buildConfig)
+```
+
+```php
+public static function setConfig(BuildConfig $config): void
 ```
 
 ```php
@@ -1471,7 +1317,7 @@ public function getPluginLabel(): string
 ```
 
 ```php
-public function getPluginDescription(): string
+public function getPluginDescription(): string // Now includes example ship with cargo values
 ```
 
 ```php
@@ -1625,7 +1471,13 @@ Generates release notes from changelog files during the build process. Parses `c
 #### Public Methods
 
 ```php
-public function __construct(FolderInfo $buildFolder)
+/**
+ * @param FolderInfo $buildFolder
+ * @param float[]|int[] $multipliers
+ * @param ShipResult[] $shipResults
+ * @param BuildConfig $buildConfig
+ */
+public function __construct(FolderInfo $buildFolder, array $multipliers, array $shipResults, BuildConfig $buildConfig)
 ```
 
 ```php
@@ -1648,6 +1500,10 @@ public function generate(): void
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0 | Feb 9, 2026 | Initial public API documentation |
-| 1.1 | Feb 10, 2026 | Updated for PHP 8.4: added asymmetric visibility, typed constants, and refactored iteration logic. |
+| 1.6 | Mar 1, 2026 | Deterministic example ship selection: added BuildConfig::KEY_EXAMPLE_SHIPS + getExampleShip(); added BuildConfig parameter to CargoSizeExtractor and ReleaseNotesGenerator constructors; added FileCollection::setConfig() and $buildConfig static property; extended FileCollection::reset() to clear $buildConfig; changed ReleaseNotesGenerator::formatComparisonTable() from private to protected. Added 9 PHPUnit unit tests (ExampleShipSelectionTest). |
+| 1.5 | Mar 1, 2026 | Updated FileCollection::getPluginDescription() to include example ship cargo values; updated ReleaseNotesGenerator constructor to accept multipliers and ship results, added formatComparisonTable() for AIO comparison table in release notes. |
+| 1.4 | Feb 19, 2026 | Removed ReductionTier, AdjustedDrag, AdjustedInertia, PhysicsOverrideDef, and Jerk Adjustments section (deleted in v4.0 refactoring); updated PhysicsCalculator constructor (removed useEffectiveRatioCap); updated PhysicsCalculator methods |
+| 1.3 | Feb 19, 2026 | Added AccelerationOverrideDef and diagnostic DiagnosticsLogger with simplified acceleration-only approach |
 | 1.2 | Feb 11, 2026 | Added ReleaseNotesGenerator class, three new CargoSizeException error constants (ERROR_MISSING_CHANGELOG, ERROR_CHANGELOG_PARSE, ERROR_FILE_WRITE). |
+| 1.1 | Feb 10, 2026 | Updated for PHP 8.4: added asymmetric visibility, typed constants, and refactored iteration logic. |
+| 1.0 | Feb 9, 2026 | Initial public API documentation |

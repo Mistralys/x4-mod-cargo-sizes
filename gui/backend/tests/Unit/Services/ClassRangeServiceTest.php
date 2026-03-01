@@ -18,9 +18,7 @@ use PHPUnit\Framework\TestCase;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Services\ClassRangeService;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Services\ShipDataService;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ClassRangeRequest;
-use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ReductionTiers;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Exceptions\GUIException;
-use Mistralys\X4\Mods\CargoSizesMod\Build\ReductionTier;
 
 /**
  * Class ClassRangeServiceTest
@@ -67,11 +65,6 @@ class ClassRangeServiceTest extends TestCase
         $request = new ClassRangeRequest(
             shipType: 'transport',
             cargoMultiplier: 2.0,
-            dragReductionTiers: [],
-            jerkReductionTiers: [],
-            inertiaImpactFactor: 1.0,
-            useEffectiveRatioCap: false,
-            dragReductionFactor: 0.5,
             accelerationResponsiveness: 1.0,
             engineId: null
         );
@@ -107,11 +100,6 @@ class ClassRangeServiceTest extends TestCase
         $request = new ClassRangeRequest(
             shipType: 'transport',
             cargoMultiplier: 2.0,
-            dragReductionTiers: [],
-            jerkReductionTiers: [],
-            inertiaImpactFactor: 1.0,
-            useEffectiveRatioCap: false,
-            dragReductionFactor: 0.5,
             accelerationResponsiveness: 1.0,
             engineId: null
         );
@@ -160,11 +148,6 @@ class ClassRangeServiceTest extends TestCase
         $request = new ClassRangeRequest(
             shipType: 'mining',
             cargoMultiplier: 4.0,
-            dragReductionTiers: [],
-            jerkReductionTiers: [],
-            inertiaImpactFactor: 1.0,
-            useEffectiveRatioCap: false,
-            dragReductionFactor: 0.5,
             accelerationResponsiveness: 1.0,
             engineId: null
         );

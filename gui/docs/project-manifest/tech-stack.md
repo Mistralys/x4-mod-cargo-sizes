@@ -1,7 +1,7 @@
 # Tech Stack & Architectural Patterns
 
-> **Version:** 1.4  
-> **Last Updated:** February 18, 2026  
+> **Version:** 1.5  
+> **Last Updated:** February 19, 2026  
 > **Purpose:** Runtime, dependencies, and architectural patterns reference
 
 ---
@@ -224,11 +224,8 @@ This GUI integrates with the parent X4 Cargo Sizes Mod codebase:
 
 | Dependency | Source | Purpose |
 |------------|--------|---------|
-| **PhysicsCalculator** | Parent mod | Core physics calculations |
-| **AdjustedDrag** | Parent mod | Drag force adjustments |
-| **AdjustedInertia** | Parent mod | Rotational inertia adjustments |
-| **AdjustedJerk** | Parent mod | Jerk (acceleration rate) adjustments |
-| **ReductionTier** | Parent mod | Tier-based reduction system |
+| **PhysicsCalculator** | Parent mod | Core physics calculations (mass ratio, scaling) |
+| **AdjustedAccelerationFactors** | Parent mod | Acceleration value wrapper with computed scaled values |
 | **X4 Core Library** | composer dependency | Game data access (ships, engines) |
 
 **Integration Pattern:**
@@ -236,7 +233,7 @@ This GUI integrates with the parent X4 Cargo Sizes Mod codebase:
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\PhysicsCalculator;
 
 // Backend services wrap parent mod classes
-$calculator = new PhysicsCalculator($baseMass, $originalCargo, ...);
+$calculator = new PhysicsCalculator($baseMass, $originalCargo, $adjustedCargo, $multiplier);
 ```
 
 ### X4 Core Library

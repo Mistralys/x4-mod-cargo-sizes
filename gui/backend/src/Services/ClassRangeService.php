@@ -7,28 +7,23 @@ use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ClassRangeRequest;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ClassRangeResponse;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\RangeMetric;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ShipMetricSummary;
+use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ShipMetricsRow;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Exceptions\GUIException;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\PhysicsCalculator;
-use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedDrag;
-use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedInertia;
-use Mistralys\X4\Mods\CargoSizesMod\Output\Jerk\AdjustedJerk;
-use Mistralys\X4\Mods\CargoSizesMod\Build\ReductionTier;
 use Mistralys\X4\Database\Ships\ShipDefs;
 use Mistralys\X4\Database\Engines\EngineDefs;
-use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Drag;
-use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\Inertia;
-use Mistralys\X4\Mods\CargoSizesMod\GUI\Utils\PhysicsCalculationHelper;
 
 /**
  * Class-range calculation service.
+ *
  * Computes physics impact ranges (min/max/median) across all ships of a given type.
+ * Only acceleration is modified by the mod; drag, inertia, and jerk are unchanged.
  *
  * @package X4 Cargo Sizes Mod
  * @subpackage GUI Backend
  */
 class ClassRangeService
 {
-    use PhysicsCalculationHelper;
     public function __construct(
         private readonly ShipDataService $shipDataService
     ) {}
@@ -43,9 +38,8 @@ class ClassRangeService
     public function calculateClassRange(ClassRangeRequest $request): ClassRangeResponse
     {
         try {
-            // Get all ships of the requested type
             $ships = $this->shipDataService->getShipsByType($request->shipType);
-            
+
             if (empty($ships)) {
                 throw new GUIException(
                     sprintf('No ships found for type: %s', $request->shipType),
@@ -54,27 +48,18 @@ class ClassRangeService
                 );
             }
 
-            // Find applicable tiers
-            $dragTier = $this->findTierForMultiplier($request->dragReductionTiers, $request->cargoMultiplier);
-            $jerkTier = $this->findTierForMultiplier($request->jerkReductionTiers, $request->cargoMultiplier);
-
-            // Load engine data if engine selected
+            // Load engine definition if engine selected
             $engineDef = null;
             if ($request->engineId !== null) {
                 $engineDef = EngineDefs::getInstance()->getByID($request->engineId);
             }
 
             // Collect metrics for all ships
+            /** @var ShipMetricsRow[] $shipMetrics */
             $shipMetrics = [];
             foreach ($ships as $ship) {
-                $metrics = $this->calculateShipMetrics(
-                    $ship,
-                    $request,
-                    $dragTier,
-                    $jerkTier,
-                    $engineDef
-                );
-                
+                $metrics = $this->calculateShipMetrics($ship, $request, $engineDef);
+
                 if ($metrics !== null) {
                     $shipMetrics[] = $metrics;
                 }
@@ -88,10 +73,7 @@ class ClassRangeService
                 );
             }
 
-            // Compute ranges
             $ranges = $this->computeRanges($shipMetrics, $request->engineId !== null);
-
-            // Identify worst-case (highest mass ratio) and best-case (lowest mass ratio)
             $worstCase = $this->findWorstCase($shipMetrics);
             $bestCase = $this->findBestCase($shipMetrics);
 
@@ -116,128 +98,76 @@ class ClassRangeService
      *
      * @param array{id: string, name: string, size: string, mass: float, cargo: float} $ship
      * @param ClassRangeRequest $request
-     * @param ReductionTier $dragTier
-     * @param ReductionTier $jerkTier
      * @param \Mistralys\X4\Database\Engines\EngineDef|null $engineDef
-     * @return array{shipId: string, shipName: string, size: string, massRatio: float, topSpeed: ?array, acceleration: ?array, dragChangePercent: float, metrics: array}|null
+     * @return ShipMetricsRow|null
      */
     private function calculateShipMetrics(
         array $ship,
         ClassRangeRequest $request,
-        ReductionTier $dragTier,
-        ReductionTier $jerkTier,
         ?\Mistralys\X4\Database\Engines\EngineDef $engineDef
-    ): ?array
-    {
+    ): ?ShipMetricsRow {
         try {
             $shipDef = ShipDefs::getInstance()->getByID($ship['id']);
-            
+
             // Skip ships with zero cargo (avoid division by zero)
             $originalCargo = $shipDef->getCargoCapacity();
             if ($originalCargo <= 0) {
-                $originalCargo = (float)$ship['cargo']; // Use fallback from ShipDataService
+                $originalCargo = (float)$ship['cargo'];
                 if ($originalCargo <= 0) {
-                    return null; // Skip this ship
+                    return null;
                 }
             }
-            
+
             $adjustedCargo = $originalCargo * $request->cargoMultiplier;
             $baseMass = $shipDef->getMass();
 
-            // Create physics calculator
             $calculator = new PhysicsCalculator(
                 $baseMass,
                 $originalCargo,
                 $adjustedCargo,
-                $request->cargoMultiplier,
-                $request->useEffectiveRatioCap
+                $request->cargoMultiplier
             );
-
-            // Get real drag values
-            $originalDrag = new Drag(
-                $shipDef->getDragForward(),
-                $shipDef->getDragReverse(),
-                $shipDef->getDragHorizontal(),
-                $shipDef->getDragVertical(),
-                $shipDef->getDragPitch(),
-                $shipDef->getDragYaw(),
-                $shipDef->getDragRoll()
-            );
-
-            // Apply drag reduction
-            $adjustedDrag = new AdjustedDrag($originalDrag, $dragTier->getReductionPercent());
-
-            // Calculate average drag change percent
-            $dragChangePercent = $this->calculateAverageDragChange($originalDrag, $adjustedDrag);
-
-            // Get real inertia values
-            $originalInertia = new Inertia(
-                $shipDef->getInertiaPitch(),
-                $shipDef->getInertiaYaw(),
-                $shipDef->getInertiaRoll()
-            );
-
-            // Apply inertia adjustment
-            $inertiaMultiplier = 1.0 + (($calculator->getMassRatio() - 1.0) * $request->inertiaImpactFactor);
-            $adjustedInertia = new AdjustedInertia($originalInertia, $inertiaMultiplier);
-
-            // Calculate average inertia change percent
-            $inertiaChangePercent = $this->calculateAverageInertiaChange($originalInertia, $adjustedInertia);
 
             // Calculate engine-dependent metrics if engine selected
             $topSpeed = null;
             $acceleration = null;
-            
+
             if ($engineDef !== null) {
                 $engineCount = $shipDef->countEngines();
                 $thrustForward = $engineDef->getThrustForward();
                 $totalThrust = $thrustForward * $engineCount;
                 $dragForward = $shipDef->getDragForward();
-                
+
                 if ($dragForward > 0) {
-                    // X4 top speed formula: v_max = thrust_kN / drag_coefficient
-                    $topSpeedOriginal = $totalThrust / $dragForward;
-                    // Adjusted top speed uses reduced drag (mod reduces drag to compensate mass)
-                    $adjustedDragFwd = $adjustedDrag->getForward();
-                    $topSpeedAdjustedValue = ($adjustedDragFwd > 0)
-                        ? $totalThrust / $adjustedDragFwd
-                        : $topSpeedOriginal;
+                    // Drag is unchanged; top speed = thrust / drag (same original and adjusted)
+                    $topSpeedValue = $totalThrust / $dragForward;
                     $topSpeed = [
-                        'original' => $topSpeedOriginal,
-                        'adjusted' => $topSpeedAdjustedValue
+                        'original' => $topSpeedValue,
+                        'adjusted' => $topSpeedValue,
                     ];
                 }
-                
+
                 $thrustNewtons = $totalThrust * 1000.0;
                 $originalAccel = $thrustNewtons / $calculator->getOriginalFullMass();
-                $rawAdjustedAccel = $thrustNewtons / $calculator->getAdjustedFullMass();
-
-                // Apply acceleration compensation factor (0.0 = no help, 1.0 = fully restore original)
-                $accelFactor = $request->accelerationResponsiveness;
-                $compensatedAccel = $rawAdjustedAccel + $accelFactor * ($originalAccel - $rawAdjustedAccel);
+                // AccelFactor override: adjusted = original × responsiveness
+                $adjustedAccel = $originalAccel * $request->accelerationResponsiveness;
 
                 $acceleration = [
                     'original' => $originalAccel,
-                    'adjusted' => $compensatedAccel
+                    'adjusted' => $adjustedAccel,
                 ];
             }
 
-            return [
-                'shipId' => $ship['id'],
-                'shipName' => $ship['name'],
-                'size' => $ship['size'],
-                'massRatio' => $calculator->getMassRatio(),
-                'topSpeed' => $topSpeed,
-                'acceleration' => $acceleration,
-                'dragChangePercent' => $dragChangePercent,
-                'metrics' => [
-                    'massRatio' => $calculator->getMassRatio(),
-                    'dragChangePercent' => $dragChangePercent,
-                    'inertiaChangePercent' => $inertiaChangePercent
-                ]
-            ];
-        } catch (\Exception $e) {
-            // Skip ships that fail to calculate (e.g., missing engine data)
+            return new ShipMetricsRow(
+                shipId: $ship['id'],
+                shipName: $ship['name'],
+                size: $ship['size'],
+                massRatio: $calculator->getMassRatio(),
+                topSpeed: $topSpeed,
+                acceleration: $acceleration,
+            );
+        } catch (\Exception) {
+            // Skip ships that fail to calculate (e.g., missing data)
             return null;
         }
     }
@@ -245,7 +175,7 @@ class ClassRangeService
     /**
      * Computes min/max/median ranges for all metrics.
      *
-     * @param array<array{shipId: string, shipName: string, size: string, massRatio: float, topSpeed: ?array, acceleration: ?array, dragChangePercent: float, metrics: array}> $shipMetrics
+     * @param ShipMetricsRow[] $shipMetrics
      * @param bool $hasEngine
      * @return array<string, RangeMetric>
      */
@@ -253,31 +183,20 @@ class ClassRangeService
     {
         $ranges = [];
 
-        // Extract value arrays for each metric
-        $massRatios = array_column($shipMetrics, 'massRatio');
-        $dragChanges = [];
-        $inertiaChanges = [];
+        $massRatios = array_map(static fn(ShipMetricsRow $row) => $row->massRatio, $shipMetrics);
         $topSpeedsOriginal = [];
-        $topSpeedsAdjusted = [];
         $accelerationsOriginal = [];
-        $accelerationsAdjusted = [];
 
         foreach ($shipMetrics as $metric) {
-            $dragChanges[] = $metric['metrics']['dragChangePercent'];
-            $inertiaChanges[] = $metric['metrics']['inertiaChangePercent'];
-            
-            if ($hasEngine && $metric['topSpeed'] !== null) {
-                $topSpeedsOriginal[] = $metric['topSpeed']['original'];
-                $topSpeedsAdjusted[] = $metric['topSpeed']['adjusted'];
+            if ($hasEngine && $metric->topSpeed !== null) {
+                $topSpeedsOriginal[] = $metric->topSpeed['original'];
             }
-            
-            if ($hasEngine && $metric['acceleration'] !== null) {
-                $accelerationsOriginal[] = $metric['acceleration']['original'];
-                $accelerationsAdjusted[] = $metric['acceleration']['adjusted'];
+
+            if ($hasEngine && $metric->acceleration !== null) {
+                $accelerationsOriginal[] = $metric->acceleration['original'];
             }
         }
 
-        // Compute ranges for each metric
         $ranges['massRatio'] = new RangeMetric(
             min: min($massRatios),
             max: max($massRatios),
@@ -286,23 +205,6 @@ class ClassRangeService
             label: 'Mass Ratio'
         );
 
-        $ranges['dragChange'] = new RangeMetric(
-            min: min($dragChanges),
-            max: max($dragChanges),
-            median: $this->computeMedian($dragChanges),
-            unit: '%',
-            label: 'Drag Change'
-        );
-
-        $ranges['inertiaChange'] = new RangeMetric(
-            min: min($inertiaChanges),
-            max: max($inertiaChanges),
-            median: $this->computeMedian($inertiaChanges),
-            unit: '%',
-            label: 'Inertia Change'
-        );
-
-        // Add engine-dependent metrics if available
         if ($hasEngine && !empty($topSpeedsOriginal)) {
             $ranges['topSpeed'] = new RangeMetric(
                 min: min($topSpeedsOriginal),
@@ -329,7 +231,7 @@ class ClassRangeService
     /**
      * Finds the worst-case ship (highest mass ratio).
      *
-     * @param array<array{shipId: string, shipName: string, size: string, massRatio: float, topSpeed: ?array, acceleration: ?array, dragChangePercent: float}> $shipMetrics
+     * @param ShipMetricsRow[] $shipMetrics
      * @return ShipMetricSummary
      */
     private function findWorstCase(array $shipMetrics): ShipMetricSummary
@@ -338,27 +240,26 @@ class ClassRangeService
         $maxMassRatio = 0.0;
 
         foreach ($shipMetrics as $metric) {
-            if ($metric['massRatio'] > $maxMassRatio) {
-                $maxMassRatio = $metric['massRatio'];
+            if ($metric->massRatio > $maxMassRatio) {
+                $maxMassRatio = $metric->massRatio;
                 $worstShip = $metric;
             }
         }
 
         return new ShipMetricSummary(
-            shipId: $worstShip['shipId'],
-            shipName: $worstShip['shipName'],
-            size: $worstShip['size'],
-            massRatio: $worstShip['massRatio'],
-            topSpeed: $worstShip['topSpeed'],
-            acceleration: $worstShip['acceleration'],
-            dragChangePercent: $worstShip['dragChangePercent']
+            shipId: $worstShip->shipId,
+            shipName: $worstShip->shipName,
+            size: $worstShip->size,
+            massRatio: $worstShip->massRatio,
+            topSpeed: $worstShip->topSpeed,
+            acceleration: $worstShip->acceleration,
         );
     }
 
     /**
      * Finds the best-case ship (lowest mass ratio).
      *
-     * @param array<array{shipId: string, shipName: string, size: string, massRatio: float, topSpeed: ?array, acceleration: ?array, dragChangePercent: float}> $shipMetrics
+     * @param ShipMetricsRow[] $shipMetrics
      * @return ShipMetricSummary
      */
     private function findBestCase(array $shipMetrics): ShipMetricSummary
@@ -367,20 +268,19 @@ class ClassRangeService
         $minMassRatio = PHP_FLOAT_MAX;
 
         foreach ($shipMetrics as $metric) {
-            if ($metric['massRatio'] < $minMassRatio) {
-                $minMassRatio = $metric['massRatio'];
+            if ($metric->massRatio < $minMassRatio) {
+                $minMassRatio = $metric->massRatio;
                 $bestShip = $metric;
             }
         }
 
         return new ShipMetricSummary(
-            shipId: $bestShip['shipId'],
-            shipName: $bestShip['shipName'],
-            size: $bestShip['size'],
-            massRatio: $bestShip['massRatio'],
-            topSpeed: $bestShip['topSpeed'],
-            acceleration: $bestShip['acceleration'],
-            dragChangePercent: $bestShip['dragChangePercent']
+            shipId: $bestShip->shipId,
+            shipName: $bestShip->shipName,
+            size: $bestShip->size,
+            massRatio: $bestShip->massRatio,
+            topSpeed: $bestShip->topSpeed,
+            acceleration: $bestShip->acceleration,
         );
     }
 
@@ -396,20 +296,13 @@ class ClassRangeService
             return 0.0;
         }
 
-        // Median calculation using sort() - O(n log n) complexity
-        // Current dataset: ~80 ships per type (~0.5ms overhead)
-        // Acceptable for datasets <1000 items per constraints.md
-        // For datasets >1000 items, implement quickselect algorithm (O(n) average case)
-        // Reference: https://en.wikipedia.org/wiki/Quickselect
         sort($values);
         $count = count($values);
         $middle = (int)floor($count / 2);
 
         if ($count % 2 === 0) {
-            // Even number: average of two middle values
             return ($values[$middle - 1] + $values[$middle]) / 2.0;
         } else {
-            // Odd number: middle value
             return $values[$middle];
         }
     }
