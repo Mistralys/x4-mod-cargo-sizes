@@ -155,7 +155,7 @@ Please refer to the tool's instructions to unpack the game data files.
 2. Copy `dev-config.php.dist` to `dev-config.php`.
 3. Edit the file to set the correct paths.
 4. Run `composer install` to install the dependencies.
-5. Run `composer build-mod` to build the mod.
+5. Run `composer build` to build the mod.
 
 ### Automatic Release Notes Generation
 
