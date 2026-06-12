@@ -14,6 +14,7 @@ use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AccelerationOverrideDef;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\AdjustedAccelerationFactors;
 use Mistralys\X4\Mods\CargoSizesMod\Output\Physics\PhysicsCalculator;
 use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\AccelerationFactors;
+use Mistralys\X4\Mods\CargoSizesMod\XML\ShipXML\EmptyAccelerationFactors;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -41,20 +42,75 @@ class AccelerationOverrideTest extends TestCase
     }
 
     /**
-     * Verify that AccelerationOverrideDef targets the correct XPath.
+     * Verify that AccelerationOverrideDef targets the correct XPath for replace mode.
      *
-     * The XPath must point to properties/thruster/acceleration so the game engine
-     * applies the override to the correct XML element.
+     * When a ship already has <accfactors> in its macro XML the override must use
+     * <replace> targeting properties/physics/accfactors.
      */
     public function testAccelerationOverrideXMLTargetsCorrectPath(): void
     {
+        // Non-empty original → replace mode: path ends with /accfactors
         $adjusted = new AdjustedAccelerationFactors($this->originalFactors, 2.818);
         $def = new AccelerationOverrideDef(self::MACRO_NAME, $adjusted);
 
         $path = $def->getPath();
 
-        $this->assertStringContainsString('properties/thruster/acceleration', $path);
+        $this->assertStringContainsString('properties/physics/accfactors', $path);
         $this->assertStringContainsString(self::MACRO_NAME, $path);
+    }
+
+    /**
+     * Verify that ships without <accfactors> use add mode (targeting <physics>).
+     *
+     * Most transport and mining ships have no explicit <accfactors> element.
+     * The override must use <add> to append the element under <physics> instead
+     * of <replace>, which would fail because there is nothing to replace.
+     */
+    public function testNoExistingAccfactorsUsesAddMode(): void
+    {
+        $empty = new EmptyAccelerationFactors();
+        $adjusted = new AdjustedAccelerationFactors($empty, 3.99);
+        $def = new AccelerationOverrideDef(self::MACRO_NAME, $adjusted);
+
+        $rendered = $def->render();
+
+        // Must use <add> and target the parent <physics> element
+        $this->assertStringContainsString('<add ', $rendered);
+        $this->assertStringContainsString('properties/physics"', $rendered);
+        $this->assertStringNotContainsString('<replace ', $rendered);
+    }
+
+    /**
+     * Verify that ships with existing <accfactors> use replace mode.
+     */
+    public function testExistingAccfactorsUsesReplaceMode(): void
+    {
+        $adjusted = new AdjustedAccelerationFactors($this->originalFactors, 2.818);
+        $def = new AccelerationOverrideDef(self::MACRO_NAME, $adjusted);
+
+        $rendered = $def->render();
+
+        $this->assertStringContainsString('<replace ', $rendered);
+        $this->assertStringNotContainsString('<add ', $rendered);
+    }
+
+    /**
+     * Verify that _ORIG template tokens are not corrupted by shorter prefix tokens.
+     *
+     * str_replace processes keys in order; if $ACC_FORWARD is substituted before
+     * $ACC_FORWARD_ORIG, the _ORIG token becomes e.g. "3.99_ORIG".
+     * This test guards against that regression.
+     */
+    public function testOriginalValuesAreNotCorruptedByTemplateSubstitution(): void
+    {
+        $adjusted = new AdjustedAccelerationFactors($this->originalFactors, 2.0);
+        $def = new AccelerationOverrideDef(self::MACRO_NAME, $adjusted);
+
+        $rendered = $def->render();
+
+        // The _ORIG comment must contain numeric values, not mangled tokens like "4.00_ORIG"
+        $this->assertMatchesRegularExpression('/forward=\d+\.\d+,/', $rendered);
+        $this->assertStringNotContainsString('_ORIG', $rendered);
     }
 
     /**
