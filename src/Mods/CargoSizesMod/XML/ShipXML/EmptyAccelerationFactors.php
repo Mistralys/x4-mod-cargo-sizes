@@ -10,4 +10,9 @@ class EmptyAccelerationFactors extends AccelerationFactors
     {
         parent::__construct(1.0, 1.0, 1.0, 1.0);
     }
+
+    public function isEmpty(): bool
+    {
+        return true;
+    }
 }

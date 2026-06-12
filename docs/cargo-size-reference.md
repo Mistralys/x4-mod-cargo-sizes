@@ -4,16 +4,16 @@
 
 ### Auxiliaries XL
 
-- _Atlas E_: 34,040 m3 > **68,080 m3**
+- _Atlas E_: 56,100 m3 > **112,200 m3**
 - _Atlas Sentinel_: 34,800 m3 > **69,600 m3**
 - _Atlas Vanguard_: 29,000 m3 > **58,000 m3**
-- _Honshu_: 43,000 m3 > **86,000 m3**
-- _Monitor_: 29,000 m3 > **58,000 m3**
-- _Nomad Sentinel_: 34,800 m3 > **69,600 m3**
-- _Nomad Vanguard_: 29,000 m3 > **58,000 m3**
-- _Orca_: 40,000 m3 > **80,000 m3**
-- _Stork Sentinel_: 30,000 m3 > **60,000 m3**
-- _Stork Vanguard_: 25,000 m3 > **50,000 m3**
+- _Honshu_: 71,500 m3 > **143,000 m3**
+- _Monitor_: 57,000 m3 > **114,000 m3**
+- _Nomad Sentinel_: 54,500 m3 > **109,000 m3**
+- _Nomad Vanguard_: 53,200 m3 > **106,400 m3**
+- _Orca_: 59,200 m3 > **118,400 m3**
+- _Stork Sentinel_: 52,600 m3 > **105,200 m3**
+- _Stork Vanguard_: 50,600 m3 > **101,200 m3**
 
 ### Carriers L
 
@@ -35,29 +35,29 @@
 
 ### Mining ships L
 
-- _Chthonios (Gas) Sentinel_: 38,400 m3 > **76,800 m3**
-- _Chthonios (Gas) Vanguard_: 32,000 m3 > **64,000 m3**
-- _Chthonios (Mineral) Sentinel_: 38,400 m3 > **76,800 m3**
-- _Chthonios (Mineral) Vanguard_: 32,000 m3 > **64,000 m3**
-- _Chthonios E (Gas)_: 35,200 m3 > **70,400 m3**
-- _Chthonios E (Mineral)_: 34,960 m3 > **69,920 m3**
-- _Crane (Gas) Sentinel_: 52,800 m3 > **105,600 m3**
-- _Crane (Gas) Vanguard_: 44,000 m3 > **88,000 m3**
-- _Crane (Mineral) Sentinel_: 57,600 m3 > **115,200 m3**
-- _Crane (Mineral) Vanguard_: 48,000 m3 > **96,000 m3**
-- _Crane E (Gas)_: 54,000 m3 > **108,000 m3**
-- _Crane E (Mineral)_: 50,000 m3 > **100,000 m3**
-- _Donia_: 34,000 m3 > **68,000 m3**
-- _Hokkaido (Gas)_: 38,000 m3 > **76,000 m3**
-- _Hokkaido (Mineral)_: 38,000 m3 > **76,000 m3**
-- _Magnetar (Gas) Sentinel_: 50,400 m3 > **100,800 m3**
-- _Magnetar (Gas) Vanguard_: 42,000 m3 > **84,000 m3**
-- _Magnetar (Mineral) Sentinel_: 50,400 m3 > **100,800 m3**
-- _Magnetar (Mineral) Vanguard_: 40,000 m3 > **80,000 m3**
-- _Rorqual (Gas)_: 42,000 m3 > **84,000 m3**
-- _Rorqual (Mineral)_: 40,000 m3 > **80,000 m3**
-- _Wyvern (Gas)_: 22,000 m3 > **44,000 m3**
-- _Wyvern (Mineral)_: 20,000 m3 > **40,000 m3**
+- _Chthonios (Gas) Sentinel_: 47,500 m3 > **95,000 m3**
+- _Chthonios (Gas) Vanguard_: 43,500 m3 > **87,000 m3**
+- _Chthonios (Mineral) Sentinel_: 47,500 m3 > **95,000 m3**
+- _Chthonios (Mineral) Vanguard_: 43,500 m3 > **87,000 m3**
+- _Chthonios E (Gas)_: 45,100 m3 > **90,200 m3**
+- _Chthonios E (Mineral)_: 44,960 m3 > **89,920 m3**
+- _Crane (Gas) Sentinel_: 58,000 m3 > **116,000 m3**
+- _Crane (Gas) Vanguard_: 52,600 m3 > **105,200 m3**
+- _Crane (Mineral) Sentinel_: 60,800 m3 > **121,600 m3**
+- _Crane (Mineral) Vanguard_: 54,800 m3 > **109,600 m3**
+- _Crane E (Gas)_: 58,500 m3 > **117,000 m3**
+- _Crane E (Mineral)_: 62,300 m3 > **124,600 m3**
+- _Donia_: 45,000 m3 > **90,000 m3**
+- _Hokkaido (Gas)_: 51,300 m3 > **102,600 m3**
+- _Hokkaido (Mineral)_: 51,300 m3 > **102,600 m3**
+- _Magnetar (Gas) Sentinel_: 57,200 m3 > **114,400 m3**
+- _Magnetar (Gas) Vanguard_: 52,000 m3 > **104,000 m3**
+- _Magnetar (Mineral) Sentinel_: 57,200 m3 > **114,400 m3**
+- _Magnetar (Mineral) Vanguard_: 50,800 m3 > **101,600 m3**
+- _Rorqual (Gas)_: 49,600 m3 > **99,200 m3**
+- _Rorqual (Mineral)_: 48,500 m3 > **97,000 m3**
+- _Wyvern (Gas)_: 37,000 m3 > **74,000 m3**
+- _Wyvern (Mineral)_: 35,800 m3 > **71,600 m3**
 
 ### Mining ships M
 
@@ -159,16 +159,16 @@
 
 ### Auxiliaries XL
 
-- _Atlas E_: 34,040 m3 > **136,160 m3**
+- _Atlas E_: 56,100 m3 > **224,400 m3**
 - _Atlas Sentinel_: 34,800 m3 > **139,200 m3**
 - _Atlas Vanguard_: 29,000 m3 > **116,000 m3**
-- _Honshu_: 43,000 m3 > **172,000 m3**
-- _Monitor_: 29,000 m3 > **116,000 m3**
-- _Nomad Sentinel_: 34,800 m3 > **139,200 m3**
-- _Nomad Vanguard_: 29,000 m3 > **116,000 m3**
-- _Orca_: 40,000 m3 > **160,000 m3**
-- _Stork Sentinel_: 30,000 m3 > **120,000 m3**
-- _Stork Vanguard_: 25,000 m3 > **100,000 m3**
+- _Honshu_: 71,500 m3 > **286,000 m3**
+- _Monitor_: 57,000 m3 > **228,000 m3**
+- _Nomad Sentinel_: 54,500 m3 > **218,000 m3**
+- _Nomad Vanguard_: 53,200 m3 > **212,800 m3**
+- _Orca_: 59,200 m3 > **236,800 m3**
+- _Stork Sentinel_: 52,600 m3 > **210,400 m3**
+- _Stork Vanguard_: 50,600 m3 > **202,400 m3**
 
 ### Carriers L
 
@@ -190,29 +190,29 @@
 
 ### Mining ships L
 
-- _Chthonios (Gas) Sentinel_: 38,400 m3 > **153,600 m3**
-- _Chthonios (Gas) Vanguard_: 32,000 m3 > **128,000 m3**
-- _Chthonios (Mineral) Sentinel_: 38,400 m3 > **153,600 m3**
-- _Chthonios (Mineral) Vanguard_: 32,000 m3 > **128,000 m3**
-- _Chthonios E (Gas)_: 35,200 m3 > **140,800 m3**
-- _Chthonios E (Mineral)_: 34,960 m3 > **139,840 m3**
-- _Crane (Gas) Sentinel_: 52,800 m3 > **211,200 m3**
-- _Crane (Gas) Vanguard_: 44,000 m3 > **176,000 m3**
-- _Crane (Mineral) Sentinel_: 57,600 m3 > **230,400 m3**
-- _Crane (Mineral) Vanguard_: 48,000 m3 > **192,000 m3**
-- _Crane E (Gas)_: 54,000 m3 > **216,000 m3**
-- _Crane E (Mineral)_: 50,000 m3 > **200,000 m3**
-- _Donia_: 34,000 m3 > **136,000 m3**
-- _Hokkaido (Gas)_: 38,000 m3 > **152,000 m3**
-- _Hokkaido (Mineral)_: 38,000 m3 > **152,000 m3**
-- _Magnetar (Gas) Sentinel_: 50,400 m3 > **201,600 m3**
-- _Magnetar (Gas) Vanguard_: 42,000 m3 > **168,000 m3**
-- _Magnetar (Mineral) Sentinel_: 50,400 m3 > **201,600 m3**
-- _Magnetar (Mineral) Vanguard_: 40,000 m3 > **160,000 m3**
-- _Rorqual (Gas)_: 42,000 m3 > **168,000 m3**
-- _Rorqual (Mineral)_: 40,000 m3 > **160,000 m3**
-- _Wyvern (Gas)_: 22,000 m3 > **88,000 m3**
-- _Wyvern (Mineral)_: 20,000 m3 > **80,000 m3**
+- _Chthonios (Gas) Sentinel_: 47,500 m3 > **190,000 m3**
+- _Chthonios (Gas) Vanguard_: 43,500 m3 > **174,000 m3**
+- _Chthonios (Mineral) Sentinel_: 47,500 m3 > **190,000 m3**
+- _Chthonios (Mineral) Vanguard_: 43,500 m3 > **174,000 m3**
+- _Chthonios E (Gas)_: 45,100 m3 > **180,400 m3**
+- _Chthonios E (Mineral)_: 44,960 m3 > **179,840 m3**
+- _Crane (Gas) Sentinel_: 58,000 m3 > **232,000 m3**
+- _Crane (Gas) Vanguard_: 52,600 m3 > **210,400 m3**
+- _Crane (Mineral) Sentinel_: 60,800 m3 > **243,200 m3**
+- _Crane (Mineral) Vanguard_: 54,800 m3 > **219,200 m3**
+- _Crane E (Gas)_: 58,500 m3 > **234,000 m3**
+- _Crane E (Mineral)_: 62,300 m3 > **249,200 m3**
+- _Donia_: 45,000 m3 > **180,000 m3**
+- _Hokkaido (Gas)_: 51,300 m3 > **205,200 m3**
+- _Hokkaido (Mineral)_: 51,300 m3 > **205,200 m3**
+- _Magnetar (Gas) Sentinel_: 57,200 m3 > **228,800 m3**
+- _Magnetar (Gas) Vanguard_: 52,000 m3 > **208,000 m3**
+- _Magnetar (Mineral) Sentinel_: 57,200 m3 > **228,800 m3**
+- _Magnetar (Mineral) Vanguard_: 50,800 m3 > **203,200 m3**
+- _Rorqual (Gas)_: 49,600 m3 > **198,400 m3**
+- _Rorqual (Mineral)_: 48,500 m3 > **194,000 m3**
+- _Wyvern (Gas)_: 37,000 m3 > **148,000 m3**
+- _Wyvern (Mineral)_: 35,800 m3 > **143,200 m3**
 
 ### Mining ships M
 
@@ -314,16 +314,16 @@
 
 ### Auxiliaries XL
 
-- _Atlas E_: 34,040 m3 > **204,240 m3**
+- _Atlas E_: 56,100 m3 > **336,600 m3**
 - _Atlas Sentinel_: 34,800 m3 > **208,800 m3**
 - _Atlas Vanguard_: 29,000 m3 > **174,000 m3**
-- _Honshu_: 43,000 m3 > **258,000 m3**
-- _Monitor_: 29,000 m3 > **174,000 m3**
-- _Nomad Sentinel_: 34,800 m3 > **208,800 m3**
-- _Nomad Vanguard_: 29,000 m3 > **174,000 m3**
-- _Orca_: 40,000 m3 > **240,000 m3**
-- _Stork Sentinel_: 30,000 m3 > **180,000 m3**
-- _Stork Vanguard_: 25,000 m3 > **150,000 m3**
+- _Honshu_: 71,500 m3 > **429,000 m3**
+- _Monitor_: 57,000 m3 > **342,000 m3**
+- _Nomad Sentinel_: 54,500 m3 > **327,000 m3**
+- _Nomad Vanguard_: 53,200 m3 > **319,200 m3**
+- _Orca_: 59,200 m3 > **355,200 m3**
+- _Stork Sentinel_: 52,600 m3 > **315,600 m3**
+- _Stork Vanguard_: 50,600 m3 > **303,600 m3**
 
 ### Carriers L
 
@@ -345,29 +345,29 @@
 
 ### Mining ships L
 
-- _Chthonios (Gas) Sentinel_: 38,400 m3 > **230,400 m3**
-- _Chthonios (Gas) Vanguard_: 32,000 m3 > **192,000 m3**
-- _Chthonios (Mineral) Sentinel_: 38,400 m3 > **230,400 m3**
-- _Chthonios (Mineral) Vanguard_: 32,000 m3 > **192,000 m3**
-- _Chthonios E (Gas)_: 35,200 m3 > **211,200 m3**
-- _Chthonios E (Mineral)_: 34,960 m3 > **209,760 m3**
-- _Crane (Gas) Sentinel_: 52,800 m3 > **316,800 m3**
-- _Crane (Gas) Vanguard_: 44,000 m3 > **264,000 m3**
-- _Crane (Mineral) Sentinel_: 57,600 m3 > **345,600 m3**
-- _Crane (Mineral) Vanguard_: 48,000 m3 > **288,000 m3**
-- _Crane E (Gas)_: 54,000 m3 > **324,000 m3**
-- _Crane E (Mineral)_: 50,000 m3 > **300,000 m3**
-- _Donia_: 34,000 m3 > **204,000 m3**
-- _Hokkaido (Gas)_: 38,000 m3 > **228,000 m3**
-- _Hokkaido (Mineral)_: 38,000 m3 > **228,000 m3**
-- _Magnetar (Gas) Sentinel_: 50,400 m3 > **302,400 m3**
-- _Magnetar (Gas) Vanguard_: 42,000 m3 > **252,000 m3**
-- _Magnetar (Mineral) Sentinel_: 50,400 m3 > **302,400 m3**
-- _Magnetar (Mineral) Vanguard_: 40,000 m3 > **240,000 m3**
-- _Rorqual (Gas)_: 42,000 m3 > **252,000 m3**
-- _Rorqual (Mineral)_: 40,000 m3 > **240,000 m3**
-- _Wyvern (Gas)_: 22,000 m3 > **132,000 m3**
-- _Wyvern (Mineral)_: 20,000 m3 > **120,000 m3**
+- _Chthonios (Gas) Sentinel_: 47,500 m3 > **285,000 m3**
+- _Chthonios (Gas) Vanguard_: 43,500 m3 > **261,000 m3**
+- _Chthonios (Mineral) Sentinel_: 47,500 m3 > **285,000 m3**
+- _Chthonios (Mineral) Vanguard_: 43,500 m3 > **261,000 m3**
+- _Chthonios E (Gas)_: 45,100 m3 > **270,600 m3**
+- _Chthonios E (Mineral)_: 44,960 m3 > **269,760 m3**
+- _Crane (Gas) Sentinel_: 58,000 m3 > **348,000 m3**
+- _Crane (Gas) Vanguard_: 52,600 m3 > **315,600 m3**
+- _Crane (Mineral) Sentinel_: 60,800 m3 > **364,800 m3**
+- _Crane (Mineral) Vanguard_: 54,800 m3 > **328,800 m3**
+- _Crane E (Gas)_: 58,500 m3 > **351,000 m3**
+- _Crane E (Mineral)_: 62,300 m3 > **373,800 m3**
+- _Donia_: 45,000 m3 > **270,000 m3**
+- _Hokkaido (Gas)_: 51,300 m3 > **307,800 m3**
+- _Hokkaido (Mineral)_: 51,300 m3 > **307,800 m3**
+- _Magnetar (Gas) Sentinel_: 57,200 m3 > **343,200 m3**
+- _Magnetar (Gas) Vanguard_: 52,000 m3 > **312,000 m3**
+- _Magnetar (Mineral) Sentinel_: 57,200 m3 > **343,200 m3**
+- _Magnetar (Mineral) Vanguard_: 50,800 m3 > **304,800 m3**
+- _Rorqual (Gas)_: 49,600 m3 > **297,600 m3**
+- _Rorqual (Mineral)_: 48,500 m3 > **291,000 m3**
+- _Wyvern (Gas)_: 37,000 m3 > **222,000 m3**
+- _Wyvern (Mineral)_: 35,800 m3 > **214,800 m3**
 
 ### Mining ships M
 
@@ -469,16 +469,16 @@
 
 ### Auxiliaries XL
 
-- _Atlas E_: 34,040 m3 > **272,320 m3**
+- _Atlas E_: 56,100 m3 > **448,800 m3**
 - _Atlas Sentinel_: 34,800 m3 > **278,400 m3**
 - _Atlas Vanguard_: 29,000 m3 > **232,000 m3**
-- _Honshu_: 43,000 m3 > **344,000 m3**
-- _Monitor_: 29,000 m3 > **232,000 m3**
-- _Nomad Sentinel_: 34,800 m3 > **278,400 m3**
-- _Nomad Vanguard_: 29,000 m3 > **232,000 m3**
-- _Orca_: 40,000 m3 > **320,000 m3**
-- _Stork Sentinel_: 30,000 m3 > **240,000 m3**
-- _Stork Vanguard_: 25,000 m3 > **200,000 m3**
+- _Honshu_: 71,500 m3 > **572,000 m3**
+- _Monitor_: 57,000 m3 > **456,000 m3**
+- _Nomad Sentinel_: 54,500 m3 > **436,000 m3**
+- _Nomad Vanguard_: 53,200 m3 > **425,600 m3**
+- _Orca_: 59,200 m3 > **473,600 m3**
+- _Stork Sentinel_: 52,600 m3 > **420,800 m3**
+- _Stork Vanguard_: 50,600 m3 > **404,800 m3**
 
 ### Carriers L
 
@@ -500,29 +500,29 @@
 
 ### Mining ships L
 
-- _Chthonios (Gas) Sentinel_: 38,400 m3 > **307,200 m3**
-- _Chthonios (Gas) Vanguard_: 32,000 m3 > **256,000 m3**
-- _Chthonios (Mineral) Sentinel_: 38,400 m3 > **307,200 m3**
-- _Chthonios (Mineral) Vanguard_: 32,000 m3 > **256,000 m3**
-- _Chthonios E (Gas)_: 35,200 m3 > **281,600 m3**
-- _Chthonios E (Mineral)_: 34,960 m3 > **279,680 m3**
-- _Crane (Gas) Sentinel_: 52,800 m3 > **422,400 m3**
-- _Crane (Gas) Vanguard_: 44,000 m3 > **352,000 m3**
-- _Crane (Mineral) Sentinel_: 57,600 m3 > **460,800 m3**
-- _Crane (Mineral) Vanguard_: 48,000 m3 > **384,000 m3**
-- _Crane E (Gas)_: 54,000 m3 > **432,000 m3**
-- _Crane E (Mineral)_: 50,000 m3 > **400,000 m3**
-- _Donia_: 34,000 m3 > **272,000 m3**
-- _Hokkaido (Gas)_: 38,000 m3 > **304,000 m3**
-- _Hokkaido (Mineral)_: 38,000 m3 > **304,000 m3**
-- _Magnetar (Gas) Sentinel_: 50,400 m3 > **403,200 m3**
-- _Magnetar (Gas) Vanguard_: 42,000 m3 > **336,000 m3**
-- _Magnetar (Mineral) Sentinel_: 50,400 m3 > **403,200 m3**
-- _Magnetar (Mineral) Vanguard_: 40,000 m3 > **320,000 m3**
-- _Rorqual (Gas)_: 42,000 m3 > **336,000 m3**
-- _Rorqual (Mineral)_: 40,000 m3 > **320,000 m3**
-- _Wyvern (Gas)_: 22,000 m3 > **176,000 m3**
-- _Wyvern (Mineral)_: 20,000 m3 > **160,000 m3**
+- _Chthonios (Gas) Sentinel_: 47,500 m3 > **380,000 m3**
+- _Chthonios (Gas) Vanguard_: 43,500 m3 > **348,000 m3**
+- _Chthonios (Mineral) Sentinel_: 47,500 m3 > **380,000 m3**
+- _Chthonios (Mineral) Vanguard_: 43,500 m3 > **348,000 m3**
+- _Chthonios E (Gas)_: 45,100 m3 > **360,800 m3**
+- _Chthonios E (Mineral)_: 44,960 m3 > **359,680 m3**
+- _Crane (Gas) Sentinel_: 58,000 m3 > **464,000 m3**
+- _Crane (Gas) Vanguard_: 52,600 m3 > **420,800 m3**
+- _Crane (Mineral) Sentinel_: 60,800 m3 > **486,400 m3**
+- _Crane (Mineral) Vanguard_: 54,800 m3 > **438,400 m3**
+- _Crane E (Gas)_: 58,500 m3 > **468,000 m3**
+- _Crane E (Mineral)_: 62,300 m3 > **498,400 m3**
+- _Donia_: 45,000 m3 > **360,000 m3**
+- _Hokkaido (Gas)_: 51,300 m3 > **410,400 m3**
+- _Hokkaido (Mineral)_: 51,300 m3 > **410,400 m3**
+- _Magnetar (Gas) Sentinel_: 57,200 m3 > **457,600 m3**
+- _Magnetar (Gas) Vanguard_: 52,000 m3 > **416,000 m3**
+- _Magnetar (Mineral) Sentinel_: 57,200 m3 > **457,600 m3**
+- _Magnetar (Mineral) Vanguard_: 50,800 m3 > **406,400 m3**
+- _Rorqual (Gas)_: 49,600 m3 > **396,800 m3**
+- _Rorqual (Mineral)_: 48,500 m3 > **388,000 m3**
+- _Wyvern (Gas)_: 37,000 m3 > **296,000 m3**
+- _Wyvern (Mineral)_: 35,800 m3 > **286,400 m3**
 
 ### Mining ships M
 
@@ -624,16 +624,16 @@
 
 ### Auxiliaries XL
 
-- _Atlas E_: 34,040 m3 > **340,400 m3**
+- _Atlas E_: 56,100 m3 > **561,000 m3**
 - _Atlas Sentinel_: 34,800 m3 > **348,000 m3**
 - _Atlas Vanguard_: 29,000 m3 > **290,000 m3**
-- _Honshu_: 43,000 m3 > **430,000 m3**
-- _Monitor_: 29,000 m3 > **290,000 m3**
-- _Nomad Sentinel_: 34,800 m3 > **348,000 m3**
-- _Nomad Vanguard_: 29,000 m3 > **290,000 m3**
-- _Orca_: 40,000 m3 > **400,000 m3**
-- _Stork Sentinel_: 30,000 m3 > **300,000 m3**
-- _Stork Vanguard_: 25,000 m3 > **250,000 m3**
+- _Honshu_: 71,500 m3 > **715,000 m3**
+- _Monitor_: 57,000 m3 > **570,000 m3**
+- _Nomad Sentinel_: 54,500 m3 > **545,000 m3**
+- _Nomad Vanguard_: 53,200 m3 > **532,000 m3**
+- _Orca_: 59,200 m3 > **592,000 m3**
+- _Stork Sentinel_: 52,600 m3 > **526,000 m3**
+- _Stork Vanguard_: 50,600 m3 > **506,000 m3**
 
 ### Carriers L
 
@@ -655,29 +655,29 @@
 
 ### Mining ships L
 
-- _Chthonios (Gas) Sentinel_: 38,400 m3 > **384,000 m3**
-- _Chthonios (Gas) Vanguard_: 32,000 m3 > **320,000 m3**
-- _Chthonios (Mineral) Sentinel_: 38,400 m3 > **384,000 m3**
-- _Chthonios (Mineral) Vanguard_: 32,000 m3 > **320,000 m3**
-- _Chthonios E (Gas)_: 35,200 m3 > **352,000 m3**
-- _Chthonios E (Mineral)_: 34,960 m3 > **349,600 m3**
-- _Crane (Gas) Sentinel_: 52,800 m3 > **528,000 m3**
-- _Crane (Gas) Vanguard_: 44,000 m3 > **440,000 m3**
-- _Crane (Mineral) Sentinel_: 57,600 m3 > **576,000 m3**
-- _Crane (Mineral) Vanguard_: 48,000 m3 > **480,000 m3**
-- _Crane E (Gas)_: 54,000 m3 > **540,000 m3**
-- _Crane E (Mineral)_: 50,000 m3 > **500,000 m3**
-- _Donia_: 34,000 m3 > **340,000 m3**
-- _Hokkaido (Gas)_: 38,000 m3 > **380,000 m3**
-- _Hokkaido (Mineral)_: 38,000 m3 > **380,000 m3**
-- _Magnetar (Gas) Sentinel_: 50,400 m3 > **504,000 m3**
-- _Magnetar (Gas) Vanguard_: 42,000 m3 > **420,000 m3**
-- _Magnetar (Mineral) Sentinel_: 50,400 m3 > **504,000 m3**
-- _Magnetar (Mineral) Vanguard_: 40,000 m3 > **400,000 m3**
-- _Rorqual (Gas)_: 42,000 m3 > **420,000 m3**
-- _Rorqual (Mineral)_: 40,000 m3 > **400,000 m3**
-- _Wyvern (Gas)_: 22,000 m3 > **220,000 m3**
-- _Wyvern (Mineral)_: 20,000 m3 > **200,000 m3**
+- _Chthonios (Gas) Sentinel_: 47,500 m3 > **475,000 m3**
+- _Chthonios (Gas) Vanguard_: 43,500 m3 > **435,000 m3**
+- _Chthonios (Mineral) Sentinel_: 47,500 m3 > **475,000 m3**
+- _Chthonios (Mineral) Vanguard_: 43,500 m3 > **435,000 m3**
+- _Chthonios E (Gas)_: 45,100 m3 > **451,000 m3**
+- _Chthonios E (Mineral)_: 44,960 m3 > **449,600 m3**
+- _Crane (Gas) Sentinel_: 58,000 m3 > **580,000 m3**
+- _Crane (Gas) Vanguard_: 52,600 m3 > **526,000 m3**
+- _Crane (Mineral) Sentinel_: 60,800 m3 > **608,000 m3**
+- _Crane (Mineral) Vanguard_: 54,800 m3 > **548,000 m3**
+- _Crane E (Gas)_: 58,500 m3 > **585,000 m3**
+- _Crane E (Mineral)_: 62,300 m3 > **623,000 m3**
+- _Donia_: 45,000 m3 > **450,000 m3**
+- _Hokkaido (Gas)_: 51,300 m3 > **513,000 m3**
+- _Hokkaido (Mineral)_: 51,300 m3 > **513,000 m3**
+- _Magnetar (Gas) Sentinel_: 57,200 m3 > **572,000 m3**
+- _Magnetar (Gas) Vanguard_: 52,000 m3 > **520,000 m3**
+- _Magnetar (Mineral) Sentinel_: 57,200 m3 > **572,000 m3**
+- _Magnetar (Mineral) Vanguard_: 50,800 m3 > **508,000 m3**
+- _Rorqual (Gas)_: 49,600 m3 > **496,000 m3**
+- _Rorqual (Mineral)_: 48,500 m3 > **485,000 m3**
+- _Wyvern (Gas)_: 37,000 m3 > **370,000 m3**
+- _Wyvern (Mineral)_: 35,800 m3 > **358,000 m3**
 
 ### Mining ships M
 

@@ -30,14 +30,19 @@ class AccelerationOverrideDef extends TagOverrideDef
         parent::__construct($macroName);
 
         $this
-            ->setMacroPath('properties/thruster/acceleration')
-            ->setTagName('acceleration');
+            ->setMacroPath('properties/physics/accfactors')
+            ->setTagName('accfactors');
+
+        // Ships that have no explicit <accfactors> in their macro XML need an <add>
+        // operation (to append the element under <physics>). Ships that already have
+        // <accfactors> use a <replace> operation on the existing element.
+        $this->enableAddMode($accelerationFactors->getOriginal()->isEmpty());
 
         $this->accelerationFactors = $accelerationFactors;
     }
 
     private const TAG_TEMPLATE = <<<'XML'
-        <acceleration forward="$ACC_FORWARD" reverse="$ACC_REVERSE" horizontal="$ACC_HORIZONTAL" vertical="$ACC_VERTICAL" />
+        <accfactors forward="$ACC_FORWARD" reverse="$ACC_REVERSE" horizontal="$ACC_HORIZONTAL" vertical="$ACC_VERTICAL" />
         <!-- AccelerationFactor scaled by $SCALING_FACTOR -->
         <!-- Original: forward=$ACC_FORWARD_ORIG, reverse=$ACC_REVERSE_ORIG, horizontal=$ACC_HORIZONTAL_ORIG, vertical=$ACC_VERTICAL_ORIG -->
 XML;
@@ -55,16 +60,19 @@ XML;
     {
         $orig = $this->accelerationFactors->getOriginal();
 
+        // IMPORTANT: _ORIG keys must come before their shorter counterparts
+        // (e.g. $ACC_FORWARD_ORIG before $ACC_FORWARD) to prevent str_replace
+        // from mangling the _ORIG tokens during substitution.
         return array(
+            '$ACC_FORWARD_ORIG' => dec2($orig->getForward()),
+            '$ACC_REVERSE_ORIG' => dec2($orig->getReverse()),
+            '$ACC_HORIZONTAL_ORIG' => dec2($orig->getHorizontal()),
+            '$ACC_VERTICAL_ORIG' => dec2($orig->getVertical()),
             '$ACC_FORWARD' => dec2($this->accelerationFactors->getForward()),
             '$ACC_REVERSE' => dec2($this->accelerationFactors->getReverse()),
             '$ACC_HORIZONTAL' => dec2($this->accelerationFactors->getHorizontal()),
             '$ACC_VERTICAL' => dec2($this->accelerationFactors->getVertical()),
             '$SCALING_FACTOR' => dec2($this->accelerationFactors->getScalingFactor()) . 'x',
-            '$ACC_FORWARD_ORIG' => dec2($orig->getForward()),
-            '$ACC_REVERSE_ORIG' => dec2($orig->getReverse()),
-            '$ACC_HORIZONTAL_ORIG' => dec2($orig->getHorizontal()),
-            '$ACC_VERTICAL_ORIG' => dec2($orig->getVertical()),
         );
     }
 }

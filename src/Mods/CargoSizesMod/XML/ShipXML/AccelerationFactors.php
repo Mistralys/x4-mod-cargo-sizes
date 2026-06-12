@@ -38,4 +38,17 @@ class AccelerationFactors
     {
         return $this->vertical;
     }
+
+    /**
+     * Whether this represents a ship that has no explicit acceleration factors
+     * defined in its macro XML (i.e. all axes default to 1.0).
+     *
+     * Returns `false` for this class; overridden in {@see EmptyAccelerationFactors}.
+     *
+     * @return bool
+     */
+    public function isEmpty(): bool
+    {
+        return false;
+    }
 }

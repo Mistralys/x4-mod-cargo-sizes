@@ -1,5 +1,8 @@
 # Cargo Sizes Mod - Changelog
 
+# v3.1.0 for X4 v9.0 - Data Update
+- Dependencies: Updated X4 Core to [v1.4.0](https://github.com/Mistralys/x4-core/releases/tag/1.4.0).
+
 ## v3.0.0 for X4 v8.0 - Physics Fix
 - FOMOD: Added example cargo sizes.
 - Core: Fixed physics calculations preventing player-piloted ships from using travel drive.
