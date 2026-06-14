@@ -15,6 +15,12 @@ use Mistralys\X4\UI\Console;
 
 class ReleaseNotesGenerator
 {
+    /**
+     * Volume in m³ of one Claytronics unit in X4 vanilla game data.
+     * Source: output/vanilla/libraries/wares.xml, line 127 (volume="24").
+     */
+    private const int CLAYTRONICS_VOLUME = 24;
+
     private FolderInfo $buildFolder;
 
     /** @var float[]|int[] */
@@ -204,12 +210,12 @@ class ReleaseNotesGenerator
         // Prefer the deterministically configured ship if available.
         $exampleShip = null;
         $typeSizeCombinations = [
-            [CargoSizeExtractor::SHIP_TYPE_TRANSPORT, 's'],
-            [CargoSizeExtractor::SHIP_TYPE_TRANSPORT, 'm'],
             [CargoSizeExtractor::SHIP_TYPE_TRANSPORT, 'l'],
-            [CargoSizeExtractor::SHIP_TYPE_STORAGE, 's'],
-            [CargoSizeExtractor::SHIP_TYPE_STORAGE, 'm'],
+            [CargoSizeExtractor::SHIP_TYPE_TRANSPORT, 'm'],
+            [CargoSizeExtractor::SHIP_TYPE_TRANSPORT, 's'],
             [CargoSizeExtractor::SHIP_TYPE_STORAGE, 'l'],
+            [CargoSizeExtractor::SHIP_TYPE_STORAGE, 'm'],
+            [CargoSizeExtractor::SHIP_TYPE_STORAGE, 's'],
         ];
         foreach ($typeSizeCombinations as [$type, $size]) {
             $label = $this->buildConfig->getExampleShip($type, $size);
@@ -232,16 +238,18 @@ class ReleaseNotesGenerator
         $lines = [];
         $lines[] = '## Cargo Multiplier Comparison';
         $lines[] = '';
-        $lines[] = '| Variant | Example Ship | Vanilla Cargo | Adjusted Cargo |';
-        $lines[] = '|---------|-------------|---------------|----------------|';
+        $lines[] = '| Variant | Example Ship | Vanilla Cargo | Adjusted Cargo | Claytronics |';
+        $lines[] = '|---------|-------------|---------------|----------------|-------------|';
 
         foreach ($this->multipliers as $multiplier) {
+            $adjustedCargo = $exampleShip->calculateCargoValue($multiplier);
             $lines[] = sprintf(
-                '| AIO x%s | %s | %s m³ | %s m³ |',
+                '| AIO x%s | %s | %s m³ | %s m³ | %s |',
                 $multiplier,
                 $exampleShip->getShipLabel(),
                 number_format($exampleShip->getCargoValue(), 0, '.', ','),
-                number_format($exampleShip->calculateCargoValue($multiplier), 0, '.', ',')
+                number_format($adjustedCargo, 0, '.', ','),
+                number_format((int)floor($adjustedCargo / self::CLAYTRONICS_VOLUME), 0, '.', ',')
             );
         }
 
