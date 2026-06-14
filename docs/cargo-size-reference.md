@@ -48,6 +48,7 @@
 - _Crane E (Gas)_: 58,500 m3 > **117,000 m3**
 - _Crane E (Mineral)_: 62,300 m3 > **124,600 m3**
 - _Donia_: 45,000 m3 > **90,000 m3**
+- _H_: 12,000 m3 > **24,000 m3**
 - _Hokkaido (Gas)_: 51,300 m3 > **102,600 m3**
 - _Hokkaido (Mineral)_: 51,300 m3 > **102,600 m3**
 - _Magnetar (Gas) Sentinel_: 57,200 m3 > **114,400 m3**
@@ -93,6 +94,7 @@
 
 ### Transport ships L
 
+- _Barbarossa_: 21,000 m3 > **42,000 m3**
 - _Buffalo_: 16,000 m3 > **32,000 m3**
 - _Helios E_: 25,500 m3 > **51,000 m3**
 - _Helios Sentinel_: 25,200 m3 > **50,400 m3**
@@ -153,7 +155,6 @@
 - _Tethys Sentinel_: 1,896 m3 > **3,792 m3**
 - _Tethys Vanguard_: 1,580 m3 > **3,160 m3**
 - _Tuatara_: 1,350 m3 > **2,700 m3**
-- _Tuatara_: 1,350 m3 > **2,700 m3**
 
 ## Cargo Size x4
 
@@ -203,6 +204,7 @@
 - _Crane E (Gas)_: 58,500 m3 > **234,000 m3**
 - _Crane E (Mineral)_: 62,300 m3 > **249,200 m3**
 - _Donia_: 45,000 m3 > **180,000 m3**
+- _H_: 12,000 m3 > **48,000 m3**
 - _Hokkaido (Gas)_: 51,300 m3 > **205,200 m3**
 - _Hokkaido (Mineral)_: 51,300 m3 > **205,200 m3**
 - _Magnetar (Gas) Sentinel_: 57,200 m3 > **228,800 m3**
@@ -248,6 +250,7 @@
 
 ### Transport ships L
 
+- _Barbarossa_: 21,000 m3 > **84,000 m3**
 - _Buffalo_: 16,000 m3 > **64,000 m3**
 - _Helios E_: 25,500 m3 > **102,000 m3**
 - _Helios Sentinel_: 25,200 m3 > **100,800 m3**
@@ -308,7 +311,6 @@
 - _Tethys Sentinel_: 1,896 m3 > **7,584 m3**
 - _Tethys Vanguard_: 1,580 m3 > **6,320 m3**
 - _Tuatara_: 1,350 m3 > **5,400 m3**
-- _Tuatara_: 1,350 m3 > **5,400 m3**
 
 ## Cargo Size x6
 
@@ -358,6 +360,7 @@
 - _Crane E (Gas)_: 58,500 m3 > **351,000 m3**
 - _Crane E (Mineral)_: 62,300 m3 > **373,800 m3**
 - _Donia_: 45,000 m3 > **270,000 m3**
+- _H_: 12,000 m3 > **72,000 m3**
 - _Hokkaido (Gas)_: 51,300 m3 > **307,800 m3**
 - _Hokkaido (Mineral)_: 51,300 m3 > **307,800 m3**
 - _Magnetar (Gas) Sentinel_: 57,200 m3 > **343,200 m3**
@@ -403,6 +406,7 @@
 
 ### Transport ships L
 
+- _Barbarossa_: 21,000 m3 > **126,000 m3**
 - _Buffalo_: 16,000 m3 > **96,000 m3**
 - _Helios E_: 25,500 m3 > **153,000 m3**
 - _Helios Sentinel_: 25,200 m3 > **151,200 m3**
@@ -463,7 +467,6 @@
 - _Tethys Sentinel_: 1,896 m3 > **11,376 m3**
 - _Tethys Vanguard_: 1,580 m3 > **9,480 m3**
 - _Tuatara_: 1,350 m3 > **8,100 m3**
-- _Tuatara_: 1,350 m3 > **8,100 m3**
 
 ## Cargo Size x8
 
@@ -513,6 +516,7 @@
 - _Crane E (Gas)_: 58,500 m3 > **468,000 m3**
 - _Crane E (Mineral)_: 62,300 m3 > **498,400 m3**
 - _Donia_: 45,000 m3 > **360,000 m3**
+- _H_: 12,000 m3 > **96,000 m3**
 - _Hokkaido (Gas)_: 51,300 m3 > **410,400 m3**
 - _Hokkaido (Mineral)_: 51,300 m3 > **410,400 m3**
 - _Magnetar (Gas) Sentinel_: 57,200 m3 > **457,600 m3**
@@ -558,6 +562,7 @@
 
 ### Transport ships L
 
+- _Barbarossa_: 21,000 m3 > **168,000 m3**
 - _Buffalo_: 16,000 m3 > **128,000 m3**
 - _Helios E_: 25,500 m3 > **204,000 m3**
 - _Helios Sentinel_: 25,200 m3 > **201,600 m3**
@@ -618,7 +623,6 @@
 - _Tethys Sentinel_: 1,896 m3 > **15,168 m3**
 - _Tethys Vanguard_: 1,580 m3 > **12,640 m3**
 - _Tuatara_: 1,350 m3 > **10,800 m3**
-- _Tuatara_: 1,350 m3 > **10,800 m3**
 
 ## Cargo Size x10
 
@@ -668,6 +672,7 @@
 - _Crane E (Gas)_: 58,500 m3 > **585,000 m3**
 - _Crane E (Mineral)_: 62,300 m3 > **623,000 m3**
 - _Donia_: 45,000 m3 > **450,000 m3**
+- _H_: 12,000 m3 > **120,000 m3**
 - _Hokkaido (Gas)_: 51,300 m3 > **513,000 m3**
 - _Hokkaido (Mineral)_: 51,300 m3 > **513,000 m3**
 - _Magnetar (Gas) Sentinel_: 57,200 m3 > **572,000 m3**
@@ -713,6 +718,7 @@
 
 ### Transport ships L
 
+- _Barbarossa_: 21,000 m3 > **210,000 m3**
 - _Buffalo_: 16,000 m3 > **160,000 m3**
 - _Helios E_: 25,500 m3 > **255,000 m3**
 - _Helios Sentinel_: 25,200 m3 > **252,000 m3**
@@ -772,6 +778,5 @@
 - _Terrapin_: 2,230 m3 > **22,300 m3**
 - _Tethys Sentinel_: 1,896 m3 > **18,960 m3**
 - _Tethys Vanguard_: 1,580 m3 > **15,800 m3**
-- _Tuatara_: 1,350 m3 > **13,500 m3**
 - _Tuatara_: 1,350 m3 > **13,500 m3**
 
