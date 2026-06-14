@@ -1,8 +1,8 @@
 # Cargo Sizes Mod - Changelog
 
 ## v3.2.0 for X4 v9.0 - New Ships
-- Ships: Added Xenon H (`ship_xen_l_terraformer_01_a`) to miner output group.
-- Ships: Added Barbarossa (`ship_pir_l_scavenger_01_a`) to transport output group.
+- Ships: Added Xenon H to miner output group.
+- Ships: Added Barbarossa to transport output group.
 - Core: Pure alias macros (no `<physics>` element) are now skipped during extraction.
 
 ## v3.1.0 for X4 v9.0 - Data Update
