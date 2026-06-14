@@ -126,6 +126,16 @@ For each SHIP_TYPE (transport, miner, auxiliary, carrier):
             ↓
             Parse ship XML → ShipXMLFile
             ↓
+            SKIP if pure alias macro (alias= attribute present, no <physics> element)
+              — game resolves alias inheritance; mod override on _a covers _b variant
+            ↓
+            Resolve ship type via resolveShipType($macroName):
+              1. Early alias intercept (keyword in macro name parts):
+                 • "scavenger" → SHIP_TYPE_TRANSPORT  (Barbarossa)
+                 • "terraformer" → SHIP_TYPE_MINER    (Xenon H)
+              2. Standard keyword match against SHIP_TYPES keys
+              3. Return null → skip (unsupported type)
+            ↓
             Find cargo definition in ship XML
             ↓
             Locate cargo XML file:
@@ -850,5 +860,6 @@ All flight mechanics files regenerated with new acceleration values
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.5 | Jun 12, 2026 | Document alias macro skip and scavenger/terraformer type alias intercept in Step 4 |
 | 1.0 | Feb 9, 2026 | Initial data flows documentation |
 | 1.3 | Feb 19, 2026 | Replace tier-based physics flow with acceleration-only approach (WP-003) |

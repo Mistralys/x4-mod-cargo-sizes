@@ -1500,6 +1500,7 @@ public function generate(): void
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.7 | Jun 14, 2026 | Added `CLAYTRONICS_VOLUME` private constant (24 m³) to `ReleaseNotesGenerator`; extended `formatComparisonTable()` header and rows with a fifth "Claytronics" column (units that fit in adjusted cargo); changed `"trans-l"` example ship in `config/build-config.json` from "Shuyaku Sentinel" to "Shuyaku Vanguard". |
 | 1.6 | Mar 1, 2026 | Deterministic example ship selection: added BuildConfig::KEY_EXAMPLE_SHIPS + getExampleShip(); added BuildConfig parameter to CargoSizeExtractor and ReleaseNotesGenerator constructors; added FileCollection::setConfig() and $buildConfig static property; extended FileCollection::reset() to clear $buildConfig; changed ReleaseNotesGenerator::formatComparisonTable() from private to protected. Added 9 PHPUnit unit tests (ExampleShipSelectionTest). |
 | 1.5 | Mar 1, 2026 | Updated FileCollection::getPluginDescription() to include example ship cargo values; updated ReleaseNotesGenerator constructor to accept multipliers and ship results, added formatComparisonTable() for AIO comparison table in release notes. |
 | 1.4 | Feb 19, 2026 | Removed ReductionTier, AdjustedDrag, AdjustedInertia, PhysicsOverrideDef, and Jerk Adjustments section (deleted in v4.0 refactoring); updated PhysicsCalculator constructor (removed useEffectiveRatioCap); updated PhysicsCalculator methods |

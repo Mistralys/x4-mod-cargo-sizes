@@ -75,6 +75,17 @@ $extractor->extract([2, 4, 8, 10]); // multipliers
 // Results are automatically written to output folder
 ```
 
+**Ship Type Alias Mapping (Filter Pattern):**
+
+`CargoSizeExtractor::resolveShipType()` contains an early alias intercept that maps hybrid ship classes to standard output categories before the normal keyword lookup runs:
+
+| Internal keyword | Output category | Example ship |
+|-----------------|-----------------|--------------|
+| `scavenger` | `SHIP_TYPE_TRANSPORT` (`trans`) | Barbarossa (`ship_pir_l_scavenger_01_a`) |
+| `terraformer` | `SHIP_TYPE_MINER` (`miner`) | Xenon H (`ship_xen_l_terraformer_01_a`) |
+
+Pure alias macros (those with an `alias=` attribute in their `<macro>` element and no `<physics>` element) are skipped entirely during extraction. The game resolves alias inheritance automatically, so the referenced macro's mod overrides cover the alias variant.
+
 ### 2. **XML File Representation Pattern**
 
 XML files are wrapped in OOP classes for easy manipulation:
@@ -438,5 +449,6 @@ mod-name-vX.X.X-for-vX.X/
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.4 | Jun 12, 2026 | Added Ship Type Alias Mapping table and alias macro skip rule to Extractor-Builder Pattern |
 | 1.3 | Feb 19, 2026 | Removed PhysicsOverrideDef and JerkOverrideDef from Override Definition Pattern (deleted in v4.0 refactoring) |
 | 1.0 | Feb 9, 2026 | Initial tech stack documentation |

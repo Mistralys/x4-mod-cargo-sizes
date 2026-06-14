@@ -337,7 +337,17 @@ class ShipDataService
     private function determineShipType(string $shipId): ?string
     {
         $parts = ConvertHelper::explodeTrim('_', $shipId);
-        
+
+        // Alias hybrid ship classes to their output categories before standard lookup.
+        // Barbarossa (scavenger class) → transport; Xenon H (terraformer class) → mining.
+        if (in_array('scavenger', $parts)) {
+            return 'transport';
+        }
+
+        if (in_array('terraformer', $parts)) {
+            return 'mining';
+        }
+
         // Check if any part matches a known ship type
         foreach (array_keys(self::SHIP_TYPE_MAP) as $type) {
             $extractorType = self::SHIP_TYPE_MAP[$type];

@@ -218,6 +218,10 @@ class ShipDataService
     /**
      * Gets ships filtered by type.
      *
+     * Internally calls determineShipType() which mirrors CargoSizeExtractor::resolveShipType(),
+     * including the early alias intercept: macros containing "scavenger" resolve to "transport"
+     * and macros containing "terraformer" resolve to "mining".
+     *
      * @param string $type Ship type (transport, mining, auxiliary, carrier)
      * @return array<array{id: string, name: string, size: string, mass: float, cargo: float}>
      * @throws GUIException

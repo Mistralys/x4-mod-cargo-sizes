@@ -807,6 +807,21 @@ The file `config/build-config.json` contains the following top-level keys:
 - **Silent fallback:** If the configured ship label is not found in the current build data, both consumers fall back to `array_rand()` without error.
 - **Accessed via:** `BuildConfig::getExampleShip(string $shipType, string $shipSize): string`.
 
+### 5. Ship Type Filtering Rules
+
+**RULE:** `CargoSizeExtractor::resolveShipType()` MUST apply the early alias intercept **before** the standard keyword lookup.
+
+The following hybrid ship classes must be aliased to standard output categories:
+
+| Internal keyword (in macro name) | Maps to constant | Output folder |
+|----------------------------------|-----------------|---------------|
+| `scavenger` | `SHIP_TYPE_TRANSPORT` (`trans`) | `transport_*` |
+| `terraformer` | `SHIP_TYPE_MINER` (`miner`) | `miner_*` |
+
+**RULE:** Pure alias macros (XML `<macro>` element has a non-empty `alias=` attribute) MUST be skipped during `analyzeShipMacro()`. They have no `<physics>` element and inherit their values from the referenced macro. The same alias resolution in `ShipDataService::determineShipType()` applies the identical intercept for the GUI layer.
+
+---
+
 ## 🚀 Performance Constraints
 
 ### 1. No Premature Optimization
@@ -955,6 +970,7 @@ Before committing new code, verify:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.5 | Jun 12, 2026 | Added Ship Type Filtering Rules (scavenger→transport, terraformer→miner, alias macro skip) |
 | 1.3 | Feb 19, 2026 | Updated Adjusted Values Pattern example to use AdjustedAccelerationFactors (AdjustedDrag removed in v4.0 refactoring) |
 | 1.2 | Feb 19, 2026 | Updated test directory example to reflect actual test suite (CargoSizesModTests/) after tier-based system removal |
 | 1.0 | Feb 9, 2026 | Initial constraints documentation |

@@ -1,6 +1,11 @@
 # Cargo Sizes Mod - Changelog
 
-# v3.1.0 for X4 v9.0 - Data Update
+## v3.2.0 for X4 v9.0 - New Ships
+- Ships: Added Xenon H (`ship_xen_l_terraformer_01_a`) to miner output group.
+- Ships: Added Barbarossa (`ship_pir_l_scavenger_01_a`) to transport output group.
+- Core: Pure alias macros (no `<physics>` element) are now skipped during extraction.
+
+## v3.1.0 for X4 v9.0 - Data Update
 - Dependencies: Updated X4 Core to [v1.4.0](https://github.com/Mistralys/x4-core/releases/tag/1.4.0).
 
 ## v3.0.0 for X4 v8.0 - Physics Fix

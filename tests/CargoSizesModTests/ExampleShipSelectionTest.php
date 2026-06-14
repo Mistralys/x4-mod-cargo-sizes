@@ -237,6 +237,7 @@ class ExampleShipSelectionTest extends TestCase
         $this->assertStringContainsString('Courier Sentinel', $result);
         $this->assertStringContainsString('AIO x2', $result);
         $this->assertStringContainsString('AIO x4', $result);
+        $this->assertStringContainsString('Claytronics', $result);
     }
 
     /**
@@ -257,6 +258,8 @@ class ExampleShipSelectionTest extends TestCase
 
         $this->assertStringContainsString('2,000', $result); // 1000 × 2
         $this->assertStringContainsString('4,000', $result); // 1000 × 4
+        $this->assertStringContainsString('83', $result);    // floor(2000 / 24) = 83 Claytronics
+        $this->assertStringContainsString('166', $result);   // floor(4000 / 24) = 166 Claytronics
     }
 
     /**

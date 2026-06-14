@@ -1,7 +1,7 @@
 # Data Flows & System Interactions
 
-> **Version:** 1.2  
-> **Last Updated:** February 19, 2026  
+> **Version:** 1.3  
+> **Last Updated:** June 12, 2026  
 > **Purpose:** How data moves through the system
 
 ---
@@ -395,6 +395,10 @@ ShipDataService::getShipsByType("transport")
         ↓
 Map Type to Extractor Constant
         "transport" → CargoSizeExtractor::SHIP_TYPE_TRANSPORT
+        ↓
+determineShipType() alias intercept (mirrors CargoSizeExtractor::resolveShipType()):
+        macro contains "scavenger" → "transport"  (Barbarossa)
+        macro contains "terraformer" → "mining"   (Xenon H)
         ↓
 Query Sample Ships (TODO: Use extracted game data)
         [

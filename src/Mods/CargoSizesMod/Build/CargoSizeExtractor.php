@@ -537,6 +537,16 @@ TXT;
     {
         $parts = ConvertHelper::explodeTrim('_', $macroName);
 
+        // Alias hybrid ship classes to their output categories before standard lookup.
+        // Barbarossa (scavenger class) → transport; Xenon H (terraformer class) → miner.
+        if(in_array('scavenger', $parts)) {
+            return self::SHIP_TYPE_TRANSPORT;
+        }
+
+        if(in_array('terraformer', $parts)) {
+            return self::SHIP_TYPE_MINER;
+        }
+
         return array_find(
             array_keys(self::SHIP_TYPES),
             fn(string $type) => in_array($type, $parts)
@@ -563,6 +573,15 @@ TXT;
     private function analyzeShipMacro(ShipXMLFile $shipXMLFile) : void
     {
         $macroName = $shipXMLFile->getMacroName();
+
+        // Pure alias macros (alias= attribute present) have no <physics> element of
+        // their own; they inherit everything from the referenced macro. The game's
+        // alias resolution will apply the referenced macro's mod overrides to them
+        // automatically, so we don't need to generate separate override files.
+        if($shipXMLFile->getAliasName() !== null) {
+            $this->addMessage('Alias macro – skipping [%s]', $macroName);
+            return;
+        }
 
         $shipType = $this->resolveShipType($macroName);
         if($shipType === null) {
