@@ -1,6 +1,6 @@
 # Project Constraints & Rules
 
-> **Version:** 1.4
+> **Version:** 1.6
 > **Last Updated:** March 1, 2026
 > **Purpose:** Non-negotiable rules, conventions, and coding standards
 
@@ -809,16 +809,13 @@ The file `config/build-config.json` contains the following top-level keys:
 
 ### 5. Ship Type Filtering Rules
 
-**RULE:** `CargoSizeExtractor::resolveShipType()` MUST apply the early alias intercept **before** the standard keyword lookup.
+**RULE:** Ship type metadata (labels, macro keywords), keyword aliases (such as `scavenger` and `terraformer`) and sizes are defined in `config/ship-types.json` and MUST NOT be hardcoded in PHP.
 
-The following hybrid ship classes must be aliased to standard output categories:
+**RULE:** Each ship type MUST declare an explicit `primaryKeyword` (one of its `macroKeywords`) in `config/ship-types.json`. Keyword aliases resolve to the primary keyword of their target type. Ship sizes are the closed constant `ShipTypeConfig::SIZES`.
 
-| Internal keyword (in macro name) | Maps to constant | Output folder |
-|----------------------------------|-----------------|---------------|
-| `scavenger` | `SHIP_TYPE_TRANSPORT` (`trans`) | `transport_*` |
-| `terraformer` | `SHIP_TYPE_MINER` (`miner`) | `miner_*` |
+**RULE:** Keyword aliases MUST be checked before the standard keywords. `CargoSizeExtractor::resolveShipType()` delegates to `ShipTypeConfig::resolveMacroKeyword()`, and `ShipDataService` to `ShipTypeConfig::resolveType()`.
 
-**RULE:** Pure alias macros (XML `<macro>` element has a non-empty `alias=` attribute) MUST be skipped during `analyzeShipMacro()`. They have no `<physics>` element and inherit their values from the referenced macro. The same alias resolution in `ShipDataService::determineShipType()` applies the identical intercept for the GUI layer.
+**RULE:** Pure alias macros (XML `<macro>` element has a non-empty `alias=` attribute) MUST be skipped during `analyzeShipMacro()`. They have no `<physics>` element and inherit their values from the referenced macro.
 
 ---
 
@@ -970,6 +967,7 @@ Before committing new code, verify:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.6 | Nov 22, 2026 | Ship type metadata, keyword aliases and sizes moved to `config/ship-types.json` (`ShipTypeConfig`); rules in section 5 replaced |
 | 1.5 | Jun 12, 2026 | Added Ship Type Filtering Rules (scavenger→transport, terraformer→miner, alias macro skip) |
 | 1.3 | Feb 19, 2026 | Updated Adjusted Values Pattern example to use AdjustedAccelerationFactors (AdjustedDrag removed in v4.0 refactoring) |
 | 1.2 | Feb 19, 2026 | Updated test directory example to reflect actual test suite (CargoSizesModTests/) after tier-based system removal |

@@ -46,6 +46,7 @@ use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ShipDetails;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Exceptions\GUIException;
 use Mistralys\X4\Database\Ships\ShipDefs;
 use Mistralys\X4\Database\Engines\EngineDefs;
+use Mistralys\X4\Mods\CargoSizesMod\ShipTypeConfig;
 
 /**
  * Test suite for ShipDataService.
@@ -57,11 +58,121 @@ class ShipDataServiceTest extends TestCase
 {
     private ShipDataService $service;
 
+    /**
+     * @var string[] Temporary fixture files to delete in tearDown().
+     */
+    private array $tempFiles = [];
+
     protected function setUp(): void
     {
         // Create fresh service instance for each test
         // Uses real X4 Core singletons loaded via bootstrap
         $this->service = new ShipDataService();
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->tempFiles as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+
+        $this->tempFiles = [];
+    }
+
+    /**
+     * Writes a fixture ship types config to a temp file and loads it.
+     */
+    private function createFixtureConfig(array $data): ShipTypeConfig
+    {
+        $path = tempnam(sys_get_temp_dir(), 'shiptypes_');
+        $this->assertNotFalse($path);
+        $this->tempFiles[] = $path;
+        file_put_contents($path, json_encode($data, JSON_THROW_ON_ERROR));
+
+        return ShipTypeConfig::createFromFile($path);
+    }
+
+    /**
+     * Uses the shipped ship types file: the GUI reports the config's types.
+     */
+    public function testGetShipTypesMatchesConfig(): void
+    {
+        $this->assertSame(
+            ShipTypeConfig::getInstance()->getTypes(),
+            $this->service->getShipTypes()
+        );
+    }
+
+    /**
+     * Scavenger and terraformer keyword aliases are classified
+     * through the shared config, not through GUI code.
+     */
+    public function testScavengerAndTerraformerAliasesClassified(): void
+    {
+        $method = new \ReflectionMethod(ShipDataService::class, 'determineShipType');
+
+        $this->assertSame('transport', $method->invoke($this->service, 'ship_bos_xl_scavenger_01_a_macro'));
+        $this->assertSame('mining', $method->invoke($this->service, 'ship_xen_xl_terraformer_01_a_macro'));
+    }
+
+    /**
+     * Storage ships are transports (previously unclassified in the GUI).
+     */
+    public function testStorageMacroClassifiedAsTransport(): void
+    {
+        $method = new \ReflectionMethod(ShipDataService::class, 'determineShipType');
+
+        $this->assertSame('transport', $method->invoke($this->service, 'ship_arg_l_storage_01_a_macro'));
+        $this->assertNull($method->invoke($this->service, 'ship_arg_l_unknown_01_a_macro'));
+    }
+
+    /**
+     * An extra keyword alias in an injected config is recognized
+     * without any PHP code change.
+     */
+    public function testInjectedConfigWithExtraAlias(): void
+    {
+        $config = $this->createFixtureConfig([
+            'types' => [
+                'transport' => ['label' => 'Haulers', 'primaryKeyword' => 'trans', 'macroKeywords' => ['trans']],
+                'mining' => ['label' => 'Miners', 'primaryKeyword' => 'miner', 'macroKeywords' => ['miner']],
+            ],
+            'keywordAliases' => ['hauler' => 'transport'],
+        ]);
+
+        $service = new ShipDataService(null, null, $config);
+        $method = new \ReflectionMethod(ShipDataService::class, 'determineShipType');
+
+        $this->assertSame('transport', $method->invoke($service, 'ship_xyz_m_hauler_01_a_macro'));
+        $this->assertNull($method->invoke($this->service, 'ship_xyz_m_hauler_01_a_macro'));
+        $this->assertSame(
+            [
+                ['type' => 'transport', 'label' => 'Haulers'],
+                ['type' => 'mining', 'label' => 'Miners'],
+            ],
+            $service->getShipTypes()
+        );
+    }
+
+    /**
+     * Types are validated against the injected config.
+     */
+    public function testGetShipsByTypeRejectsTypeMissingFromInjectedConfig(): void
+    {
+        $config = $this->createFixtureConfig([
+            'types' => [
+                'transport' => ['label' => 'Haulers', 'primaryKeyword' => 'trans', 'macroKeywords' => ['trans']],
+            ],
+        ]);
+
+        $service = new ShipDataService(null, null, $config);
+
+        $this->expectException(GUIException::class);
+        $this->expectExceptionMessage('Unknown ship type: carrier');
+
+        $service->getShipsByType('carrier');
     }
 
     /**

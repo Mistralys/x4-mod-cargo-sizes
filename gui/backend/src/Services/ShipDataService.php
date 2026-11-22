@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod\GUI\Services;
 
-use AppUtils\ConvertHelper;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\DTOs\ShipDetails;
 use Mistralys\X4\Mods\CargoSizesMod\GUI\Exceptions\GUIException;
+use Mistralys\X4\Mods\CargoSizesMod\ShipTypeConfig;
 use Mistralys\X4\Database\Ships\ShipDefs;
 use Mistralys\X4\Database\Engines\EngineDefs;
 
@@ -17,29 +17,6 @@ use Mistralys\X4\Database\Engines\EngineDefs;
  */
 class ShipDataService
 {
-    /**
-     * Ship type constants matching CargoSizeExtractor.
-     */
-    private const string SHIP_TYPE_TRANSPORT = 'trans';
-    private const string SHIP_TYPE_MINING = 'miner';
-    private const string SHIP_TYPE_AUXILIARY = 'resupplier';
-    private const string SHIP_TYPE_CARRIER = 'carrier';
-
-    /**
-     * Ship sizes supported by the mod (matching CargoSizeExtractor::SHIP_SIZES).
-     */
-    private const array SHIP_SIZES = ['xs', 's', 'm', 'l', 'xl'];
-
-    /**
-     * Maps internal ship types to extractor types.
-     */
-    private const array SHIP_TYPE_MAP = [
-        'transport' => self::SHIP_TYPE_TRANSPORT,
-        'mining' => self::SHIP_TYPE_MINING,
-        'auxiliary' => self::SHIP_TYPE_AUXILIARY,
-        'carrier' => self::SHIP_TYPE_CARRIER
-    ];
-
     /**
      * Cache for loaded ships (loaded once per request).
      * @var array<array{id: string, name: string, type: string, size: string, mass: float, cargo: float}>|null
@@ -54,13 +31,21 @@ class ShipDataService
 
     private ?ShipDefs $shipDefs;
     private ?EngineDefs $engineDefs;
+    private ShipTypeConfig $shipTypeConfig;
 
+    /**
+     * @param ShipDefs|null $shipDefs
+     * @param EngineDefs|null $engineDefs
+     * @param ShipTypeConfig|null $shipTypeConfig Ship type definitions; defaults to the shared instance (`config/ship-types.json`).
+     */
     public function __construct(
         ?ShipDefs $shipDefs = null,
-        ?EngineDefs $engineDefs = null
+        ?EngineDefs $engineDefs = null,
+        ?ShipTypeConfig $shipTypeConfig = null
     ) {
         $this->shipDefs = $shipDefs;
         $this->engineDefs = $engineDefs;
+        $this->shipTypeConfig = $shipTypeConfig ?? ShipTypeConfig::getInstance();
     }
 
     private function getShipDefs(): ShipDefs
@@ -80,12 +65,7 @@ class ShipDataService
      */
     public function getShipTypes(): array
     {
-        return [
-            ['type' => 'transport', 'label' => 'Transport ships'],
-            ['type' => 'mining', 'label' => 'Mining ships'],
-            ['type' => 'auxiliary', 'label' => 'Auxiliaries'],
-            ['type' => 'carrier', 'label' => 'Carriers']
-        ];
+        return $this->shipTypeConfig->getTypes();
     }
 
     /**
@@ -100,7 +80,7 @@ class ShipDataService
      */
     public function getShipsByType(string $type): array
     {
-        if (!isset(self::SHIP_TYPE_MAP[$type])) {
+        if (!in_array($type, $this->shipTypeConfig->getTypeNames(), true)) {
             throw new GUIException(
                 sprintf('Unknown ship type: %s', $type),
                 '',
@@ -277,7 +257,7 @@ class ShipDataService
      */
     private function extractShipSize(string $shipId): string
     {
-        foreach (self::SHIP_SIZES as $size) {
+        foreach (ShipTypeConfig::SIZES as $size) {
             if (str_contains($shipId, '_' . $size . '_')) {
                 return $size;
             }
@@ -309,7 +289,7 @@ class ShipDataService
             $size = $this->extractShipSize($shipId);
             
             // Filter by supported sizes (xs, s, m, l, xl)
-            if (!in_array($size, self::SHIP_SIZES)) {
+            if (!in_array($size, ShipTypeConfig::SIZES, true)) {
                 continue;
             }
             
@@ -329,34 +309,15 @@ class ShipDataService
 
     /**
      * Determines ship type from ship macro name.
-     * Uses the same logic as CargoSizeExtractor::resolveShipType().
+     * Delegates to {@see ShipTypeConfig::resolveType()}, which reads the
+     * ship type definitions from `config/ship-types.json`.
      *
      * @param string $shipId Ship macro name
      * @return string|null Ship type or null if not classifiable
      */
     private function determineShipType(string $shipId): ?string
     {
-        $parts = ConvertHelper::explodeTrim('_', $shipId);
-
-        // Alias hybrid ship classes to their output categories before standard lookup.
-        // Barbarossa (scavenger class) → transport; Xenon H (terraformer class) → mining.
-        if (in_array('scavenger', $parts)) {
-            return 'transport';
-        }
-
-        if (in_array('terraformer', $parts)) {
-            return 'mining';
-        }
-
-        // Check if any part matches a known ship type
-        foreach (array_keys(self::SHIP_TYPE_MAP) as $type) {
-            $extractorType = self::SHIP_TYPE_MAP[$type];
-            if (in_array($extractorType, $parts)) {
-                return $type;
-            }
-        }
-        
-        return null;
+        return $this->shipTypeConfig->resolveType($shipId);
     }
 
     /**
@@ -428,7 +389,7 @@ class ShipDataService
     {
         // Engine IDs follow pattern: engine_{faction}_{size}_...
         // Example: engine_arg_m_allround_01_mk1
-        foreach (self::SHIP_SIZES as $size) {
+        foreach (ShipTypeConfig::SIZES as $size) {
             if (str_contains($engineId, '_' . $size . '_')) {
                 return $size;
             }

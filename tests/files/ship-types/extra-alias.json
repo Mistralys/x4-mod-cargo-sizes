@@ -1,0 +1,29 @@
+{
+  "types": {
+    "transport": {
+      "label": "Transport ships",
+      "primaryKeyword": "trans",
+      "macroKeywords": ["trans", "storage"]
+    },
+    "mining": {
+      "label": "Mining ships",
+      "primaryKeyword": "miner",
+      "macroKeywords": ["miner"]
+    },
+    "auxiliary": {
+      "label": "Auxiliaries",
+      "primaryKeyword": "resupplier",
+      "macroKeywords": ["resupplier"]
+    },
+    "carrier": {
+      "label": "Carriers",
+      "primaryKeyword": "carrier",
+      "macroKeywords": ["carrier"]
+    }
+  },
+  "keywordAliases": {
+    "scavenger": "transport",
+    "terraformer": "mining",
+    "freighter": "carrier"
+  }
+}

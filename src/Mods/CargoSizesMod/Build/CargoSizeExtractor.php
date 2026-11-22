@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 namespace Mistralys\X4\Mods\CargoSizesMod;
 
-use AppUtils\ConvertHelper;
 use AppUtils\FileHelper;
 use AppUtils\FileHelper\FileInfo;
 use AppUtils\FileHelper\FolderInfo;
@@ -53,14 +52,6 @@ class CargoSizeExtractor
     public const string PROPS_FOLDER = 'assets/props/StorageModules/macros';
     const string UNITS_FOLDER = 'assets/units/size_%s/macros';
     const string FILE_PROP_FOLDER_RELATIVE = 'folderRelative';
-
-    public const array SHIP_SIZES = array(
-        'xs',
-        's',
-        'm',
-        'l',
-        'xl'
-    );
 
     /**
      * Table of ship types with the JSON key names for
@@ -397,7 +388,7 @@ class CargoSizeExtractor
             $this->zips[$typeKey] = array();
         }
 
-        foreach (self::SHIP_SIZES as $size)
+        foreach (ShipTypeConfig::SIZES as $size)
         {
             if ($result->getSize() !== $size) {
                 continue;
@@ -535,22 +526,7 @@ TXT;
 
     private function resolveShipType(string $macroName) : ?string
     {
-        $parts = ConvertHelper::explodeTrim('_', $macroName);
-
-        // Alias hybrid ship classes to their output categories before standard lookup.
-        // Barbarossa (scavenger class) → transport; Xenon H (terraformer class) → miner.
-        if(in_array('scavenger', $parts)) {
-            return self::SHIP_TYPE_TRANSPORT;
-        }
-
-        if(in_array('terraformer', $parts)) {
-            return self::SHIP_TYPE_MINER;
-        }
-
-        return array_find(
-            array_keys(self::SHIP_TYPES),
-            fn(string $type) => in_array($type, $parts)
-        );
+        return ShipTypeConfig::getInstance()->resolveMacroKeyword($macroName);
     }
 
     private function analyzeShipMacros() : void
@@ -579,7 +555,7 @@ TXT;
         // alias resolution will apply the referenced macro's mod overrides to them
         // automatically, so we don't need to generate separate override files.
         if($shipXMLFile->getAliasName() !== null) {
-            $this->addMessage('Alias macro – skipping [%s]', $macroName);
+            $this->addMessage('Alias macro - skipping [%s]', $macroName);
             return;
         }
 
@@ -674,7 +650,7 @@ TXT;
 
         $this->shipMacros = array();
 
-        foreach(self::SHIP_SIZES as $shipSize) {
+        foreach(ShipTypeConfig::SIZES as $shipSize) {
             foreach($this->dataFolders->getAll() as $dataFolder) {
                 foreach ($this->getXMLFiles($dataFolder->getPath()->getPath() . '/' . sprintf(self::UNITS_FOLDER, $shipSize)) as $file) {
                     if (str_starts_with($file->getBaseName(), 'ship_')) {
@@ -712,7 +688,7 @@ TXT;
                 $files[] = $file->setRuntimeProperty(self::FILE_PROP_FOLDER_RELATIVE, self::PROPS_FOLDER);
             }
 
-            foreach (self::SHIP_SIZES as $shipSize) {
+            foreach (ShipTypeConfig::SIZES as $shipSize) {
                 $relative = sprintf(self::UNITS_FOLDER, $shipSize);
                 foreach ($this->getXMLFiles($dataFolder->getPath()->getPath() . '/' . $relative) as $file) {
                     $files[] = $file->setRuntimeProperty(self::FILE_PROP_FOLDER_RELATIVE, $relative);

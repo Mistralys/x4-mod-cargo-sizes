@@ -1,7 +1,7 @@
 # Project File Tree
 
-> **Version:** 1.3  
-> **Last Updated:** February 19, 2026  
+> **Version:** 1.4  
+> **Last Updated:** November 22, 2026  
 > **Purpose:** Complete directory structure for navigation and file location
 
 ---
@@ -109,7 +109,8 @@ CargoSizesMod/
 │   └── ShipXMLFile.php             # Ship definition XML wrapper
 │
 ├── CargoSizeException.php          # Custom exception class
-└── ModInfo.php                     # Mod metadata (name, version, URLs)
+├── ModInfo.php                     # Mod metadata (name, version, URLs)
+└── ShipTypeConfig.php              # Shared ship type definitions (reads config/ship-types.json)
 ```
 
 ---
@@ -121,6 +122,7 @@ config/
 ├── custom-builds/                  # Custom build configurations
 │   └── irukandji.json              # Example custom build
 ├── build-config.json               # Main build configuration
+├── ship-types.json                 # Shared ship type definitions and keyword aliases
 └── translations.json               # Translation overrides
 ```
 
@@ -351,6 +353,7 @@ Mistralys\X4\                       # Global namespace
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.4 | Nov 22, 2026 | Added `config/ship-types.json` and `ShipTypeConfig.php`. |
 | 1.3 | Feb 19, 2026 | Added tests/ section; removed stale Jerk/ entries and obsolete Physics/ files (AdjustedDrag, AdjustedInertia, PhysicsOverrideDef); updated Output/ to reflect post-refactoring structure (DiagnosticsLogger, AdjustedValues* location, PhysicsCalculator); updated file count |
 | 1.2 | Feb 19, 2026 | Added AccelerationOverrideDef; updated Physics/ |
 | 1.0 | Feb 9, 2026 | Initial file tree documentation |

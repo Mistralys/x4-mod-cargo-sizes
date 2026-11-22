@@ -6,11 +6,13 @@
 
 /**
  * Ship size categories.
+ * Must match `ShipTypeConfig::SIZES` (PHP).
  */
 export type ShipSize = 'xs' | 's' | 'm' | 'l' | 'xl';
 
 /**
  * Ship type identifier.
+ * Must match the type names in `config/ship-types.json`.
  */
 export type ShipType = 'transport' | 'mining' | 'auxiliary' | 'carrier';
 

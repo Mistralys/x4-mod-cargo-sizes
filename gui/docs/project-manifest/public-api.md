@@ -1,7 +1,7 @@
 # Public API - Signatures Only
 
-> **Version:** 1.6  
-> **Last Updated:** February 19, 2026  
+> **Version:** 1.7  
+> **Last Updated:** November 22, 2026  
 > **Purpose:** Public method signatures and contracts (NO implementations)
 
 ---
@@ -201,11 +201,13 @@ class ShipDataService
      *
      * @param \Mistralys\X4\Database\Ships\ShipDefs|null $shipDefs Optional ship definitions (defaults to X4 Core singleton)
      * @param \Mistralys\X4\Database\Engines\EngineDefs|null $engineDefs Optional engine definitions (defaults to X4 Core singleton)
+     * @param \Mistralys\X4\Mods\CargoSizesMod\ShipTypeConfig|null $shipTypeConfig Optional ship type definitions (defaults to `ShipTypeConfig::getInstance()`, i.e. `config/ship-types.json`)
      * @since 1.3.0 - Made data sources injectable for unit testing
      */
     public function __construct(
         ?\Mistralys\X4\Database\Ships\ShipDefs $shipDefs = null,
-        ?\Mistralys\X4\Database\Engines\EngineDefs $engineDefs = null
+        ?\Mistralys\X4\Database\Engines\EngineDefs $engineDefs = null,
+        ?\Mistralys\X4\Mods\CargoSizesMod\ShipTypeConfig $shipTypeConfig = null
     );
     
     /**
@@ -218,9 +220,8 @@ class ShipDataService
     /**
      * Gets ships filtered by type.
      *
-     * Internally calls determineShipType() which mirrors CargoSizeExtractor::resolveShipType(),
-     * including the early alias intercept: macros containing "scavenger" resolve to "transport"
-     * and macros containing "terraformer" resolve to "mining".
+     * Classification comes from `config/ship-types.json` through `ShipTypeConfig`
+     * (shared with the CLI build); the accepted types are `ShipTypeConfig::getTypeNames()`.
      *
      * @param string $type Ship type (transport, mining, auxiliary, carrier)
      * @return array<array{id: string, name: string, size: string, mass: float, cargo: float}>

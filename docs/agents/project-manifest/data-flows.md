@@ -1,6 +1,6 @@
 # Data Flows & Interactions
 
-> **Version:** 1.4  
+> **Version:** 1.6  
 > **Last Updated:** March 1, 2026  
 > **Purpose:** Describes how data flows through the system from input to output
 
@@ -129,12 +129,9 @@ For each SHIP_TYPE (transport, miner, auxiliary, carrier):
             SKIP if pure alias macro (alias= attribute present, no <physics> element)
               — game resolves alias inheritance; mod override on _a covers _b variant
             ↓
-            Resolve ship type via resolveShipType($macroName):
-              1. Early alias intercept (keyword in macro name parts):
-                 • "scavenger" → SHIP_TYPE_TRANSPORT  (Barbarossa)
-                 • "terraformer" → SHIP_TYPE_MINER    (Xenon H)
-              2. Standard keyword match against SHIP_TYPES keys
-              3. Return null → skip (unsupported type)
+            Resolve via `ShipTypeConfig::resolveMacroKeyword()`
+            (keyword aliases -> standard keywords, from `config/ship-types.json`)
+            Return null -> skip (unsupported type)
             ↓
             Find cargo definition in ship XML
             ↓
@@ -860,6 +857,7 @@ All flight mechanics files regenerated with new acceleration values
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.6 | Nov 22, 2026 | Step 4 ship type resolution delegates to `ShipTypeConfig::resolveMacroKeyword()` |
 | 1.5 | Jun 12, 2026 | Document alias macro skip and scavenger/terraformer type alias intercept in Step 4 |
 | 1.0 | Feb 9, 2026 | Initial data flows documentation |
 | 1.3 | Feb 19, 2026 | Replace tier-based physics flow with acceleration-only approach (WP-003) |

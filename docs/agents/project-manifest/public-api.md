@@ -1,7 +1,7 @@
 # Public API Reference
 
-> **Version:** 1.6
-> **Last Updated:** March 1, 2026
+> **Version:** 1.8
+> **Last Updated:** November 22, 2026
 > **Purpose:** Complete public API signatures (NO implementations)
 
 ---
@@ -113,6 +113,35 @@ const ERROR_FILE_WRITE = 178007;
 
 ---
 
+### ShipTypeConfig
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod`  
+**File:** [src/Mods/CargoSizesMod/ShipTypeConfig.php](../../../src/Mods/CargoSizesMod/ShipTypeConfig.php)
+
+Shared ship type definitions loaded from `config/ship-types.json`. Throws `CargoSizeException` (`ERROR_INVALID_CONFIG`) when the file is missing or invalid.
+
+```php
+public const array SIZES = ['xs', 's', 'm', 'l', 'xl'];
+
+public static function getInstance() : self;
+public static function createFromFile(string $path) : self;
+public static function resetInstance() : void;
+
+// Canonical type: transport, mining, auxiliary, carrier (used by the GUI)
+public function resolveType(string $macroName) : ?string;
+
+// Internal macro keyword: trans, storage, miner, resupplier, carrier (used by the CLI)
+public function resolveMacroKeyword(string $macroName) : ?string;
+
+/** @return array{type:string,label:string}[] */
+public function getTypes() : array;
+
+/** @return string[] */
+public function getTypeNames() : array;
+```
+
+---
+
 ## Build System
 
 ### CargoSizeBuildTools
@@ -195,7 +224,6 @@ public const string HOMEPAGE_URL = 'https://github.com/Mistralys/x4-mod-cargo-si
 public const string MOD_PREFIX = 'cargo-size';
 public const string AUTHOR_NAME = 'AeonsOfTime';
 public const string PROPS_FOLDER = 'assets/props/StorageModules/macros';
-public const string SHIP_SIZES = array(...);
 public const string SHIP_TYPES = array(...);
 ```
 
@@ -1500,6 +1528,7 @@ public function generate(): void
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.8 | Nov 22, 2026 | Added `ShipTypeConfig` (shared ship type definitions and `SIZES` constant). |
 | 1.7 | Jun 14, 2026 | Added `CLAYTRONICS_VOLUME` private constant (24 m³) to `ReleaseNotesGenerator`; extended `formatComparisonTable()` header and rows with a fifth "Claytronics" column (units that fit in adjusted cargo); changed `"trans-l"` example ship in `config/build-config.json` from "Shuyaku Sentinel" to "Shuyaku Vanguard". |
 | 1.6 | Mar 1, 2026 | Deterministic example ship selection: added BuildConfig::KEY_EXAMPLE_SHIPS + getExampleShip(); added BuildConfig parameter to CargoSizeExtractor and ReleaseNotesGenerator constructors; added FileCollection::setConfig() and $buildConfig static property; extended FileCollection::reset() to clear $buildConfig; changed ReleaseNotesGenerator::formatComparisonTable() from private to protected. Added 9 PHPUnit unit tests (ExampleShipSelectionTest). |
 | 1.5 | Mar 1, 2026 | Updated FileCollection::getPluginDescription() to include example ship cargo values; updated ReleaseNotesGenerator constructor to accept multipliers and ship results, added formatComparisonTable() for AIO comparison table in release notes. |

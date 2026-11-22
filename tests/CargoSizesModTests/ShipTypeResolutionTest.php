@@ -103,6 +103,17 @@ class ShipTypeResolutionTest extends TestCase
     }
 
     /**
+     * Storage ships must resolve to the storage keyword, which stays
+     * distinct from the transport keyword (build output contract).
+     */
+    public function testStorageResolvesToStorage(): void
+    {
+        $result = $this->resolveShipType('ship_arg_l_storage_container_01_a_macro');
+
+        $this->assertSame(CargoSizeExtractor::SHIP_TYPE_STORAGE, $result);
+    }
+
+    /**
      * Unknown / unsupported macro names must return null.
      */
     public function testUnknownMacroReturnsNull(): void

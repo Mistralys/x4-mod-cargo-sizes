@@ -1,5 +1,10 @@
 # Cargo Sizes Mod - Changelog
 
+## v3.2.1 - **WIP; UNRELEASED**
+- Core: Ship types and keyword aliases are now defined in the shared `config/ship-types.json`; sizes are a shared constant.
+- GUI: Storage ships are now listed under the Transport type, matching the build output.
+- Core: Fixed garbled dash in the alias macro console message on Windows.
+
 ## v3.2.0 for X4 v9.0 - New Ships
 - Ships: Added Xenon H to miner output group.
 - Ships: Added Barbarossa to transport output group.

@@ -40,7 +40,7 @@ class ShipXMLFile extends BaseXMLFile
 
         $macro = $this->getMacroName();
 
-        foreach(CargoSizeExtractor::SHIP_SIZES as $size) {
+        foreach(ShipTypeConfig::SIZES as $size) {
             if(str_contains($macro, '_'.$size.'_')) {
                 $this->size = $size;
                 return $this->size;

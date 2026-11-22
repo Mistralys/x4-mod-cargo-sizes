@@ -13,6 +13,7 @@ use Mistralys\X4\Mods\CargoSizesMod\CargoSizeExtractor;
 use Mistralys\X4\Mods\CargoSizesMod\Console;
 use Mistralys\X4\Mods\CargoSizesMod\ContentXMLRenderer;
 use Mistralys\X4\Mods\CargoSizesMod\ModInfo;
+use Mistralys\X4\Mods\CargoSizesMod\ShipTypeConfig;
 use Mistralys\X4\Mods\CargoSizesMod\Translation;
 
 class FomodWriter
@@ -175,7 +176,7 @@ XML;
         {
             $ships = FileCollection::getByPrettyShipType($shipType);
 
-            foreach (CargoSizeExtractor::SHIP_SIZES as $shipSize)
+            foreach (ShipTypeConfig::SIZES as $shipSize)
             {
                 $sizeShips = array_filter($ships, static function(FileCollection $collection) use ($shipSize) : bool {
                     return $collection->getShipSize() === $shipSize;
