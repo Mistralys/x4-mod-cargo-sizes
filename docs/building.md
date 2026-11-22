@@ -124,4 +124,8 @@ composer gui:start-win
 
 See the [GUI README](../gui/README.md) for setup, usage and troubleshooting.
 
+## Checking that a refactor does not change the build output
+
+Refactors that must not change the mod output can be verified with `composer build:baseline` (before the change) and `composer build:parity` (after a `composer build`). The workflow is documented for agents in [AGENTS.md](../AGENTS.md) under "Output-parity check for refactors".
+
 [X4 Data Extractor]: https://github.com/Mistralys/x4-data-extractor

@@ -229,6 +229,10 @@ class ShipTypeConfig
             throw $this->createError('Missing or invalid "types" section.');
         }
 
+        if(empty($data['types'])) {
+            throw $this->createError('The "types" section has no ship types.');
+        }
+
         foreach($data['types'] as $type => $typeData) {
             $this->types[(string)$type] = $this->validateType((string)$type, $typeData);
         }

@@ -1,7 +1,7 @@
 # Project Constraints & Rules
 
-> **Version:** 1.6
-> **Last Updated:** March 1, 2026
+> **Version:** 1.7
+> **Last Updated:** November 22, 2026
 > **Purpose:** Non-negotiable rules, conventions, and coding standards
 
 ---
@@ -817,6 +817,16 @@ The file `config/build-config.json` contains the following top-level keys:
 
 **RULE:** Pure alias macros (XML `<macro>` element has a non-empty `alias=` attribute) MUST be skipped during `analyzeShipMacro()`. They have no `<physics>` element and inherit their values from the referenced macro.
 
+**RULE:** `config/ship-types.json` MUST define at least one ship type. `ShipTypeConfig` rejects an empty `types` section with `CargoSizeException::ERROR_INVALID_CONFIG`. Keyword matching is case-sensitive (X4 macro names are lowercase).
+
+### 6. Line Endings
+
+**RULE:** The working tree uses CRLF. The index is LF; `.gitattributes` sets `* text=auto`, so no tracked content depends on a contributor's git setup. New and changed text files are written CRLF.
+
+**RULE:** `docs/cargo-size-reference.md` is the exception. `MarkdownReference` regenerates it with LF on every build, so it is pinned with `text eol=lf` in `.gitattributes`. Never hand-convert it.
+
+**RULE:** Build output parity (`composer build:parity`) never folds line endings: a line ending change is a content difference.
+
 ---
 
 ## 🚀 Performance Constraints
@@ -967,6 +977,7 @@ Before committing new code, verify:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.7 | Nov 22, 2026 | Added line ending rules (CRLF working tree, `.gitattributes`, generated-file exception) and the empty-`types` validation rule |
 | 1.6 | Nov 22, 2026 | Ship type metadata, keyword aliases and sizes moved to `config/ship-types.json` (`ShipTypeConfig`); rules in section 5 replaced |
 | 1.5 | Jun 12, 2026 | Added Ship Type Filtering Rules (scavenger→transport, terraformer→miner, alias macro skip) |
 | 1.3 | Feb 19, 2026 | Updated Adjusted Values Pattern example to use AdjustedAccelerationFactors (AdjustedDrag removed in v4.0 refactoring) |

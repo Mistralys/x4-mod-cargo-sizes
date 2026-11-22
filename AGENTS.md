@@ -1,7 +1,7 @@
 # AI Agent Operating System - X4 Cargo Sizes Mod
 
-> **Version:** 1.3
-> **Last Updated:** February 17, 2026
+> **Version:** 1.4
+> **Last Updated:** November 22, 2026
 > **Purpose:** Source of Truth and Operating Procedures for AI Agents
 
 ---
@@ -199,6 +199,7 @@ Build Tool / Mod Generator
 | **Add new config file** | `file-tree.md`, `data-flows.md`, `constraints.md` | config/ directory, Configuration Flow, Configuration Rules |
 | **Change file I/O approach** | `constraints.md`, `tech-stack.md` | File I/O Constraints, relevant pattern |
 | **Add new build script** | `tech-stack.md`, `constraints.md` | Composer Scripts, Build Process |
+| **Change the parity/baseline commands** | `tech-stack.md`, `data-flows.md`, `public-api.md`, `AGENTS.md` | Build Parity Check, Parity Check Flow, Build namespace, Output-parity check for refactors |
 | **Add new test suite** | `constraints.md`, `file-tree.md` | Testing Constraints, tests/ directory |
 | **Change XML processing** | `constraints.md`, `tech-stack.md`, `data-flows.md` | XML Constraints, XML Pattern, XML Processing Flow |
 | **Add translation** | `constraints.md`, `public-api.md` | Localization, config/translations.json |
@@ -412,6 +413,10 @@ This project depends heavily on the **mistralys/x4-core** library. When working 
 → Reference: public-api.md (XML namespace)
 → Update: tech-stack.md + public-api.md + file-tree.md
 
+# Verify a refactor does not change the mod output
+→ Run: composer build:baseline BEFORE editing, then composer build, composer build:parity
+→ Study: AGENTS.md (Output-parity check for refactors), data-flows.md (Parity Check Flow)
+
 # Generate custom build
 → Study: data-flows.md (Build Process Flow)
 → Use: CargoSizeBuildTools::build()
@@ -479,6 +484,7 @@ This project depends heavily on the **mistralys/x4-core** library. When working 
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.4 | Nov 22, 2026 | Added "Output-parity check for refactors" (`composer build:baseline`, `composer build:parity`). |
 | 1.3 | Feb 17, 2026 | Added GUI test infrastructure (PHPUnit 11), Service Container pattern, Parameter Object pattern, strict equality refactoring. Updated manifest docs to v1.3. |
 ---
 
@@ -543,6 +549,41 @@ php -f src/Mods/CargoSizesMod/References/CargoSizeReferenceBuilder.php
 ```
 
 For detailed flow, see [data-flows.md](docs/agents/project-manifest/data-flows.md).
+
+---
+
+## 🧪 Output-parity check for refactors
+
+Use this for refactors and cleanups that must **not** change the mod output (built zips and the physics diagnostics report). Do **not** use it for features that change the output on purpose.
+
+**Workflow (the order matters):**
+
+1. `composer build:baseline` - **first, before editing anything.** It builds from the current source and snapshots the result. A baseline captured from an already modified tree proves nothing.
+2. Make the change.
+3. `composer build`
+4. `composer build:parity`
+
+**Options** (pass after `--`, for example `composer build:parity -- --baseline=work/my-refactor`):
+
+| Option | Command | Meaning |
+|--------|---------|---------|
+| `--baseline=<dir>` | both | Baseline folder. Default: `work/baseline-ship-types` (gitignored `work/`). Relative paths resolve against the project root. |
+| `--force` | `build:baseline` | Replace a non-empty baseline folder. Without it the command refuses (before building) so a baseline that is still needed is not overwritten. |
+
+**Output and exit codes.** Neither command ever prompts. The first line of output is the verdict, `PARITY PASS` or `PARITY FAIL: <n> differing, <m> missing, <k> unexpected`, followed by one line per difference (`DIFFERS`, `MISSING`, `UNEXPECTED`) as `<zip>: <entry>`. Composer itself prints a `> ...::compareBaseline` line before that. Errors start with `ERROR:` and name the fix.
+
+| Exit code | Meaning |
+|-----------|---------|
+| 0 | Parity (or baseline captured) |
+| 1 | Differences found |
+| 2 | Usage or setup error: unknown option, no baseline, non-empty baseline without `--force`, no build output, failed build |
+
+**Notes:**
+
+- The baseline lives in the gitignored `work/` folder and is never committed. For a new refactor, replace the old baseline with `--force` or use `--baseline=work/<name>`.
+- A build rewrites the tracked file `docs/cargo-size-reference.md` (LF line endings, pinned in `.gitattributes`). That change is expected.
+- Comparison is by CRC32 per zip entry. Version strings and generated dates are normalised; line endings never are. The random example ship picks in `fomod/ModuleConfig.xml` (chosen with `array_rand()` when no example ship is configured) are on an allow-list: their content may differ, but the entry must still exist. See `BuildParityComparator::ALLOWED_CONTENT_DIFFERENCES`.
+- Windows tip: Git Bash `sed -i` strips CR from CRLF files. Edit with the editor tool, or restore with `sed -i 's/\r$//; s/$/\r/' <file>`.
 
 ---
 

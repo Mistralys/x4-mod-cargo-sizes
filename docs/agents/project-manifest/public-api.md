@@ -1,6 +1,6 @@
 # Public API Reference
 
-> **Version:** 1.8
+> **Version:** 1.9
 > **Last Updated:** November 22, 2026
 > **Purpose:** Complete public API signatures (NO implementations)
 
@@ -109,6 +109,9 @@ const ERROR_MISSING_RELATIVE_PATH = 178004;
 const ERROR_MISSING_CHANGELOG = 178005;
 const ERROR_CHANGELOG_PARSE = 178006;
 const ERROR_FILE_WRITE = 178007;
+const ERROR_INVALID_CONFIG = 178008;
+const ERROR_INVALID_CALCULATOR_PARAMS = 178009;
+const ERROR_PARITY_SETUP = 178010; // Baseline or build output missing, unknown option, refused overwrite
 ```
 
 ---
@@ -118,7 +121,7 @@ const ERROR_FILE_WRITE = 178007;
 **Namespace:** `Mistralys\X4\Mods\CargoSizesMod`  
 **File:** [src/Mods/CargoSizesMod/ShipTypeConfig.php](../../../src/Mods/CargoSizesMod/ShipTypeConfig.php)
 
-Shared ship type definitions loaded from `config/ship-types.json`. Throws `CargoSizeException` (`ERROR_INVALID_CONFIG`) when the file is missing or invalid.
+Shared ship type definitions loaded from `config/ship-types.json`. Throws `CargoSizeException` (`ERROR_INVALID_CONFIG`) when the file is missing or invalid, including an empty `types` section.
 
 ```php
 public const array SIZES = ['xs', 's', 'm', 'l', 'xl'];
@@ -156,7 +159,134 @@ public static function build(): void
 ```
 
 ```php
+// Composer script `build:parity`: compares the latest build against the baseline
+public static function compareBaseline(?object $event = null): void
+```
+
+```php
+// Composer script `build:baseline`: builds, then snapshots the result as the baseline
+public static function captureBaseline(?object $event = null): void
+```
+
+```php
 public static function getConfig(): BuildConfig
+```
+
+---
+
+### BuildParityComparator
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod`
+**File:** [src/Mods/CargoSizesMod/Build/BuildParityComparator.php](../../../src/Mods/CargoSizesMod/Build/BuildParityComparator.php)
+
+Compares a baseline set of build zips against a fresh build by the CRC32 of every entry (see the Parity Check Flow in `data-flows.md`). Version strings and generated dates are normalised, line endings never are. Entries on the allow-list may differ in content but must still exist on both sides.
+
+```php
+public const string DEFAULT_BASELINE_DIR = 'work/baseline-ship-types';
+public const string DEFAULT_BUILD_DIR = 'build';
+public const string DIAGNOSTICS_FILE = 'physics-diagnostics.txt';
+public const string BASELINE_ZIPS_FOLDER = 'zips';
+
+/** Pattern (matched against the entry path in the zip) => justification */
+public const array ALLOWED_CONTENT_DIFFERENCES = [...];
+
+public function __construct(
+    string $baselineDir = self::DEFAULT_BASELINE_DIR,
+    string $buildDir = self::DEFAULT_BUILD_DIR,
+    ?array $allowList = null
+);
+
+public static function hasBaseline(string $baselineDir) : bool;
+
+/** @throws CargoSizeException (ERROR_PARITY_SETUP) when the baseline or build output is missing */
+public function compare() : BuildParityResult;
+
+/** Latest `v*-for-v*` folder under the build root. @throws CargoSizeException */
+public static function findBuildZipFolder(string $buildDir) : string;
+```
+
+---
+
+### BuildParityResult
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod`
+**File:** [src/Mods/CargoSizesMod/Build/BuildParityResult.php](../../../src/Mods/CargoSizesMod/Build/BuildParityResult.php)
+
+Structured outcome of a comparison. Entry names have the form `<zip key>: <entry path>`.
+
+```php
+public function isParity() : bool;
+public function getVerdict() : string;   // 'PARITY PASS' | 'PARITY FAIL: <n> differing, <m> missing, <k> unexpected'
+public function getDifferenceLines() : array;
+public function getMatching() : array;
+public function getDiffering() : array;
+public function getMissing() : array;
+public function getUnexpected() : array;
+public function getAllowedDifferences() : array;
+public function toArray() : array;
+// plus addMatching(), addDiffering(), addMissing(), addUnexpected(), addAllowedDifference()
+```
+
+---
+
+### BaselineOptions
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod`
+**File:** [src/Mods/CargoSizesMod/Build/BaselineOptions.php](../../../src/Mods/CargoSizesMod/Build/BaselineOptions.php)
+
+Parser for the two options of `build:baseline` and `build:parity`.
+
+```php
+public const string OPTION_BASELINE = '--baseline';
+public const string OPTION_FORCE = '--force';
+
+/** @throws CargoSizeException (ERROR_PARITY_SETUP) on an unknown option */
+public static function parse(array $arguments, bool $allowForce) : BaselineOptions;
+public static function getValidOptions(bool $allowForce) : array;
+public function getBaselineDir() : string;
+public function isForce() : bool;
+```
+
+---
+
+### BaselineCapture
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod`
+**File:** [src/Mods/CargoSizesMod/Build/BaselineCapture.php](../../../src/Mods/CargoSizesMod/Build/BaselineCapture.php)
+
+Snapshots the current build output (`zips/*.zip`, `physics-diagnostics.txt`) into a baseline folder. Does not run the build. Refuses a non-empty folder without `$force`; only replaces what it writes.
+
+```php
+public function __construct(string $buildDir, string $baselineDir);
+
+/** @throws CargoSizeException (ERROR_PARITY_SETUP) */
+public function assertWritable(bool $force) : void;
+
+/** @return string The baseline folder. @throws CargoSizeException (ERROR_PARITY_SETUP) */
+public function capture(bool $force) : string;
+```
+
+---
+
+### BaselineCommand / BaselineCommandResult
+
+**Namespace:** `Mistralys\X4\Mods\CargoSizesMod`
+**Files:** [BaselineCommand.php](../../../src/Mods/CargoSizesMod/Build/BaselineCommand.php), [BaselineCommandResult.php](../../../src/Mods/CargoSizesMod/Build/BaselineCommandResult.php)
+
+Logic behind the Composer commands. Never prompts; the first output line is the verdict or error; exit codes are fixed (0 pass, 1 differences, 2 usage or setup error).
+
+```php
+BaselineCommand::compare(array $arguments, ?string $buildDir = null) : BaselineCommandResult;
+BaselineCommand::capture(array $arguments, callable $build, ?string $buildDir = null) : BaselineCommandResult;
+BaselineCommand::getUsageLines() : array;
+
+public const int EXIT_OK = 0;
+public const int EXIT_DIFFERENCES = 1;
+public const int EXIT_ERROR = 2;
+public function getExitCode() : int;
+public function getLines() : array;
+public function getVerdict() : string;
+public function render() : string;
 ```
 
 ---
@@ -1528,6 +1658,7 @@ public function generate(): void
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.9 | Nov 22, 2026 | Added `BuildParityComparator`, `BuildParityResult`, `BaselineOptions`, `BaselineCapture`, `BaselineCommand`, `BaselineCommandResult`; `CargoSizeBuildTools::compareBaseline()` and `captureBaseline()`; `CargoSizeException::ERROR_PARITY_SETUP`; `ShipTypeConfig` rejects an empty `types` section. |
 | 1.8 | Nov 22, 2026 | Added `ShipTypeConfig` (shared ship type definitions and `SIZES` constant). |
 | 1.7 | Jun 14, 2026 | Added `CLAYTRONICS_VOLUME` private constant (24 m³) to `ReleaseNotesGenerator`; extended `formatComparisonTable()` header and rows with a fifth "Claytronics" column (units that fit in adjusted cargo); changed `"trans-l"` example ship in `config/build-config.json` from "Shuyaku Sentinel" to "Shuyaku Vanguard". |
 | 1.6 | Mar 1, 2026 | Deterministic example ship selection: added BuildConfig::KEY_EXAMPLE_SHIPS + getExampleShip(); added BuildConfig parameter to CargoSizeExtractor and ReleaseNotesGenerator constructors; added FileCollection::setConfig() and $buildConfig static property; extended FileCollection::reset() to clear $buildConfig; changed ReleaseNotesGenerator::formatComparisonTable() from private to protected. Added 9 PHPUnit unit tests (ExampleShipSelectionTest). |

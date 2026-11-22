@@ -17,4 +17,5 @@ class CargoSizeException extends X4Exception
     public const ERROR_FILE_WRITE = 178007;
     public const ERROR_INVALID_CONFIG = 178008;
     public const ERROR_INVALID_CALCULATOR_PARAMS = 178009;
+    public const ERROR_PARITY_SETUP = 178010;
 }

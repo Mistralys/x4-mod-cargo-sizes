@@ -61,7 +61,7 @@ class ExampleShipSelectionTest extends TestCase
      */
     private function makeEmptyConfig(): BuildConfig
     {
-        $config = $this->createMock(BuildConfig::class);
+        $config = $this->createStub(BuildConfig::class);
         $config->method('getExampleShip')->willReturn('');
         return $config;
     }
@@ -80,7 +80,7 @@ class ExampleShipSelectionTest extends TestCase
      */
     private function makeTransportShip(string $label, int $cargo = 1000): ShipResult
     {
-        $ship = $this->createMock(ShipResult::class);
+        $ship = $this->createStub(ShipResult::class);
         $ship->method('getShipType')->willReturn(CargoSizeExtractor::SHIP_TYPE_TRANSPORT);
         $ship->method('getShipLabel')->willReturn($label);
         $ship->method('getCargoValue')->willReturn($cargo);
@@ -95,7 +95,7 @@ class ExampleShipSelectionTest extends TestCase
      */
     private function makeMinerShip(string $label): ShipResult
     {
-        $ship = $this->createMock(ShipResult::class);
+        $ship = $this->createStub(ShipResult::class);
         $ship->method('getShipType')->willReturn(CargoSizeExtractor::SHIP_TYPE_MINER);
         $ship->method('getShipLabel')->willReturn($label);
         $ship->method('getCargoValue')->willReturn(500);
@@ -115,7 +115,7 @@ class ExampleShipSelectionTest extends TestCase
      */
     public function testExampleShipDescriptionFormat(): void
     {
-        $storage = $this->createMock(StorageOverrideFile::class);
+        $storage = $this->createStub(StorageOverrideFile::class);
         $storage->method('getShipName')->willReturn('Courier Sentinel');
         $storage->method('getCargo')->willReturn(1000);
         $storage->method('getAdjustedCargo')->willReturn(4000);
@@ -139,12 +139,12 @@ class ExampleShipSelectionTest extends TestCase
      */
     public function testExampleShipDescriptionDeterministicSelectionPicksConfiguredShip(): void
     {
-        $shipA = $this->createMock(StorageOverrideFile::class);
+        $shipA = $this->createStub(StorageOverrideFile::class);
         $shipA->method('getShipName')->willReturn('ShipA');
         $shipA->method('getCargo')->willReturn(1000);
         $shipA->method('getAdjustedCargo')->willReturn(2000);
 
-        $shipB = $this->createMock(StorageOverrideFile::class);
+        $shipB = $this->createStub(StorageOverrideFile::class);
         $shipB->method('getShipName')->willReturn('ShipB');
         $shipB->method('getCargo')->willReturn(1500);
         $shipB->method('getAdjustedCargo')->willReturn(3000);
@@ -153,8 +153,9 @@ class ExampleShipSelectionTest extends TestCase
         $collection->addFile($shipA);
         $collection->addFile($shipB);
 
+        // A real mock: the expectation verifies the lookup arguments (with() has no effect on a stub).
         $config = $this->createMock(BuildConfig::class);
-        $config->method('getExampleShip')->with('trans', 's')->willReturn('ShipB');
+        $config->expects($this->atLeastOnce())->method('getExampleShip')->with('trans', 's')->willReturn('ShipB');
         FileCollection::setConfig($config);
 
         $result = $collection->getPluginDescription();
@@ -169,12 +170,12 @@ class ExampleShipSelectionTest extends TestCase
      */
     public function testExampleShipDescriptionFallbackWhenConfiguredShipNotFound(): void
     {
-        $shipA = $this->createMock(StorageOverrideFile::class);
+        $shipA = $this->createStub(StorageOverrideFile::class);
         $shipA->method('getShipName')->willReturn('ShipA');
         $shipA->method('getCargo')->willReturn(1000);
         $shipA->method('getAdjustedCargo')->willReturn(2000);
 
-        $shipB = $this->createMock(StorageOverrideFile::class);
+        $shipB = $this->createStub(StorageOverrideFile::class);
         $shipB->method('getShipName')->willReturn('ShipB');
         $shipB->method('getCargo')->willReturn(1500);
         $shipB->method('getAdjustedCargo')->willReturn(3000);
@@ -184,7 +185,7 @@ class ExampleShipSelectionTest extends TestCase
         $collection->addFile($shipA);
         $collection->addFile($shipB);
 
-        $config = $this->createMock(BuildConfig::class);
+        $config = $this->createStub(BuildConfig::class);
         $config->method('getExampleShip')->willReturn('ShipC'); // Not present
         FileCollection::setConfig($config);
 
@@ -271,7 +272,7 @@ class ExampleShipSelectionTest extends TestCase
         $shipA = $this->makeTransportShip('ShipA', 2000);
         $shipB = $this->makeTransportShip('ShipB', 1000);
 
-        $config = $this->createMock(BuildConfig::class);
+        $config = $this->createStub(BuildConfig::class);
         $config->method('getExampleShip')->willReturnCallback(
             static function(string $type, string $size): string {
                 return ($type === CargoSizeExtractor::SHIP_TYPE_TRANSPORT && $size === 's') ? 'ShipB' : '';
@@ -299,7 +300,7 @@ class ExampleShipSelectionTest extends TestCase
     {
         $ship = $this->makeTransportShip('ShipA', 1000);
 
-        $config = $this->createMock(BuildConfig::class);
+        $config = $this->createStub(BuildConfig::class);
         $config->method('getExampleShip')->willReturn('ShipC'); // Not in $shipResults
 
         $generator = new TestableReleaseNotesGenerator(

@@ -1,0 +1,10 @@
+{
+  "types": {
+    "transport": {
+      "label": "Transport ships",
+      "primaryKeyword": "trans",
+      "macroKeywords": ["trans"]
+    }
+  },
+  "keywordAliases": {}
+}

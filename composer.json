@@ -36,6 +36,8 @@
   },
   "scripts": {
     "build": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::build",
+    "build:baseline": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::captureBaseline",
+    "build:parity": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::compareBaseline",
     "test": "phpunit",
     "analyze": "phpstan analyze",
     "gui:install": [

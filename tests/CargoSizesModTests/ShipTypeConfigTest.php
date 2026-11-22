@@ -166,4 +166,54 @@ class ShipTypeConfigTest extends TestCase
 
         ShipTypeConfig::createFromFile(self::FIXTURES.'no-macro-keywords.json');
     }
+
+    public function testMissingLabelThrows(): void
+    {
+        $this->expectException(CargoSizeException::class);
+        $this->expectExceptionMessageMatches('/has no label.*missing-label\.json/s');
+
+        ShipTypeConfig::createFromFile(self::FIXTURES.'missing-label.json');
+    }
+
+    public function testEmptyTypesThrows(): void
+    {
+        try {
+            ShipTypeConfig::createFromFile(self::FIXTURES.'empty-types.json');
+        } catch (CargoSizeException $e) {
+            $this->assertSame(CargoSizeException::ERROR_INVALID_CONFIG, $e->getCode());
+            $this->assertStringContainsString('no ship types', $e->getMessage());
+            $this->assertStringContainsString('empty-types.json', $e->getMessage());
+            return;
+        }
+
+        $this->fail('An empty "types" section must be rejected.');
+    }
+
+    public function testEmptyAliasesIsValid(): void
+    {
+        $config = ShipTypeConfig::createFromFile(self::FIXTURES.'empty-aliases.json');
+
+        $this->assertSame('transport', $config->resolveType('ship_arg_l_trans_01_a_macro'));
+        $this->assertSame('trans', $config->resolveMacroKeyword('ship_arg_l_trans_01_a_macro'));
+    }
+
+    public function testNonStringAliasTargetThrows(): void
+    {
+        $this->expectException(CargoSizeException::class);
+        $this->expectExceptionMessage('non-string-alias-target.json');
+
+        ShipTypeConfig::createFromFile(self::FIXTURES.'non-string-alias-target.json');
+    }
+
+    /**
+     * Pinned contract: keyword matching is case-sensitive. X4 macro names
+     * are lowercase, so an uppercase keyword is deliberately not matched.
+     */
+    public function testKeywordMatchingIsCaseSensitive(): void
+    {
+        $config = ShipTypeConfig::getInstance();
+
+        $this->assertNull($config->resolveType('ship_arg_l_TRANS_01_a_macro'));
+        $this->assertNull($config->resolveMacroKeyword('ship_arg_l_TRANS_01_a_macro'));
+    }
 }

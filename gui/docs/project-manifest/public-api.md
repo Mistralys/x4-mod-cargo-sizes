@@ -1,6 +1,6 @@
 # Public API - Signatures Only
 
-> **Version:** 1.7  
+> **Version:** 1.8  
 > **Last Updated:** November 22, 2026  
 > **Purpose:** Public method signatures and contracts (NO implementations)
 
@@ -1182,6 +1182,15 @@ export interface ValidationResult {
 | `GET` | `/api/config` | `ConfigEndpoint::get()` |
 | `POST` | `/api/config` | `ConfigEndpoint::update()` |
 | `POST` | `/api/config/validate` | `ConfigEndpoint::validate()` |
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.8 | Nov 22, 2026 | Added this Version History table. No API change; history before 1.7 is not reconstructed. |
+| 1.7 | Nov 22, 2026 | `ShipDataService` takes an optional `ShipTypeConfig`; ship classification comes from `config/ship-types.json`. |
 
 ---
 

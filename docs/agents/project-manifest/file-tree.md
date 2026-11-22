@@ -1,6 +1,6 @@
 # Project File Tree
 
-> **Version:** 1.4  
+> **Version:** 1.5  
 > **Last Updated:** November 22, 2026  
 > **Purpose:** Complete directory structure for navigation and file location
 
@@ -22,6 +22,7 @@ x4-mod-cargo-sizes/
 │       └── CargoSizesMod/          # Main mod code
 ├── tests/                          # Unit tests (PHPUnit)
 ├── vendor/                         # Composer dependencies
+├── .gitattributes                  # Line ending policy (text=auto; generated reference pinned to LF)
 ├── changelog-builder.md            # Changelog building guide
 ├── changelog.md                    # Version history
 ├── composer.json                   # Composer configuration
@@ -55,7 +56,13 @@ CargoSizesMod/
 │   │   ├── BasePlugin.php          # Abstract plugin base
 │   │   ├── PluginInterface.php     # Plugin contract
 │   │   └── PluginLoader.php        # Plugin discovery/execution
+│   ├── BaselineCapture.php         # Snapshots the build output as a parity baseline
+│   ├── BaselineCommand.php         # Logic of the build:baseline / build:parity commands
+│   ├── BaselineCommandResult.php   # Exit code and output lines of a command
+│   ├── BaselineOptions.php         # --baseline / --force option parser
 │   ├── BuildConfig.php             # Build configuration loader
+│   ├── BuildParityComparator.php   # CRC-based comparison of a build against a baseline
+│   ├── BuildParityResult.php       # Structured comparison result
 │   ├── CargoSizeBuildTools.php     # Main build orchestrator (Composer entry point)
 │   ├── CargoSizeExtractor.php      # Game data extractor
 │   ├── Console.php                 # Terminal output helper
@@ -231,7 +238,20 @@ tests/
 └── CargoSizesModTests/             # CLI test suite
     ├── AccelerationAdjustmentTest.php  # Tests for AdjustedAccelerationFactors scaling
     ├── AccelerationOverrideTest.php    # Tests for AccelerationOverrideDef XML output
-    └── PhysicsCalculatorTest.php       # Tests for PhysicsCalculator mass ratio calculations
+    ├── AliasSkipMessageTest.php        # Pins the ASCII-only alias skip console message
+    ├── BuildBaselineCommandTest.php    # Option parser, exit codes and baseline capture
+    ├── BuildParityComparatorTest.php   # Comparator on synthetic zips
+    ├── ExampleShipSelectionTest.php    # Example ship selection
+    ├── PhysicsCalculatorTest.php       # Tests for PhysicsCalculator mass ratio calculations
+    ├── ShipTypeConfigTest.php          # Shared ship type config and its validation
+    └── ShipTypeResolutionTest.php      # Ship type resolution in the extractor
+
+tests/files/ship-types/             # One fixture per ShipTypeConfig failure mode
+├── empty-aliases.json              # Valid: no keyword aliases
+├── empty-types.json                # Invalid: empty types section
+├── missing-label.json              # Invalid: type without label
+└── non-string-alias-target.json    # Invalid: alias target is not a string
+    (plus extra-alias, invalid-alias-target, invalid-primary-keyword, malformed, no-macro-keywords)
 ```
 
 ---
@@ -353,6 +373,7 @@ Mistralys\X4\                       # Global namespace
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.5 | Nov 22, 2026 | Added `.gitattributes`, the parity/baseline classes in `Build/`, the new test files and the ship type fixtures. |
 | 1.4 | Nov 22, 2026 | Added `config/ship-types.json` and `ShipTypeConfig.php`. |
 | 1.3 | Feb 19, 2026 | Added tests/ section; removed stale Jerk/ entries and obsolete Physics/ files (AdjustedDrag, AdjustedInertia, PhysicsOverrideDef); updated Output/ to reflect post-refactoring structure (DiagnosticsLogger, AdjustedValues* location, PhysicsCalculator); updated file count |
 | 1.2 | Feb 19, 2026 | Added AccelerationOverrideDef; updated Physics/ |

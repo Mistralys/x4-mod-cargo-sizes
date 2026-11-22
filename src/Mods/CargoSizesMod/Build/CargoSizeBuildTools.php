@@ -27,6 +27,46 @@ class CargoSizeBuildTools
 {
     public static function build() : void
     {
+        self::runBuild();
+    }
+
+    /**
+     * Composer entry point `build:parity`: compares the latest build against
+     * the baseline. Run `composer build` first. See {@see BaselineCommand}.
+     *
+     * Exit codes: 0 parity, 1 differences, 2 usage or setup error.
+     *
+     * @param object|null $event The Composer script event, when called by Composer.
+     */
+    public static function compareBaseline(?object $event = null) : void
+    {
+        self::finish(BaselineCommand::compare(self::resolveArguments($event)));
+    }
+
+    /**
+     * Composer entry point `build:baseline`: builds from the current source,
+     * then snapshots the result as the baseline for a later `build:parity`.
+     * See {@see BaselineCommand}.
+     *
+     * Exit codes: 0 captured, 2 usage or setup error.
+     *
+     * @param object|null $event The Composer script event, when called by Composer.
+     */
+    public static function captureBaseline(?object $event = null) : void
+    {
+        self::finish(BaselineCommand::capture(
+            self::resolveArguments($event),
+            static function () : bool {
+                return self::runBuild();
+            }
+        ));
+    }
+
+    /**
+     * @return bool False when the build failed with an exception.
+     */
+    private static function runBuild() : bool
+    {
         self::init();
 
         try
@@ -42,7 +82,52 @@ class CargoSizeBuildTools
         catch (BaseException $e)
         {
             UserInterface::displayException($e);
+
+            return false;
         }
+
+        return true;
+    }
+
+    /**
+     * Prints the command output and ends the process with the exit code
+     * when it is not 0. Unknown-option errors also print the usage.
+     */
+    private static function finish(BaselineCommandResult $result) : void
+    {
+        echo $result->render();
+
+        if($result->getExitCode() === BaselineCommandResult::EXIT_ERROR) {
+            echo implode(PHP_EOL, BaselineCommand::getUsageLines()).PHP_EOL;
+        }
+
+        if($result->getExitCode() !== BaselineCommandResult::EXIT_OK) {
+            exit($result->getExitCode());
+        }
+    }
+
+    /**
+     * Arguments given after the `--` separator of the Composer command.
+     * Composer passes them through the script event; the fallback reads
+     * them from the raw command line.
+     *
+     * @param object|null $event
+     * @return string[]
+     */
+    private static function resolveArguments(?object $event) : array
+    {
+        if($event !== null && method_exists($event, 'getArguments')) {
+            return array_values(array_map('strval', $event->getArguments()));
+        }
+
+        $argv = $_SERVER['argv'] ?? array();
+        $separator = array_search('--', $argv, true);
+
+        if($separator === false) {
+            return array();
+        }
+
+        return array_slice($argv, $separator + 1);
     }
 
     private static function init() : void

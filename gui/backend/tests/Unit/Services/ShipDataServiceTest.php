@@ -479,7 +479,7 @@ class ShipDataServiceTest extends TestCase
     public function testDependencyInjectionWithMockedShipDefs(): void
     {
         // Create mock ShipDefs
-        $mockShipDefs = $this->createMock(ShipDefs::class);
+        $mockShipDefs = $this->createStub(ShipDefs::class);
 
         // Create service with injected mock
         $service = new ShipDataService($mockShipDefs);
@@ -499,7 +499,7 @@ class ShipDataServiceTest extends TestCase
     public function testDependencyInjectionWithMockedEngineDefs(): void
     {
         // Create mock EngineDefs
-        $mockEngineDefs = $this->createMock(EngineDefs::class);
+        $mockEngineDefs = $this->createStub(EngineDefs::class);
 
         // Create service with injected mock
         $service = new ShipDataService(null, $mockEngineDefs);

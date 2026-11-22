@@ -89,7 +89,7 @@ class ClassRangeServiceTest extends TestCase
     public function testCalculateClassRangeThrowsExceptionWithEmptyShipList(): void
     {
         // Create mock that returns no ships
-        $mockShipDataService = $this->createMock(ShipDataService::class);
+        $mockShipDataService = $this->createStub(ShipDataService::class);
         $mockShipDataService->method('getShipsByType')
             ->willReturn([]);
 
@@ -119,7 +119,7 @@ class ClassRangeServiceTest extends TestCase
      */
     public function testConstructorAcceptsShipDataService(): void
     {
-        $mockShipDataService = $this->createMock(ShipDataService::class);
+        $mockShipDataService = $this->createStub(ShipDataService::class);
         $service = new ClassRangeService($mockShipDataService);
 
         $this->assertInstanceOf(ClassRangeService::class, $service,

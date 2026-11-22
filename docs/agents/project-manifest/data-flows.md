@@ -1,7 +1,7 @@
 # Data Flows & Interactions
 
-> **Version:** 1.6  
-> **Last Updated:** March 1, 2026  
+> **Version:** 1.7  
+> **Last Updated:** November 22, 2026  
 > **Purpose:** Describes how data flows through the system from input to output
 
 ---
@@ -509,6 +509,35 @@ Add to ZIP:
 
 ---
 
+## 🧪 Parity Check Flow
+
+Used for refactors that must leave the mod output unchanged.
+
+```
+composer build:baseline [-- --baseline=<dir>] [--force]
+  ├─ refuse a non-empty baseline folder without --force (before building)
+  ├─ run the build (same as composer build)
+  └─ copy build/v*-for-v*/*.zip      → <baseline>/zips/
+     copy build/physics-diagnostics.txt → <baseline>/physics-diagnostics.txt
+
+(change code)
+
+composer build
+
+composer build:parity [-- --baseline=<dir>]
+  ├─ BuildParityComparator pairs baseline zips with build zips (version suffix ignored)
+  ├─ compares entry sets, then CRC32 of every entry
+  │    normalised: version strings, build/generated dates
+  │    never normalised: line endings
+  │    allow-list: content of random example ship entries may differ, presence may not
+  └─ prints the verdict line, then the differing entries
+     exit 0 = parity, 1 = differences, 2 = usage or setup error
+```
+
+The default baseline folder is `work/baseline-ship-types` (gitignored). A build rewrites the tracked file `docs/cargo-size-reference.md`; that change is expected.
+
+---
+
 ## 🔍 Key Data Transformations
 
 ### 1. XML → Value Objects
@@ -857,6 +886,7 @@ All flight mechanics files regenerated with new acceleration values
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.7 | Nov 22, 2026 | Added Parity Check Flow (`build:baseline`, `build:parity`) |
 | 1.6 | Nov 22, 2026 | Step 4 ship type resolution delegates to `ShipTypeConfig::resolveMacroKeyword()` |
 | 1.5 | Jun 12, 2026 | Document alias macro skip and scavenger/terraformer type alias intercept in Step 4 |
 | 1.0 | Feb 9, 2026 | Initial data flows documentation |

@@ -1,6 +1,6 @@
 # Tech Stack & Architectural Patterns
 
-> **Version:** 1.5
+> **Version:** 1.6
 > **Last Updated:** November 22, 2026
 > **Purpose:** Defines runtime environment, dependencies, and architectural patterns
 
@@ -278,7 +278,9 @@ Heavy reliance on `mistralys/x4-core` for:
 // composer.json
 {
   "scripts": {
-    "build": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::build"
+    "build": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::build",
+    "build:baseline": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::captureBaseline",
+    "build:parity": "Mistralys\\X4\\Mods\\CargoSizesMod\\CargoSizeBuildTools::compareBaseline"
   }
 }
 ```
@@ -292,6 +294,19 @@ Heavy reliance on `mistralys/x4-core` for:
 6. **Generate FOMOD Installer** - Create installer package
 7. **Generate Reference Docs** - Markdown and BBCode cargo size references
 8. **Package Distribution** - Create ZIP files
+
+### Build Parity Check
+
+Refactors that must not change the mod output are verified against a baseline taken before the change:
+
+```
+composer build:baseline     # before editing: builds, snapshots zips/ + physics-diagnostics.txt into work/baseline-ship-types
+(change code)
+composer build
+composer build:parity       # first line PARITY PASS / PARITY FAIL; exit 0 / 1 / 2
+```
+
+Classes (Build namespace): `BuildParityComparator` and `BuildParityResult` (CRC32 comparison with version and date normalisation, line endings never folded, allow-list for random example ships), `BaselineOptions` (`--baseline=<dir>`, `--force`), `BaselineCapture` (snapshot with overwrite guard), `BaselineCommand` / `BaselineCommandResult` (command logic and exit codes). The agent-facing workflow is in the root `AGENTS.md`.
 
 ---
 
@@ -444,6 +459,7 @@ mod-name-vX.X.X-for-vX.X/
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.6 | Nov 22, 2026 | Added Build Parity Check section and the `build:baseline` / `build:parity` Composer scripts; Shared Config Pattern re-verified against the final code (unchanged). |
 | 1.5 | Nov 22, 2026 | Replaced Ship Type Alias Mapping table with Shared Config Pattern (`config/ship-types.json` + `ShipTypeConfig`) |
 | 1.4 | Jun 12, 2026 | Added Ship Type Alias Mapping table and alias macro skip rule to Extractor-Builder Pattern |
 | 1.3 | Feb 19, 2026 | Removed PhysicsOverrideDef and JerkOverrideDef from Override Definition Pattern (deleted in v4.0 refactoring) |
