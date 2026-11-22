@@ -10,7 +10,7 @@ The design has three parts:
 
 1. A `composer verify` script that runs the build and tests against the extracted game data, then writes two JSON files.
 2. A shields.io endpoint badge in the README that reads one of those files.
-3. An optional scheduled GitHub workflow that turns the badge orange when the game has been patched since verification.
+3. An optional scheduled GitHub workflow that turns the badge orange and opens a re-verification issue when the game has been patched since verification.
 
 Plain `composer build` must not touch the status files. Otherwise every development build produces a diff and the date stops meaning "deliberately verified".
 
@@ -25,6 +25,7 @@ Two files are needed because shields.io rejects endpoint JSON that contains keys
 ```json
 {
   "gameVersion": "8.00",
+  "egosoftBuild": "654321",
   "steamBuildId": "12345678",
   "verifiedAt": "2026-11-22",
   "modVersion": "3.1.0"
@@ -34,6 +35,7 @@ Two files are needed because shields.io rejects endpoint JSON that contains keys
 | Field | Source | Rules |
 | --- | --- | --- |
 | `gameVersion` | The extracted game data, via the X4 Data Extractor library if it exposes the version | Required. Abort the stamp if it cannot be determined. |
+| `egosoftBuild` | Egosoft's own build number, the figure shown in brackets after the version, if the game data exposes it | Optional, `null` when unavailable. Platform-independent, unlike the Steam build ID. |
 | `steamBuildId` | `buildid` in the Steam app manifest of the game installation | Optional, `null` when unavailable (for example on non-Steam installs). |
 | `verifiedAt` | Current date, UTC, `YYYY-MM-DD` | Required. |
 | `modVersion` | `mod-version.txt` | Required. Informational only. |
@@ -94,19 +96,20 @@ name: Verification staleness check
 
 on:
   schedule:
-    - cron: "0 6 * * 1"
+    - cron: "20 6 * * 1"
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
     steps:
       - uses: actions/checkout@v4
 
       - name: Compare build IDs
+        id: compare
         run: |
           verified=$(jq -r '.steamBuildId // empty' verification/status.json)
           if [ -z "$verified" ]; then
@@ -131,7 +134,11 @@ jobs:
             '{schemaVersion: 1, label: "verified against X4", message: $message, color: "orange"}' \
             > verification/badge.json
 
+          echo "stale=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Commit badge change
+        if: steps.compare.outputs.stale == 'true'
         run: |
           if git diff --quiet; then
             exit 0
@@ -140,17 +147,89 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "Mark verification badge as stale"
           git push
+
+      - name: Open re-verification issue
+        if: steps.compare.outputs.stale == 'true'
+        run: |
+          open_count=$(gh issue list \
+            --label "$LABEL" \
+            --state open \
+            --json number \
+            --jq 'length')
+          if [[ "$open_count" != "0" ]]; then
+            echo "A re-verification issue is already open."
+            exit 0
+          fi
+          gh issue create \
+            --title "$TITLE" \
+            --assignee "$ASSIGNEES" \
+            --label "$LABEL" \
+            --body "$BODY"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TITLE: Re-verify against the new X4 release
+          ASSIGNEES: Mistralys
+          LABEL: reverify
+          BODY: |
+            The game has been updated since the mod was last verified against v${{ steps.compare.outputs.version }}.
+
+            - [ ] Update the game and re-extract the game data
+            - [ ] Run `composer verify`
+            - [ ] Review the build output for changes
+            - [ ] Commit the `verification/` files in a PR that closes this issue
+            - [ ] Publish a new release if the mod files changed
 ```
 
 A lookup failure must leave the badge unchanged, never mark it stale. GitHub disables scheduled workflows in public repositories after 60 days without repository activity, so a dormant project needs the workflow re-enabled by hand.
+
+### Notification issue
+
+The last step opens an issue when the badge goes stale, which notifies the assignee and gives the re-verification PR something to close. It follows GitHub's own tutorial, [Scheduling issue creation](https://docs.github.com/en/actions/tutorials/manage-your-work/schedule-issue-creation). GitHub has no dedicated action for creating issues; the tutorial uses the GitHub CLI, which is preinstalled on GitHub-hosted runners.
+
+The step keeps these conventions from the tutorial:
+
+- `issues: write` is granted under the job's `permissions` key.
+- `gh` authenticates through `GH_TOKEN`, set to `secrets.GITHUB_TOKEN`, and targets the repository through `GH_REPO`.
+- Title, assignee, label and body are passed as environment variables, not written inline in the script.
+
+Two points go beyond the tutorial:
+
+- The step skips creation while an open issue with the `reverify` label exists. Without this, every weekly run would file a duplicate.
+- The `reverify` label must exist before the first run, or `gh issue create` fails. Create it once in the repository's label settings and use it for nothing else.
+
+The re-verification PR closes the issue with a closing keyword such as `Closes #12` in its description. If the issue is closed without a new stamp, the next scheduled run opens a fresh one, because the badge is still stale.
+
+The cron minute is set to 20 because GitHub notes that scheduled runs can be delayed or dropped at the start of every hour.
+
+### Second source: GOG build listing
+
+Egosoft publishes no machine-readable version information, so the check relies on storefront data. The Steam build ID stays the primary trigger. GOG's build listing is a candidate second source, because its version strings pair the game version with Egosoft's build number, for example `4.00 (432831)`.
+
+The listing is believed to be available without login at this undocumented endpoint, with the version string in `items[].version_name`:
+
+```text
+https://content-system.gog.com/products/<gog-product-id>/os/windows/builds?generation=2
+```
+
+If the endpoint works and `egosoftBuild` is recorded in `status.json`, extend the workflow as follows:
+
+- Fetch the newest GOG build and parse the version and Egosoft build number from its version string.
+- Mark the badge stale when either the Steam build ID or the Egosoft build number differs from the recorded value.
+- When the GOG lookup succeeds, use its version in the stale message, for example `v8.00 · game now at v8.10`. Otherwise keep `game updated since`.
+- Skip any comparison whose recorded value is `null`, and treat a failed lookup as "no change".
+
+A GOG release can trail the Steam release, which is why GOG must not be the only trigger. If the endpoint cannot be confirmed, leave the workflow Steam-only and say so in the hand-off notes.
 
 ## Assumptions to check first
 
 These points were not verified when this reference was written. Confirm each one before building on it, and report back if one is wrong.
 
 - [ ] How the game version is obtained. Check whether the X4 Data Extractor library exposes it. If not, the game folder is believed to contain a `version.dat` file with a number such as `800` for v8.00.
+- [ ] Whether the game data also exposes Egosoft's build number, and where.
 - [ ] The Steam app ID for X4: Foundations is believed to be `392160`, which makes the manifest file `steamapps/appmanifest_392160.acf`.
 - [ ] `api.steamcmd.net` is a third-party service. Confirm the endpoint and the JSON path to the public branch's `buildid` with a live request.
+- [ ] The GOG build listing endpoint, its response shape and the GOG product ID for X4: Foundations. None of these were confirmed; look the product ID up and test with a live request.
 - [ ] Confirm against the shields.io endpoint badge documentation that unknown keys are rejected and which keys are allowed.
 - [ ] Check whether `actions/checkout@v4` is still the current major version.
 
@@ -163,3 +242,4 @@ These points were not verified when this reference was written. Confirm each one
 - [ ] The writer has unit tests, and PHPStan and PHPUnit pass.
 - [ ] The README explains the badge and the `composer verify` command.
 - [ ] If the staleness workflow is included: a manual run with a deliberately wrong build ID in `status.json` turns the badge orange, and a lookup failure changes nothing.
+- [ ] The same manual run opens one issue with the `reverify` label, assigned to the maintainer. A second run opens no duplicate.
