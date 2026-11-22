@@ -1,259 +1,77 @@
 # X4 Cargo Sizes Mod
 
-A mod for X4 that provides options to increase the cargo size of
-transports, mining ships, auxiliaries and carriers.
+Bigger holds for X4: Foundations ships, without wrecking how they fly.
 
-## Mix and match cargo sizes
+**LAST VERIFIED: November 2026** | X4 Foundations 9.0, Empire Update.
 
-The mod's files are organized into ZIP files by cargo size multiplier
-and change the cargo size of all ship types by default.
+## Haul more, fly the same
 
-A separate FOMOD installer ZIP lets you choose cargo increases by ship
-type and size. For example, L-sized transport ships with 10x cargo size, 
-and M-sized mining ships with 2x cargo size.
-
-Each installer option shows a real example ship from the game with its
-vanilla and adjusted cargo values, so you can see the impact before
-choosing a multiplier.
-
-## Downloads
-
-### Nexusmods
-
-The easiest way to install the mod is with the Vortex Mod Manager.
-See the official [Nexus page for the mod][].
-
-### Manual ZIP downloads
-
-See the [Releases][]
-for all available manual downloads.
+This mod for X4: Foundations increases the cargo size of transports, mining ships, auxiliaries and carriers, including DLC ships. Because extra cargo adds mass, the mod also adjusts ship flight characteristics so that loaded ships stay flyable. Pick a ready-made multiplier, or use the FOMOD installer to choose a multiplier per ship type and size.
 
 ## Features
 
-- Automatic flight model adjustments to compensate for increased cargo sizes.
-- Affects NPC and player ships.
-- Cargo values are increased for both new and existing ships.
-- Can be installed and uninstalled at any time.
-- **Interactive Physics Tuning GUI** - Real-time visual tool for testing and configuring physics adjustments.
-- _Haul away, me mateys!_
+- Choose from cargo multipliers of x2, x4, x6, x8 or x10.
+- Mix and match with the FOMOD installer, for example L-sized transports at x10 and M-sized miners at x2.
+- Preview the effect before choosing: each installer option shows a real example ship with its vanilla and adjusted cargo values.
+- Applies to NPC and player ships, both new and existing.
+- Flight characteristics are adjusted to compensate for the added cargo mass.
+- Can be installed at any time, and does not affect savegame files.
+- Can be uninstalled at any time.
+- Browse the exact cargo values in the [cargo size reference](docs/cargo-size-reference.md).
+- Build your own multipliers (floats such as `1.5` are accepted) and tune the physics with an included web GUI.
 
-## Reference of cargo sizes
+## Requirements
 
-The exact changes to cargo sizes can be reviewed here:
+**To play:**
 
-[Reference of cargo sizes][]
+- X4: Foundations
+- A mod manager is optional. The [Vortex Mod Manager](https://www.nexusmods.com/x4foundations/mods/1713) route is recommended.
 
-## Compatibility
+**To build from source:**
 
-Because the mod changes flight characteristics of ships to compensate
-for the added mass of cargo, it will conflict with any mods that also
-change flight characteristics of ships.
+- PHP 8.4 or higher
+- [Composer](https://getcomposer.org/)
+- Game data unpacked with the [X4 Data Extractor](https://github.com/Mistralys/x4-data-extractor)
 
-As it is unlikely that any other mod that changes flight characteristics
-will work with the increased cargo sizes, I have set the mod to high priority.
-This may not work in all cases, so please [report any mod conflicts][] you
-may encounter. 
+## Quick Start
 
-## Uninstalling
+**Playing:** download the mod from the [Nexus Mods page](https://www.nexusmods.com/x4foundations/mods/1713) and install it with Vortex, or grab a ZIP from the [GitHub Releases](https://github.com/Mistralys/x4-mod-cargo-sizes/releases). Use the FOMOD ZIP to choose multipliers per ship type and size.
 
-The mod can be uninstalled at any time. However, ships may end up
-carrying way more cargo than their unmodified storage allows. While
-this causes no errors in the game, it can cause ships to become
-unresponsive as their engines cannot move that much mass.
-
-There are several ways you can deal with this:
-
-- Drop the excess cargo from the ship's hold.
-- Drop off the cargo before uninstalling the mod.
-
-## Limitations
-
-### Ship flight handling changes
-
-To compensate for the increased cargo sizes, the mod
-adjusts the flight characteristics of ships. Ideally, they should
-perform roughly the same way as before. However, due to how
-physics works, changes in flight behavior are unavoidable, especially
-for larger ships and higher cargo multipliers.
-
-### Increased piracy (unverified)
-
-Theoretically, a tricky side effect of increasing cargo sizes is
-that ships actually transport more value and are juicier targets for 
-piracy as a result.
-
-In my games, I have not been able to verify this. It seems to me that
-the piracy happens just as often as before. On the contrary, in the few
-piracy cases I was able to observe, my traders only dropped a fraction
-of their cargo. 
-
-> In one case, the pirates did not even bother to pick up the loot:
-> I was able to send my trader to pick up the dropped cargo again
-> when the pirates left.
-
-### Mining delays (unverified)
-
-Theoretically, miners should take a lot longer to fill their cargo
-holds, as the mod does not increase the mining yields. 
-
-In my games, however, that did not seem to be the case. The miners working 
-for my metal refinery, for example, will not wait until the hold is full to 
-drop off their ore. I think this is because the station manager recalls them 
-whenever raw resources are needed.
-
-## Development
-
-### Physics Tuning GUI
-
-An interactive web-based GUI is available for real-time physics tuning and visualization. The GUI allows you to:
-
-- **Adjust physics parameters** (acceleration responsiveness) and see results instantly
-- **Select specific ships and engines** from extracted game data
-- **Compare original vs. adjusted values** with visual color-coded changes
-- **Save configurations** directly to `build-config.json` for use with `composer build`
-- **Test different cargo multipliers** with real ship/engine combinations
-
-**Quick Start:**
+**Building from source:**
 
 ```bash
-# Install GUI dependencies (from project root)
-composer gui:install
-
-# Run the development server (Linux/Mac)
-composer gui:start
-
-# Or on Windows
-composer gui:start-win
+git clone git@github.com:Mistralys/x4-mod-cargo-sizes.git
+cd x4-mod-cargo-sizes
+cp dev-config.dist.php dev-config.php
+composer install
+composer build
 ```
 
-The GUI will open automatically at `http://localhost:5173` with the backend API on port 8080.
+Before `composer build`, edit `dev-config.php` and point it at your X4 game folder and the folder with the extracted game files. See the [building guide](docs/building.md) for the details.
 
-**Documentation:**
-- [GUI README](gui/README.md) - Complete setup, usage, and troubleshooting guide
-- [API Documentation](gui/docs/API.md) - REST API endpoint specifications
-- [Architecture Overview](gui/docs/ARCHITECTURE.md) - System design and data flows
-- [Development Guide](gui/docs/DEVELOPMENT.md) - Contributing and code standards
+## Learn More
 
-### Requirements
+| Resource | Description |
+|----------|-------------|
+| [Player guide](docs/player-guide.md) | Compatibility, uninstalling and known limitations. |
+| [Cargo size reference](docs/cargo-size-reference.md) | The exact cargo values for every multiplier. |
+| [Building guide](docs/building.md) | Build the mod from game data and customize build settings. |
+| [Physics tuning guide](docs/physics-tuning-guide.md) | Tune how ships handle with extra cargo. |
+| [Physics Tuning GUI](gui/README.md) | Setup and usage of the web-based tuning tool. |
+| [Changelog](changelog.md) | What changed in each version. |
+| [Report an issue](https://github.com/Mistralys/x4-mod-cargo-sizes/issues) | Report bugs and mod conflicts. |
 
-1. PHP 8.4 or higher.
-2. [Composer](https://getcomposer.org/).
+## Related X4 projects
 
-### Building from game sources
+- [X4 Game Notes](https://github.com/Mistralys/x4-game-notes) - Howtos, tips and general information about X4.
+- [X4 Core](https://github.com/Mistralys/x4-core) - Library to access X4 game data.
+- [X4 Data Extractor](https://github.com/Mistralys/x4-data-extractor) - Tool and library to extract X4 game files.
+- [X4 Savegame Parser](https://github.com/Mistralys/x4-savegame-parser) - Tool to parse X4 savegames.
 
-The mod is designed to be built directly from the game's data files,
-to make sure it is always up to date with the latest game version.
+## License
 
-### Unpacking game data files
+MIT, see [LICENSE](LICENSE).
 
-The mod requires the game's data files to be unpacked using the
-[X4 Data Extractor][] tool. The tool acts as a library to access the 
-extracted information. This includes the DLC metadata necessary to
-generate the correct mod file structure.
+## Like it? A tea is appreciated!
 
-Please refer to the tool's instructions to unpack the game data files.
-
-### Building the mod
-
-1. Clone this repository.
-2. Copy `dev-config.php.dist` to `dev-config.php`.
-3. Edit the file to set the correct paths.
-4. Run `composer install` to install the dependencies.
-5. Run `composer build` to build the mod.
-
-### Automatic Release Notes Generation
-
-The build process automatically generates release notes from the project changelogs:
-
-- **Main Changelog:** `changelog.md` - Contains mod version changes
-- **Builder Changelog:** `changelog-builder.md` - Contains build system changes
-
-During each build, a `release-notes-v{VERSION}.md` file is generated in the `build/` directory containing:
-- Release heading with version and title from the main changelog
-- All changes from the latest mod version
-- Builder section with build system changes (if builder changelog exists)
-- **Cargo Multiplier Comparison** table — a randomly selected transport ship shown across all supported multipliers (e.g., 2x through 10x), with vanilla and adjusted cargo values side-by-side
-- Installation instructions footer (AIO vs FOMOD)
-
-The generated file is ready for use in GitHub Releases and mod platform updates.
-
-### Customizing build settings
-
-All configuration settings for the build process are located
-in the `config/build-config.json` file.
-
-#### Cargo size multipliers
-
-Multipliers can be added and removed from the `cargo-multipliers`
-list. During the build process, the mod will automatically generate
-all the listed multipliers.
-
-> NOTE: Multiplier values can be floats, so you can choose to
-> use a multiplier of `1.5` for example.
-
-#### Flight model settings
-
-Because the amount of cargo a ship carries in its hold affects how
-it flies, the mod will automatically adjust the flight model to 
-compensate for the increased cargo size.
-
-### How It Works - Acceleration Scaling
-
-#### The Core Problem
-
-When cargo capacity increases, the ship mass increases. Heavier ships accelerate more slowly — they feel like freight trains. The mod compensates for this by scaling the ship's acceleration factors proportionally to the mass increase.
-
-#### Configuration
-
-The flight mechanics section in `config/build-config.json` has a single tuning parameter:
-
-```json
-"flight-mechanics": {
-  "accelerationResponsiveness": 1.0
-}
-```
-
-#### What Gets Adjusted
-
-1. **Mass** - Directly increased by the added cargo weight
-2. **Acceleration factors** - Scaled to maintain the original `AccelFactor/Mass` ratio
-
-#### Physics Formula
-
-```
-accelerationScalingFactor = massRatio × accelerationResponsiveness
-newAccel = originalAccel × accelerationScalingFactor
-```
-
-- `massRatio` — how many times heavier the ship became (e.g. `2.0` for 2x cargo)
-- `accelerationResponsiveness` — tuning multiplier (default `1.0` = vanilla feel)
-- `1.0` = ship accelerates at the same rate as vanilla despite the extra mass
-- Values below `1.0` make ships feel heavier; above `1.0` make them feel snappier
-
-#### Tuning Your Experience
-
-See [Physics Tuning Guide](docs/physics-tuning-guide.md) for:
-- Detailed parameter explanations
-- Common tuning scenarios (too sluggish, AI flight issues, etc.)
-- Testing workflow
-- Value ranges
-
-## X4 Tools and libraries
-
-- [X4 Game Notes][] - _Docs_ - Howto, tips and general information about X4.
-- [X4 Core][] - _Library_ - Access X4 game data in an OOP way.
-- [X4 Data Extractor][] - _Tool & Library_ - Extract X4 game files.
-- [X4 Savegame Parser][] - _Tool_ - Parse X4 savegames to extract information.
-- [X4 Cargo Size Mod][] - _Mod_ - Mod to increase ship cargo sizes.
-
-[X4 Data Extractor]: https://github.com/Mistralys/x4-data-extractor
-[X4 Game Notes]: https://github.com/Mistralys/x4-game-notes
-[X4 Core]: https://github.com/Mistralys/x4-core
-[X4 Savegame Parser]: https://github.com/Mistralys/x4-savegame-parser
-[X4 Cargo Size Mod]: https://github.com/Mistralys/x4-mod-cargo-sizes
-
-
-[report any mod conflicts]: https://github.com/Mistralys/x4-mod-cargo-sizes/issues
-[Nexus page for the mod]: https://www.nexusmods.com/x4foundations/mods/1713
-[Reference of cargo sizes]: ./docs/cargo-size-reference.md
-[Releases]: https://github.com/Mistralys/x4-mod-cargo-sizes/releases
+<a href="https://buymeacoffee.com/aeonoftime"><img src="docs/images/buy-me-a-tea.png" alt="Buy me a tea" width="200"></a>
